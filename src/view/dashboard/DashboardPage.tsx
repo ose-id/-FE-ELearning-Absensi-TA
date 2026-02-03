@@ -119,7 +119,7 @@ function RecentActivity() {
             return (
               <div
                 key={activity.id}
-                className="flex items-start gap-4 rounded-lg border p-4 transition-colors hover:bg-gray-50"
+                className="flex items-start gap-4 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
               >
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 ${activity.iconColor}`}
@@ -201,7 +201,7 @@ function UpcomingEvents() {
           {events.map((event) => (
             <div
               key={event.id}
-              className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-gray-50"
+              className="flex items-center justify-between rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2">
@@ -293,28 +293,28 @@ export default function DashboardPage() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <button
               type="button"
-              className="flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors hover:bg-gray-50"
+              className="flex flex-col items-center gap-2 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
             >
               <Calendar className="h-6 w-6 text-blue-600" />
               <span className="text-sm font-medium">View Schedule</span>
             </button>
             <button
               type="button"
-              className="flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors hover:bg-gray-50"
+              className="flex flex-col items-center gap-2 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
             >
               <FileText className="h-6 w-6 text-green-600" />
               <span className="text-sm font-medium">New Assignment</span>
             </button>
             <button
               type="button"
-              className="flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors hover:bg-gray-50"
+              className="flex flex-col items-center gap-2 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
             >
               <CheckCircle className="h-6 w-6 text-purple-600" />
               <span className="text-sm font-medium">Take Attendance</span>
             </button>
             <button
               type="button"
-              className="flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors hover:bg-gray-50"
+              className="flex flex-col items-center gap-2 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
             >
               <Users className="h-6 w-6 text-orange-600" />
               <span className="text-sm font-medium">Manage Users</span>
