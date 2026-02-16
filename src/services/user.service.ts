@@ -23,6 +23,8 @@ class UserService {
         // For now, I'll assume the component handles getting the token and passing it 
         // via a wrapper, OR we just implment the raw fetch here.
 
+        console.log('[UserService] Request:', { url, method: options.method || 'GET', body: options.body })
+
         const res = await fetch(url, {
             ...options,
             headers: {
@@ -31,9 +33,22 @@ class UserService {
             },
         })
 
+        console.log('[UserService] Response:', { status: res.status, statusText: res.statusText })
+
         if (!res.ok) {
             const errorData = await res.json().catch(() => ({}))
-            throw new Error(errorData.message?.message || errorData.title || 'API request failed')
+            console.error('[UserService] Error response:', errorData)
+
+            // Better error message extraction
+            const errorMessage =
+                errorData.message?.message ||
+                errorData.message?.Message ||
+                errorData.message ||
+                errorData.title ||
+                errorData.errors?.[Object.keys(errorData.errors)[0]]?.[0] ||
+                `API request failed (${res.status})`
+
+            throw new Error(errorMessage)
         }
         return res.json()
     }

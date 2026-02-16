@@ -5,7 +5,7 @@ import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Shield, Code } from 'lucide-react'
 
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
@@ -76,33 +76,40 @@ export default function RoleForm({
 
     // Helper for emulate FormItem
     const FormItem = ({ children }: { children: React.ReactNode }) => (
-        <div className="space-y-2">{children}</div>
+        <div className="space-y-3">{children}</div>
     )
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] bg-white text-gray-900">
+            <DialogContent className="sm:max-w-[500px] bg-white text-gray-900 border-none shadow-xl">
                 <DialogHeader>
-                    <DialogTitle>
+                    <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent flex items-center gap-2">
+                        <Shield className="h-6 w-6 text-blue-800" />
                         {initialData ? 'Edit System Role' : 'Create New Role'}
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription className="text-gray-600">
                         Define roles to control user access levels and permissions.
                     </DialogDescription>
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 mt-2">
                         <Controller
                             control={form.control}
                             name="role_name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Role Name</FormLabel>
+                                    <FormLabel className="text-gray-700 font-medium">Role Name</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. Administrator" {...field} />
+                                        <div className="relative">
+                                            <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input
+                                                placeholder="e.g. Administrator"
+                                                className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 h-10"
+                                                {...field}
+                                            />
+                                        </div>
                                     </FormControl>
-                                    <p className="text-[10px] text-gray-500">The visible name of the role.</p>
                                     <FormMessage>{form.formState.errors.role_name?.message}</FormMessage>
                                 </FormItem>
                             )}
@@ -113,23 +120,44 @@ export default function RoleForm({
                             name="role_code"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Role Code</FormLabel>
+                                    <FormLabel className="text-gray-700 font-medium">Role Code</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. ADM" {...field} maxLength={5} className="uppercase font-mono" />
+                                        <div className="relative">
+                                            <Code className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input
+                                                placeholder="e.g. ADM"
+                                                {...field}
+                                                maxLength={5}
+                                                className="pl-10 uppercase font-mono border-gray-300 focus:border-blue-500 focus:ring-blue-500 h-10"
+                                                onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                            />
+                                        </div>
                                     </FormControl>
-                                    <p className="text-[10px] text-gray-500">Short identifier code (max 5 chars).</p>
+                                    <p className="text-xs text-gray-500 ml-1">Short identifier code (2-5 chars, uppercase).</p>
                                     <FormMessage>{form.formState.errors.role_code?.message}</FormMessage>
                                 </FormItem>
                             )}
                         />
 
-                        <DialogFooter className="gap-2 sm:gap-0">
-                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="text-gray-700 border-gray-300 hover:bg-gray-100">
+                        <DialogFooter className="gap-3 sm:gap-0 mt-6 pt-6 border-t border-gray-100">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => onOpenChange(false)}
+                                disabled={isSubmitting}
+                                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                            >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {initialData ? 'Save Role' : 'Create Role'}
+                            <Button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md">
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>{initialData ? 'Save Changes' : 'Create Role'}</>
+                                )}
                             </Button>
                         </DialogFooter>
                     </form>

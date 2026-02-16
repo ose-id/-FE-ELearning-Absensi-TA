@@ -245,17 +245,25 @@ export default function DashboardPage() {
     )
   }
 
-  const roleCode = session?.user?.roleCode as RoleCode
+  const roleCode = (session?.user?.roleCode as RoleCode)?.toUpperCase()
 
-  switch (roleCode) {
-    case ROLES.ADMIN:
-      return <AdminDashboard />
-    case ROLES.TEACHER:
-      return <TeacherDashboard />
-    case ROLES.STUDENT:
-      return <StudentDashboard />
-    default:
-      // Fallback or unauthorized view
-      return <StudentDashboard />
+  // Debug log
+  console.log('[DashboardPage] User role code:', session?.user?.roleCode, '→ Normalized:', roleCode)
+
+  // Case-insensitive role matching
+  if (roleCode === 'ADM' || roleCode === 'ADMIN') {
+    return <AdminDashboard />
   }
+
+  if (roleCode === 'TCR' || roleCode === 'TEACHER' || roleCode === 'GURU') {
+    return <TeacherDashboard />
+  }
+
+  if (roleCode === 'STD' || roleCode === 'STUDENT' || roleCode === 'MURID') {
+    return <StudentDashboard />
+  }
+
+  // Fallback for unknown roles
+  console.warn('[DashboardPage] Unknown role code:', roleCode, '- showing StudentDashboard')
+  return <StudentDashboard />
 }
