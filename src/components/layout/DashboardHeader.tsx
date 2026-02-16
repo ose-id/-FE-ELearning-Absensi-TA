@@ -32,9 +32,7 @@ export default function DashboardHeader({ onMenuClick, sidebarExpanded }: Header
 
   return (
     <div>
-      {/* Top Navbar - removed border */}
-      <header className="flex items-center justify-between bg-white px-6 py-4">
-        {/* Left side - Menu Button (Mobile) */}
+      <header className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -84,11 +82,6 @@ export default function DashboardHeader({ onMenuClick, sidebarExpanded }: Header
           </DropdownMenuContent>
         </DropdownMenu>
       </header>
-
-      {/* Page Title and Breadcrumb - no background or card styling */}
-      <div className="px-6 py-4">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-      </div>
     </div>
   )
 }
