@@ -43,6 +43,7 @@ export const authOptions: NextAuthOptions = {
                             fullName: userData.fullName,
                             roleId: userData.role_id.toString(),
                             roleName: userData.role_name || 'User',
+                            roleCode: userData.role_code,
                             isActive: true,  // backend doesn't return this field
                             accessToken: userData.token,
                             refreshToken: '',  // backend doesn't return refresh token in this response
@@ -75,6 +76,7 @@ export const authOptions: NextAuthOptions = {
                     fullName: user.fullName,
                     roleId: user.roleId,
                     roleName: user.roleName,
+                    roleCode: user.roleCode,
                     isActive: user.isActive,
                     accessToken: user.accessToken,
                     refreshToken: user.refreshToken,
@@ -135,6 +137,7 @@ export const authOptions: NextAuthOptions = {
                     fullName: token.fullName,
                     roleId: token.roleId,
                     roleName: token.roleName,
+                    roleCode: token.roleCode,
                     isActive: token.isActive,
                 }
                 session.accessToken = token.accessToken
@@ -156,7 +159,6 @@ export const authOptions: NextAuthOptions = {
         maxAge: 24 * 60 * 60, // 24 hours
     },
 
-    secret: process.env.AUTH_SECRET,
-
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
     debug: process.env.NODE_ENV === 'development',
 }

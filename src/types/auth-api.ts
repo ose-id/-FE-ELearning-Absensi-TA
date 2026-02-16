@@ -79,6 +79,7 @@ declare module 'next-auth' {
             fullName: string
             roleId: string
             roleName: string
+            roleCode: string
             isActive: boolean
         }
         accessToken: string
@@ -93,6 +94,7 @@ declare module 'next-auth' {
         fullName: string
         roleId: string
         roleName: string
+        roleCode: string
         isActive: boolean
         accessToken: string
         refreshToken: string
@@ -108,6 +110,7 @@ declare module 'next-auth/jwt' {
         fullName: string
         roleId: string
         roleName: string
+        roleCode: string
         isActive: boolean
         accessToken: string
         refreshToken: string

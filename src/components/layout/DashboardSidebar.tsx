@@ -1,32 +1,13 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import Image from 'next/image'
-import {
-  Home,
-  Users,
-  Building2,
-  Target,
-  Briefcase,
-  Calendar,
-  BarChart3,
-  Settings,
-} from 'lucide-react'
+import { useSession } from 'next-auth/react'
 
 import { cn } from '@/utils/commons'
-
-const navItems = [
-  { icon: Home, label: 'Dashboard', href: '/dashboard' },
-  { icon: Users, label: 'User Management', href: '/user-management' },
-  { icon: Building2, label: 'Class Management', href: '/class-management' },
-  { icon: Target, label: 'Subjects', href: '/subjects' },
-  { icon: Briefcase, label: 'Assignment', href: '/assignment' },
-  { icon: Calendar, label: 'Attendance', href: '/attendance' },
-  { icon: BarChart3, label: 'Reporting', href: '/reporting' },
-  { icon: Settings, label: 'Master', href: '/master' },
-]
+import { NAV_ITEMS } from '@/config/navigation'
+import { ROLES, type RoleCode } from '@/config/roles'
 
 interface SidebarProps {
   expanded: boolean
@@ -36,7 +17,14 @@ interface SidebarProps {
 
 export default function DashboardSidebar({ expanded, onToggle, onClickOutside }: SidebarProps) {
   const pathname = usePathname()
+  const { data: session } = useSession()
   const sidebarRef = useRef<HTMLDivElement>(null)
+
+  // Default to Student if no role found (or handle as loading/empty)
+  const userRole = (session?.user?.roleCode as RoleCode) || ROLES.STUDENT
+
+  // Get nav items for current role, fallback to student or empty array
+  const currentNavItems = NAV_ITEMS[userRole] || NAV_ITEMS[ROLES.STUDENT]
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -85,7 +73,7 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4">
           <ul className="space-y-1">
-            {navItems.map((item) => {
+            {currentNavItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
 
