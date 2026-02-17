@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -18,6 +18,7 @@ import {
     CreditCard,
     GraduationCap
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
@@ -44,6 +45,8 @@ import {
 } from '@/components/ui/select/Select'
 
 import { User } from '@/types/user'
+import { Role } from '@/types/role'
+import { roleService } from '@/services/role.service'
 
 // Schema now uses 'role' string instead of 'role_id'
 const userSchema = z.object({
@@ -78,6 +81,10 @@ export default function UserForm({
     initialData,
     isSubmitting,
 }: UserFormProps) {
+    const { data: session } = useSession()
+    const [roles, setRoles] = useState<Role[]>([])
+    const [loadingRoles, setLoadingRoles] = useState(true)
+
     const form = useForm<UserFormData>({
         resolver: zodResolver(userSchema),
         defaultValues: {
@@ -96,20 +103,56 @@ export default function UserForm({
         },
     })
 
+    // Fetch roles from database
+    useEffect(() => {
+        const fetchRoles = async () => {
+            if (!session?.accessToken) return
+
+            try {
+                setLoadingRoles(true)
+                const response = await roleService.getRoles(session.accessToken)
+                if (response && response.data) {
+                    setRoles(response.data)
+                }
+            } catch (error) {
+                console.error('Failed to fetch roles:', error)
+            } finally {
+                setLoadingRoles(false)
+            }
+        }
+
+        if (open) {
+            fetchRoles()
+        }
+    }, [open, session])
+
     // Watch 'role' instead of 'role_id'
     const role = form.watch('role')
-    const isStudent = role === 'Student'
-    const isTeacher = role === 'Teacher'
-    const isAdmin = role === 'Admin'
+
+    // Helper to check role type safely and flexibly
+    const checkRole = (keyword: string) => {
+        if (!role) return false
+        return role.toLowerCase().includes(keyword.toLowerCase())
+    }
+
+    const isStudent = checkRole('student') || checkRole('murid')
+    const isTeacher = checkRole('teacher') || checkRole('guru')
+    const isAdmin = checkRole('admin')
 
     useEffect(() => {
         if (open) {
             if (initialData) {
-                // Map ID to Role Name string
+                // Find role name from roles array or fallback to mapping
                 let roleName = ''
-                if (initialData.role_id === 1) roleName = 'Admin'
-                else if (initialData.role_id === 2) roleName = 'Teacher'
-                else if (initialData.role_id === 3) roleName = 'Student'
+                const foundRole = roles.find(r => r.id === initialData.role_id)
+                if (foundRole) {
+                    roleName = foundRole.role_name
+                } else {
+                    // Fallback to hardcoded mapping if roles not loaded yet
+                    if (initialData.role_id === 1) roleName = 'Admin'
+                    else if (initialData.role_id === 2) roleName = 'Teacher'
+                    else if (initialData.role_id === 3) roleName = 'Student'
+                }
 
                 form.reset({
                     fullname: initialData.fullname,
@@ -142,7 +185,7 @@ export default function UserForm({
                 })
             }
         }
-    }, [open, initialData, form])
+    }, [open, initialData, form, roles])
 
     const handleSubmit = async (data: UserFormData) => {
         await onSubmit(data)
@@ -178,50 +221,66 @@ export default function UserForm({
                             </div>
 
                             <div className="grid gap-4 md:grid-cols-2">
-                                {/* Role Selection - Now uses 'role' string value */}
+                                {/* Role Selection - Now uses 'role' string value from database */}
                                 <Controller
                                     control={form.control}
                                     name="role"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="text-gray-700 font-medium">Role Access *</FormLabel>
-                                            <Select
-                                                onValueChange={field.onChange}
-                                                value={field.value || ''}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-blue-50/50">
-                                                        <SelectValue placeholder="Select User Role">
-                                                            {field.value === 'Admin' && <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-purple-500" /><span>Admin</span></div>}
-                                                            {field.value === 'Teacher' && <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-blue-500" /><span>Teacher</span></div>}
-                                                            {field.value === 'Student' && <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-green-500" /><span>Student</span></div>}
-                                                        </SelectValue>
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="admin" textValue="Admin">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="h-2 w-2 rounded-full bg-purple-500" />
-                                                            <span>Admin</span>
-                                                        </div>
-                                                    </SelectItem>
-                                                    <SelectItem value="teacher" textValue="Teacher">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="h-2 w-2 rounded-full bg-blue-500" />
-                                                            <span>Teacher</span>
-                                                        </div>
-                                                    </SelectItem>
-                                                    <SelectItem value="student" textValue="Student">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="h-2 w-2 rounded-full bg-green-500" />
-                                                            <span>Student</span>
-                                                        </div>
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage>{form.formState.errors.role?.message}</FormMessage>
-                                        </FormItem>
-                                    )}
+                                    render={({ field }) => {
+                                        // Helper function to get role color
+                                        const getRoleColor = (roleName: string) => {
+                                            const name = roleName.toLowerCase()
+                                            if (name.includes('admin')) return 'bg-purple-500'
+                                            if (name.includes('teacher') || name.includes('guru')) return 'bg-blue-500'
+                                            if (name.includes('student') || name.includes('murid')) return 'bg-green-500'
+                                            return 'bg-gray-500'
+                                        }
+
+                                        return (
+                                            <FormItem>
+                                                <FormLabel className="text-gray-700 font-medium">Role Access *</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value || ''}
+                                                    disabled={loadingRoles}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-blue-50/50">
+                                                            <SelectValue placeholder={loadingRoles ? "Loading roles..." : "Select User Role"}>
+                                                                {field.value && (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className={`h-2 w-2 rounded-full ${getRoleColor(field.value)}`} />
+                                                                        <span>{field.value}</span>
+                                                                    </div>
+                                                                )}
+                                                            </SelectValue>
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {loadingRoles ? (
+                                                            <div className="flex items-center justify-center p-4">
+                                                                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                                                                <span className="ml-2 text-sm text-gray-600">Loading roles...</span>
+                                                            </div>
+                                                        ) : roles.length === 0 ? (
+                                                            <div className="p-4 text-center text-sm text-gray-600">
+                                                                No roles available
+                                                            </div>
+                                                        ) : (
+                                                            roles.map((role) => (
+                                                                <SelectItem key={role.id} value={role.role_name} textValue={role.role_name}>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className={`h-2 w-2 rounded-full ${getRoleColor(role.role_name)}`} />
+                                                                        <span>{role.role_name}</span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            ))
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage>{form.formState.errors.role?.message}</FormMessage>
+                                            </FormItem>
+                                        )
+                                    }}
                                 />
 
                                 <Controller

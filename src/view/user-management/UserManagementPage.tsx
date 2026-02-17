@@ -12,7 +12,9 @@ import Pagination from '@/components/ui/pagination'
 import UserGridView from '@/components/ui/grid'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
 import { userService } from '@/services/user.service'
+import { roleService } from '@/services/role.service'
 import { User } from '@/types/user'
+import { Role } from '@/types/role'
 import UserList from './UserList'
 import UserForm, { UserFormData } from './UserForm'
 
@@ -21,6 +23,7 @@ type ViewMode = 'list' | 'grid'
 export default function UserManagementPage() {
     const { data: session } = useSession()
     const [users, setUsers] = useState<User[]>([])
+    const [roles, setRoles] = useState<Role[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [roleFilter, setRoleFilter] = useState<string>('All Roles')
@@ -50,8 +53,23 @@ export default function UserManagementPage() {
         }
     }
 
+    const fetchRoles = async () => {
+        if (!session?.accessToken) return
+        try {
+            const response = await roleService.getRoles(session.accessToken)
+            if (response && response.data) {
+                setRoles(response.data)
+            }
+        } catch (error: any) {
+            console.error('Failed to fetch roles:', error)
+        }
+    }
+
     useEffect(() => {
-        fetchUsers()
+        if (session) {
+            fetchUsers()
+            fetchRoles()
+        }
     }, [session])
 
     const handleCreate = () => {
@@ -84,13 +102,19 @@ export default function UserManagementPage() {
         try {
             setIsSubmitting(true)
 
-            // Convert role string to role_id number for API
+            // Convert role string to role_id number using fetched roles
             let roleId = 0
-            if (data.role === 'admin') roleId = 1
-            else if (data.role === 'teacher') roleId = 2
-            else if (data.role === 'student') roleId = 3
-            // Fallback default
-            if (roleId === 0) roleId = 3
+            const selectedRole = roles.find(r => r.role_name === data.role || r.role_name.toLowerCase() === data.role.toLowerCase())
+
+            if (selectedRole) {
+                roleId = selectedRole.id
+            } else {
+                // Fallback / Default logic if role not found matches (though it should be)
+                if (data.role?.toLowerCase().includes('admin')) roleId = 1
+                else if (data.role?.toLowerCase().includes('teacher')) roleId = 2
+                else if (data.role?.toLowerCase().includes('student')) roleId = 3
+                else roleId = 3 // Default to Student
+            }
 
             if (selectedUser) {
                 await userService.updateUser(
