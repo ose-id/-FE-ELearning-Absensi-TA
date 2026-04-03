@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useEffect } from 'react'
@@ -33,12 +32,20 @@ import {
 
 import { Assignment } from '@/types/assignment'
 import { Class } from '@/types/class'
+import { LearningModule } from '@/types/learning-module'
 
 const assignmentSchema = z.object({
     title: z.string().min(1, 'Title is required'),
     description: z.string().min(1, 'Description is required'),
     class_id: z.number({ message: "Class is required" }),
-    due_date: z.string().min(1, 'Due date is required'),
+    learning_module_id: z.number({ message: "Learning Module is required" }),
+    due_date: z.string().min(1, 'Due date is required')
+        .refine((date) => {
+            const selectedDate = new Date(date)
+            const now = new Date()
+            now.setMinutes(now.getMinutes() + 1) // Give 1 minute buffer
+            return selectedDate > now
+        }, { message: 'Due date must be in the future' }),
     max_score: z.number().min(1, 'Max score must be at least 1'),
 })
 
@@ -51,6 +58,7 @@ interface AssignmentFormProps {
     initialData?: Assignment | null
     isSubmitting: boolean
     classes: Class[]
+    learningModules: LearningModule[]
 }
 
 export default function AssignmentForm({
@@ -60,12 +68,15 @@ export default function AssignmentForm({
     initialData,
     isSubmitting,
     classes,
+    learningModules,
 }: AssignmentFormProps) {
     const form = useForm<AssignmentFormData>({
         resolver: zodResolver(assignmentSchema),
         defaultValues: {
             title: '',
             description: '',
+            class_id: undefined,
+            learning_module_id: undefined,
             due_date: '',
             max_score: 100,
         },
@@ -74,7 +85,6 @@ export default function AssignmentForm({
     useEffect(() => {
         if (open) {
             if (initialData) {
-                // Format date for input[type="datetime-local"]
                 const dueDate = new Date(initialData.due_date)
                 const formattedDate = dueDate.toISOString().slice(0, 16)
 
@@ -82,6 +92,7 @@ export default function AssignmentForm({
                     title: initialData.title,
                     description: initialData.description,
                     class_id: initialData.class_id,
+                    learning_module_id: initialData.learning_module_id,
                     due_date: formattedDate,
                     max_score: initialData.max_score,
                 })
@@ -90,6 +101,7 @@ export default function AssignmentForm({
                     title: '',
                     description: '',
                     class_id: undefined,
+                    learning_module_id: undefined,
                     due_date: '',
                     max_score: 100,
                 })
@@ -115,7 +127,7 @@ export default function AssignmentForm({
                     <DialogDescription>
                         {initialData
                             ? 'Update assignment details.'
-                            : 'Add a new assignment for your class.'}
+                            : 'Add a new assignment for your learning module.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -157,6 +169,34 @@ export default function AssignmentForm({
                         <div className="grid gap-4 md:grid-cols-2">
                             <Controller
                                 control={form.control}
+                                name="learning_module_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Learning Module</FormLabel>
+                                        <Select
+                                            onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
+                                            value={field.value ? field.value.toString() : ''}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select Module" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {learningModules.map((mod) => (
+                                                    <SelectItem key={mod.nid} value={mod.nid.toString()}>
+                                                        {mod.vname}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage>{form.formState.errors.learning_module_id?.message}</FormMessage>
+                                    </FormItem>
+                                )}
+                            />
+
+                            <Controller
+                                control={form.control}
                                 name="class_id"
                                 render={({ field }) => (
                                     <FormItem>
@@ -172,8 +212,8 @@ export default function AssignmentForm({
                                             </FormControl>
                                             <SelectContent>
                                                 {classes.map((cls) => (
-                                                    <SelectItem key={cls.id} value={cls.id.toString()}>
-                                                        {cls.name} ({cls.code})
+                                                    <SelectItem key={cls.nid} value={cls.nid.toString()}>
+                                                        {cls.vname}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -182,7 +222,9 @@ export default function AssignmentForm({
                                     </FormItem>
                                 )}
                             />
+                        </div>
 
+                        <div className="grid gap-4 md:grid-cols-2">
                             <Controller
                                 control={form.control}
                                 name="max_score"
@@ -201,21 +243,21 @@ export default function AssignmentForm({
                                     </FormItem>
                                 )}
                             />
-                        </div>
 
-                        <Controller
-                            control={form.control}
-                            name="due_date"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Due Date</FormLabel>
-                                    <FormControl>
-                                        <Input type="datetime-local" {...field} />
-                                    </FormControl>
-                                    <FormMessage>{form.formState.errors.due_date?.message}</FormMessage>
-                                </FormItem>
-                            )}
-                        />
+                            <Controller
+                                control={form.control}
+                                name="due_date"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Due Date</FormLabel>
+                                        <FormControl>
+                                            <Input type="datetime-local" {...field} />
+                                        </FormControl>
+                                        <FormMessage>{form.formState.errors.due_date?.message}</FormMessage>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
 
                         <DialogFooter className="gap-2 sm:gap-0">
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="text-gray-700 border-gray-300 hover:bg-gray-100">

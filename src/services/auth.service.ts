@@ -126,6 +126,53 @@ class AuthService {
             throw error
         }
     }
+
+    /**
+     * Register a new user (initial account creation)
+     */
+    async register(data: any): Promise<any> {
+        try {
+            const body = {
+                username: data.username,
+                email: data.email,
+                password: data.password,
+                fullName: data.fullname || '',
+                roleId: String(data.role_nid || data.role_id || 3)
+            }
+            
+            // Following the RegisterRequest interface exactly from types/auth-api.ts
+            
+            console.log('[AuthService] Calling Register API:', `${this.baseUrl}/register`)
+            console.log('[AuthService] Register Body:', JSON.stringify(body, null, 2))
+
+            const response = await fetch(`${this.baseUrl}/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
+            })
+
+            const result = await response.json().catch(() => ({}))
+            console.log('[AuthService] Register Response:', { status: response.status, data: result })
+
+            if (!response.ok) {
+                // Better error extraction for validation errors
+                const errorMessage = 
+                    result.message?.Error || 
+                    result.message || 
+                    result.title || 
+                    (result.errors ? Object.values(result.errors).flat().join(', ') : null) ||
+                    'Registration failed'
+                
+                throw new Error(errorMessage)
+            }
+            return result
+        } catch (error: any) {
+            console.error('[AuthService] Register error:', error)
+            throw error
+        }
+    }
 }
 
 export const authService = new AuthService()

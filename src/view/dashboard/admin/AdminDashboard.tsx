@@ -259,7 +259,10 @@ export default function AdminDashboard() {
     const [users, setUsers] = useState<User[]>([])
     const [classes, setClasses] = useState<Class[]>([])
 
+    const [mounted, setMounted] = useState(false)
+
     useEffect(() => {
+        setMounted(true)
         const timer = setInterval(() => setCurrentTime(new Date()), 1000)
         return () => clearInterval(timer)
     }, [])
@@ -297,9 +300,9 @@ export default function AdminDashboard() {
 
     // Calculate statistics from real data
     const totalUsers = users.length
-    const adminCount = users.filter(u => ['ADMIN', 'ADM'].includes(u.role_code?.toUpperCase() || '')).length
-    const teacherCount = users.filter(u => ['TEACHER', 'GURU', 'TCR'].includes(u.role_code?.toUpperCase() || '')).length
-    const studentCount = users.filter(u => ['STUDENT', 'MURID', 'STD'].includes(u.role_code?.toUpperCase() || '')).length
+    const adminCount = users.filter(u => ['ADMIN', 'ADM'].includes((u.vrole_code || u.role_code || '').toUpperCase())).length
+    const teacherCount = users.filter(u => ['GR'].includes((u.vrole_code || u.role_code || '').toUpperCase())).length
+    const studentCount = users.filter(u => ['MR'].includes((u.vrole_code || u.role_code || '').toUpperCase())).length
     const totalClasses = classes.length
 
     const stats = [
@@ -399,11 +402,11 @@ export default function AdminDashboard() {
                             <div className="flex items-center gap-2 text-gray-600">
                                 <Calendar className="h-4 w-4" />
                                 <span className="text-sm font-medium">
-                                    {currentTime.toLocaleDateString('en-US', {
+                                    {mounted ? currentTime.toLocaleDateString('en-US', {
                                         month: 'short',
                                         day: 'numeric',
                                         year: 'numeric'
-                                    })}
+                                    }) : '...'}
                                 </span>
                             </div>
                         </div>
@@ -411,10 +414,10 @@ export default function AdminDashboard() {
                             <div className="flex items-center gap-2 text-gray-900">
                                 <Clock className="h-4 w-4" />
                                 <span className="text-sm font-semibold">
-                                    {currentTime.toLocaleTimeString('en-US', {
+                                    {mounted ? currentTime.toLocaleTimeString('en-US', {
                                         hour: '2-digit',
                                         minute: '2-digit'
-                                    })}
+                                    }) : '--:--'}
                                 </span>
                             </div>
                         </div>

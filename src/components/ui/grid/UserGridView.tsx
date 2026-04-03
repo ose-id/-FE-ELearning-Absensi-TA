@@ -1,4 +1,4 @@
-import { Shield, Users } from 'lucide-react'
+import { Shield, Users, Lock } from 'lucide-react'
 import Button from '../button'
 
 export interface GridItem {
@@ -63,6 +63,20 @@ export default function UserGridView<T extends GridItem>({
         return 'bg-gradient-to-r from-green-500 to-green-600 text-white'
     }
 
+    const getRoleIcon = (role: string) => {
+        const roleUpper = role?.toUpperCase() || ''
+        if (['ADMIN', 'ADM'].includes(roleUpper)) {
+            return <Lock className="h-3 w-3" />
+        }
+        if (['TEACHER', 'GURU', 'TCR'].includes(roleUpper)) {
+            return <Shield className="h-3 w-3" />
+        }
+        if (['STUDENT', 'STD', 'MR'].includes(roleUpper)) {
+            return <Users className="h-3 w-3" />
+        }
+        return <Shield className="h-3 w-3" />
+    }
+
     if (items.length === 0) {
         return (
             <div className={`col-span-full flex flex-col items-center justify-center rounded-xl bg-white p-12 shadow-sm ${className}`}>
@@ -77,7 +91,7 @@ export default function UserGridView<T extends GridItem>({
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}>
             {items.map((item) => (
                 <div
-                    key={item.id}
+                    key={(item as any)._uid ?? `${(item as any).role_nid ?? 0}:${(item as any).id}`}
                     className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-gray-300 hover:-translate-y-1"
                 >
                     <div className="flex flex-col items-center text-center space-y-4">
@@ -106,7 +120,7 @@ export default function UserGridView<T extends GridItem>({
                                     item.role_name || item.role_code || ''
                                 )}`}
                             >
-                                <Shield className="h-3 w-3" />
+                                {getRoleIcon(item.role_name || item.role_code || '')}
                                 {item.role_name || item.role_code}
                             </span>
                         )}

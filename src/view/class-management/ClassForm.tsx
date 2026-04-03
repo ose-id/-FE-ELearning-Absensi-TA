@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useEffect } from 'react'
@@ -32,13 +31,13 @@ import {
 } from '@/components/ui/select/Select'
 
 import { Class } from '@/types/class'
-import { User } from '@/types/user'
+import { Department } from '@/types/department'
 
 const classSchema = z.object({
-    name: z.string().min(1, 'Class Name is required'),
-    code: z.string().min(1, 'Class Code is required'),
+    name: z.string().min(1, 'Class name is required'),
+    department_id: z.number({ message: "Department is required" }),
     description: z.string().optional(),
-    teacher_id: z.number({ message: "Teacher is required" }),
+    term: z.string().optional(),
 })
 
 export type ClassFormData = z.infer<typeof classSchema>
@@ -49,7 +48,7 @@ interface ClassFormProps {
     onSubmit: (data: ClassFormData) => Promise<void>
     initialData?: Class | null
     isSubmitting: boolean
-    teachers: User[]
+    departments: Department[]
 }
 
 export default function ClassForm({
@@ -58,14 +57,15 @@ export default function ClassForm({
     onSubmit,
     initialData,
     isSubmitting,
-    teachers,
+    departments,
 }: ClassFormProps) {
     const form = useForm<ClassFormData>({
         resolver: zodResolver(classSchema),
         defaultValues: {
             name: '',
-            code: '',
+            department_id: 0,
             description: '',
+            term: '',
         },
     })
 
@@ -73,17 +73,17 @@ export default function ClassForm({
         if (open) {
             if (initialData) {
                 form.reset({
-                    name: initialData.name,
-                    code: initialData.code,
-                    description: initialData.description || '',
-                    teacher_id: initialData.teacher_id,
+                    name: initialData.vname || '',
+                    department_id: initialData.nid_department,
+                    description: initialData.vdesc || '',
+                    term: initialData.term || '',
                 })
             } else {
                 form.reset({
                     name: '',
-                    code: '',
+                    department_id: 0,
                     description: '',
-                    teacher_id: undefined,
+                    term: '',
                 })
             }
         }
@@ -93,7 +93,6 @@ export default function ClassForm({
         await onSubmit(data)
     }
 
-    // Helper for emulate FormItem
     const FormItem = ({ children }: { children: React.ReactNode }) => (
         <div className="space-y-2">{children}</div>
     )
@@ -114,7 +113,6 @@ export default function ClassForm({
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-
                         <div className="grid gap-4 md:grid-cols-2">
                             <Controller
                                 control={form.control}
@@ -123,7 +121,7 @@ export default function ClassForm({
                                     <FormItem>
                                         <FormLabel>Class Name</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Mathematics 101" {...field} />
+                                            <Input placeholder="e.g., X IPA 1" {...field} />
                                         </FormControl>
                                         <FormMessage>{form.formState.errors.name?.message}</FormMessage>
                                     </FormItem>
@@ -132,14 +130,14 @@ export default function ClassForm({
 
                             <Controller
                                 control={form.control}
-                                name="code"
+                                name="term"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Class Code</FormLabel>
+                                        <FormLabel>Term</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="MATH101" {...field} />
+                                            <Input placeholder="e.g., 2024/2025" {...field} value={field.value || ''} />
                                         </FormControl>
-                                        <FormMessage>{form.formState.errors.code?.message}</FormMessage>
+                                        <FormMessage>{form.formState.errors.term?.message}</FormMessage>
                                     </FormItem>
                                 )}
                             />
@@ -147,28 +145,28 @@ export default function ClassForm({
 
                         <Controller
                             control={form.control}
-                            name="teacher_id"
+                            name="department_id"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Teacher</FormLabel>
+                                    <FormLabel>Department</FormLabel>
                                     <Select
                                         onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
                                         value={field.value ? field.value.toString() : ''}
                                     >
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select Teacher" />
+                                                <SelectValue placeholder="Select Department" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {teachers.map((teacher) => (
-                                                <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                                                    {teacher.fullname} ({teacher.email})
+                                            {departments.map((dept) => (
+                                                <SelectItem key={dept.nid} value={dept.nid.toString()}>
+                                                    {dept.vdepartment_name}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    <FormMessage>{form.formState.errors.teacher_id?.message}</FormMessage>
+                                    <FormMessage>{form.formState.errors.department_id?.message}</FormMessage>
                                 </FormItem>
                             )}
                         />
@@ -180,7 +178,6 @@ export default function ClassForm({
                                 <FormItem>
                                     <FormLabel>Description</FormLabel>
                                     <FormControl>
-
                                         <Textarea
                                             placeholder="Class description..."
                                             {...field}

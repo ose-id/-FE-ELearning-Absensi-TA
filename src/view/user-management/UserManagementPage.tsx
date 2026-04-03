@@ -88,7 +88,7 @@ export default function UserManagementPage() {
         if (!session?.accessToken) return
 
         try {
-            await userService.deleteUser(user.id, session.accessToken)
+            await userService.deleteUser(user.id, user.role_nid, session.accessToken)
             toast.success('User deleted successfully')
             fetchUsers()
         } catch (error: any) {
@@ -96,79 +96,88 @@ export default function UserManagementPage() {
         }
     }
 
-    const handleFormSubmit = async (data: UserFormData) => {
+    const handleFormSubmit = async (data: UserFormData, step?: number) => {
         if (!session?.accessToken) return
 
         try {
             setIsSubmitting(true)
 
-            // Convert role string to role_id number using fetched roles
-            let roleId = 0
-            const selectedRole = roles.find(r => r.role_name === data.role || r.role_name.toLowerCase() === data.role.toLowerCase())
+            // Convert role string to role_nid number
+            let roleNid = 0
+            const selectedRole = roles.find(r => {
+                const rName = (r.vrole_name || r.role_name || '').toLowerCase()
+                const dRole = (data.role || '').toLowerCase()
+                return rName === dRole
+            })
 
             if (selectedRole) {
-                roleId = selectedRole.id
+                roleNid = selectedRole.nid || selectedRole.id || 0
             } else {
-                // Fallback / Default logic if role not found matches (though it should be)
-                if (data.role?.toLowerCase().includes('admin')) roleId = 1
-                else if (data.role?.toLowerCase().includes('teacher')) roleId = 2
-                else if (data.role?.toLowerCase().includes('student')) roleId = 3
-                else roleId = 3 // Default to Student
+                if (data.role?.toLowerCase().includes('admin')) roleNid = 1
+                else if (data.role?.toLowerCase().includes('teacher') || data.role?.toLowerCase().includes('guru')) roleNid = 2
+                else if (data.role?.toLowerCase().includes('student') || data.role?.toLowerCase().includes('murid')) roleNid = 3
+                else roleNid = 3
+            }
+
+            // Common formatted data for APIs
+            const formattedData = {
+                ...data,
+                role_nid:     roleNid,
+                birthdate:    data.birthdate    || '',
+                address:      data.address      || '',
+                phone:        data.phone        || '',
+                whatsapp:     data.whatsapp     || '',
+                nik:          data.nik          || '',
+                degree:       data.degree       || '',
+                // Student-specific
+                nis:          data.nis          || '',
+                class_id:     data.class_id     || '',
+                class_name:   data.class_name   || '',
+                parent_name:  data.parent_name  || '',
+                parent_phone: data.parent_phone || '',
+                status:       data.status       || 'active',
             }
 
             if (selectedUser) {
-                await userService.updateUser(
-                    selectedUser.id,
-                    {
-                        id: selectedUser.id,
-                        ...data,
-                        role_id: roleId,
-                        password: data.password || undefined,
-                        // FIX: Send empty strings so backend receives the keys
-                        birthdate: data.birthdate || '',
-                        address: data.address || '',
-                        phone: data.phone || '',
-                        whatsapp: data.whatsapp || '',
-                        nik: data.nik || '',
-                        class_name: data.class_name || '',
-                        status: data.status || 'active'
-                    },
-                    session.accessToken
-                )
-                toast.success('User updated successfully')
-            } else {
-                if (!data.password) {
-                    toast.error('Password is required for new users')
-                    setIsSubmitting(false)
-                    return
-                }
+                // UPDATE FLOW
+                const oldRoleNid = selectedUser.role_nid
+                const newRoleNid = roleNid
 
-                await userService.createUser(
-                    {
-                        username: data.username,
-                        email: data.email,
-                        password: data.password,
-                        fullname: data.fullname,
-                        role_id: roleId,
-                        // FIX: Send empty strings so backend receives the keys
-                        birthdate: data.birthdate || '',
-                        address: data.address || '',
-                        phone: data.phone || '',
-                        whatsapp: data.whatsapp || '',
-                        nik: data.nik || '',
-                        class_name: data.class_name || '',
-                        status: data.status || 'active'
-                    },
-                    session.accessToken
-                )
-                toast.success('User created successfully')
+                if (oldRoleNid !== newRoleNid) {
+                    // Role changed → delete from old endpoint, create at new endpoint
+                    console.log(`[UserManagement] Role changed: ${oldRoleNid} → ${newRoleNid}. Re-creating user profile...`)
+                    try {
+                        await userService.deleteUser(selectedUser.id, oldRoleNid, session.accessToken)
+                    } catch (e) {
+                        console.warn('[UserManagement] Old profile delete failed (may not exist):', e)
+                    }
+                    await userService.createUser(
+                        { ...formattedData, password: data.password || 'ChangeMe@123' },
+                        session.accessToken
+                    )
+                    toast.success('User role changed and profile updated!')
+                } else {
+                    // Same role → normal PUT
+                    await userService.updateUser(
+                        selectedUser.id,
+                        newRoleNid,
+                        { id: selectedUser.id, ...formattedData, password: data.password || undefined },
+                        session.accessToken
+                    )
+                    toast.success('User profile updated successfully')
+                }
+            } else {
+                // CREATE FLOW (Single call to comprehensive endpoint)
+                await userService.createUser(formattedData, session.accessToken)
+                toast.success('User created successfully with full profile!')
             }
 
             setIsFormOpen(false)
             fetchUsers()
         } catch (error: any) {
-            console.error(error)
-            toast.error(error.message || 'Failed to save user')
+            console.error('[UserManagement] Flow error:', error)
+            toast.error(error.message || 'Action failed')
+            throw error
         } finally {
             setIsSubmitting(false)
         }
@@ -179,10 +188,10 @@ export default function UserManagementPage() {
 
         // Role filter
         if (roleFilter !== 'All Roles') {
-            const userRole = user.role_code?.toUpperCase() || ''
+            const userRole = (user.vrole_code || user.role_code || '').toUpperCase()
             if (roleFilter === 'admin' && !['ADMIN', 'ADM'].includes(userRole)) return false
-            if (roleFilter === 'teacher' && !['TEACHER', 'GURU', 'TCR'].includes(userRole)) return false
-            if (roleFilter === 'student' && !['STUDENT', 'MURID', 'STD'].includes(userRole)) return false
+            if (roleFilter === 'teacher' && !['GR'].includes(userRole)) return false
+            if (roleFilter === 'student' && !['MR'].includes(userRole)) return false
         }
 
         // Search filter
@@ -197,9 +206,9 @@ export default function UserManagementPage() {
 
     // Calculate statistics
     const totalUsers = users.length
-    const adminCount = users.filter(u => ['ADMIN', 'ADM'].includes(u.role_code?.toUpperCase() || '')).length
-    const teacherCount = users.filter(u => ['TEACHER', 'GURU', 'TCR'].includes(u.role_code?.toUpperCase() || '')).length
-    const studentCount = users.filter(u => ['STUDENT', 'MURID', 'STD'].includes(u.role_code?.toUpperCase() || '')).length
+    const adminCount = users.filter(u => ['ADMIN', 'ADM'].includes((u.vrole_code || u.role_code || '').toUpperCase())).length
+    const teacherCount = users.filter(u => ['GR'].includes((u.vrole_code || u.role_code || '').toUpperCase())).length
+    const studentCount = users.filter(u => ['MR'].includes((u.vrole_code || u.role_code || '').toUpperCase())).length
 
     const stats = [
         { label: 'Total Users', value: totalUsers, icon: Users, color: 'from-blue-500 to-blue-600', bgColor: 'bg-blue-50', iconColor: 'text-blue-600' },

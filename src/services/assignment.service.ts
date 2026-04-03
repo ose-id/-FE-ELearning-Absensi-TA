@@ -44,6 +44,15 @@ class AssignmentService {
         })
     }
 
+    async getAssignmentsByTeacher(token: string, teacherId?: number): Promise<AssignmentListResponse> {
+        const params = new URLSearchParams()
+        if (teacherId) params.append('teacherId', teacherId.toString())
+        const queryString = params.toString() ? `?${params.toString()}` : ''
+        return this.fetchWithAuth(`${this.baseUrl}${queryString}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+    }
+
     async getAssignmentById(id: number, token: string): Promise<Assignment> {
         const response = await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
             headers: { Authorization: `Bearer ${token}` }

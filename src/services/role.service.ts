@@ -26,17 +26,31 @@ class RoleService {
         return res.json()
     }
 
-    async getRoles(token: string): Promise<RoleListResponse> {
-        return this.fetchWithAuth(this.baseUrl, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
+    // Helper to extract data from both {data: []} and direct [] responses
+    private getData(res: any): any[] {
+        if (Array.isArray(res)) return res
+        if (res && Array.isArray(res.data)) return res.data
+        return []
     }
 
-    async getRoleById(id: number, token: string): Promise<Role> {
-        const response = await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
+    async getRoles(token: string): Promise<RoleListResponse> {
+        const response = await this.fetchWithAuth(this.baseUrl, {
             headers: { Authorization: `Bearer ${token}` }
         })
-        return response.data[0]
+        return {
+            status: '1',
+            data: this.getData(response),
+            total: this.getData(response).length,
+            message: {}
+        }
+    }
+
+    async getRoleById(nid: number, token: string): Promise<Role> {
+        const response = await this.fetchWithAuth(`${this.baseUrl}/${nid}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        const roles = this.getData(response)
+        return roles[0]
     }
 
     async createRole(data: CreateRoleRequest, token: string): Promise<void> {
@@ -47,16 +61,16 @@ class RoleService {
         })
     }
 
-    async updateRole(id: number, data: UpdateRoleRequest, token: string): Promise<void> {
-        await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
+    async updateRole(nid: number, data: UpdateRoleRequest, token: string): Promise<void> {
+        await this.fetchWithAuth(`${this.baseUrl}/${nid}`, {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` },
             body: JSON.stringify(data),
         })
     }
 
-    async deleteRole(id: number, token: string): Promise<void> {
-        await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
+    async deleteRole(nid: number, token: string): Promise<void> {
+        await this.fetchWithAuth(`${this.baseUrl}/${nid}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
         })

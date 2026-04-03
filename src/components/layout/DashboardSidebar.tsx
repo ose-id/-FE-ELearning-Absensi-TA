@@ -44,17 +44,19 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
       case 'TEACHER':
       case 'GURU':
       case 'TCR':
+      case 'GR':          // ← backend code for Guru
         return ROLES.TEACHER
       case 'STUDENT':
       case 'MURID':
       case 'STD':
+      case 'MR':          // ← backend code for Murid
         return ROLES.STUDENT
       default:
         return ROLES.STUDENT
     }
   }
 
-  const userRole = getNormalizedRole(session?.user?.roleCode)
+  const userRole = getNormalizedRole(session?.user?.vrole_code)
 
   // Get nav items for current role, fallback to student or empty array
   const currentNavItems = NAV_ITEMS[userRole] || NAV_ITEMS[ROLES.STUDENT]

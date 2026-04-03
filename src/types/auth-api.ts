@@ -16,14 +16,19 @@ export interface LoginRequest {
 }
 
 export interface AuthResponseData {
-    id: number
+    id?: number
+    nid?: number
     token: string
     username: string
     email: string
-    fullName: string  // backend returns camelCase
-    role_id: number
-    role_name: string
-    role_code: string
+    fullName?: string
+    fullname?: string
+    role_nid?: number
+    role_id?: number
+    vrole_name?: string
+    role_name?: string
+    vrole_code?: string
+    role_code?: string
 }
 
 export interface LoginResponse extends ApiResponse<AuthResponseData> {
@@ -77,9 +82,9 @@ declare module 'next-auth' {
             email: string
             username: string
             fullName: string
-            roleId: string
-            roleName: string
-            roleCode: string
+            role_nid: number
+            vrole_name: string
+            vrole_code: string
             isActive: boolean
         }
         accessToken: string
@@ -92,9 +97,9 @@ declare module 'next-auth' {
         email: string
         username: string
         fullName: string
-        roleId: string
-        roleName: string
-        roleCode: string
+        role_nid: number
+        vrole_name: string
+        vrole_code: string
         isActive: boolean
         accessToken: string
         refreshToken: string
@@ -108,9 +113,9 @@ declare module 'next-auth/jwt' {
         email: string
         username: string
         fullName: string
-        roleId: string
-        roleName: string
-        roleCode: string
+        role_nid: number
+        vrole_name: string
+        vrole_code: string
         isActive: boolean
         accessToken: string
         refreshToken: string

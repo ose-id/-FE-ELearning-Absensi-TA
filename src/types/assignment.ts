@@ -7,6 +7,8 @@ export interface Assignment {
     description: string
     class_id: number
     class_name?: string
+    learning_module_id: number
+    learning_module_name?: string
     due_date: string
     max_score: number
     created_at?: string
@@ -29,6 +31,7 @@ export interface CreateAssignmentRequest {
     title: string
     description: string
     class_id: number
+    learning_module_id: number
     due_date: string
     max_score: number
 }
@@ -38,6 +41,7 @@ export interface UpdateAssignmentRequest {
     title: string
     description: string
     class_id: number
+    learning_module_id: number
     due_date: string
     max_score: number
 }

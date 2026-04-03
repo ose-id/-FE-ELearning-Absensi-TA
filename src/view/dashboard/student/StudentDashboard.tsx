@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import {
     BookOpen,
+    Building2,
     Calendar,
     CheckCircle,
     FileText,
@@ -107,7 +108,7 @@ export default function StudentDashboard() {
         try {
             setLoading(true)
 
-            const classesResponse = await classService.getClasses(session.accessToken)
+            const classesResponse = await classService.getEnrolledClasses(session.accessToken)
 
             if (classesResponse && classesResponse.data) {
                 setClasses(classesResponse.data)
@@ -162,18 +163,25 @@ export default function StudentDashboard() {
 
     const quickActions = [
         {
-            title: 'My Classes',
-            description: 'View all your enrolled classes',
+            title: 'Browse Classes',
+            description: 'Find and enroll in new classes',
             icon: BookOpen,
             color: 'bg-gradient-to-r from-blue-600 to-blue-700',
-            onClick: () => router.push('/class-management')
+            onClick: () => router.push('/class-catalog')
+        },
+        {
+            title: 'My Classes',
+            description: 'View your enrolled classes',
+            icon: Building2,
+            color: 'bg-gradient-to-r from-emerald-600 to-emerald-700',
+            onClick: () => router.push('/my-classes')
         },
         {
             title: 'Assignments',
             description: 'Check and submit your assignments',
             icon: FileText,
             color: 'bg-gradient-to-r from-orange-600 to-orange-700',
-            onClick: () => router.push('/assignments')
+            onClick: () => router.push('/my-assignments')
         },
         {
             title: 'Attendance',
@@ -187,7 +195,7 @@ export default function StudentDashboard() {
             description: 'Check your grades and performance',
             icon: Award,
             color: 'bg-gradient-to-r from-purple-600 to-purple-700',
-            onClick: () => router.push('/reporting')
+            onClick: () => router.push('/my-grades')
         }
     ]
 
@@ -290,9 +298,9 @@ export default function StudentDashboard() {
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                 {classes.slice(0, 6).map((classItem) => (
                                     <div
-                                        key={classItem.id}
+                                        key={classItem.nid}
                                         className="group rounded-xl border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
-                                        onClick={() => router.push(`/class-management/${classItem.id}`)}
+                                        onClick={() => router.push(`/class-management/${classItem.nid}`)}
                                     >
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">

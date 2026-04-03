@@ -9,6 +9,7 @@ import {
   User,
   Settings,
 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 import Button from '@/components/ui/button'
 import DropdownMenu from '@/components/ui/dropdown-menu'
@@ -25,6 +26,11 @@ interface HeaderProps {
 
 export default function DashboardHeader({ onMenuClick, sidebarExpanded }: HeaderProps) {
   const { data: session } = useSession()
+  const [mounted, setMounted] = useState(false) // Added mounted state
+
+  useEffect(() => {
+    setMounted(true) // Set mounted to true after initial render
+  }, [])
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/' })
@@ -46,41 +52,43 @@ export default function DashboardHeader({ onMenuClick, sidebarExpanded }: Header
         </div>
 
         {/* Right side - User Menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white">
-                <User className="h-4 w-4" />
-              </div>
-              <span className="hidden text-sm font-medium sm:inline-block">
-                {session?.user?.fullName || 'Administrator'}
-              </span>
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">{session?.user?.fullName || 'Administrator User'}</p>
-                <p className="text-xs text-gray-500">{session?.user?.email || 'admin@example.com'}</p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Logout</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {mounted && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white">
+                  <User className="h-4 w-4" />
+                </div>
+                <span className="hidden text-sm font-medium sm:inline-block">
+                  {session?.user?.fullName || 'Administrator'}
+                </span>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium">{session?.user?.fullName || 'Administrator User'}</p>
+                  <p className="text-xs text-gray-500">{session?.user?.email || 'admin@example.com'}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </header>
     </div>
   )

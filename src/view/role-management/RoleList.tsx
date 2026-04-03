@@ -8,7 +8,7 @@ import TableHead from '@/components/ui/table/table-head'
 import TableHeader from '@/components/ui/table/table-header'
 import TableRow from '@/components/ui/table/table-row'
 import Button from '@/components/ui/button'
-import { Edit, Trash2, Shield, Lock, ShieldCheck, UserCog } from 'lucide-react'
+import { Edit, Trash2, Shield, Lock, ShieldCheck, UserCog, Users } from 'lucide-react'
 import { Role } from '@/types/role'
 
 interface RoleListProps {
@@ -35,8 +35,8 @@ export default function RoleList({ roles, onEdit, onDelete }: RoleListProps) {
     const getRoleIcon = (code: string) => {
         const c = code?.toUpperCase() || ''
         if (['ADM', 'ADMIN'].includes(c)) return Lock
-        if (['TCR', 'TEACHER', 'GURU'].includes(c)) return UserCog
-        if (['STD', 'STUDENT', 'MURID'].includes(c)) return ShieldCheck
+        if (['TCR', 'TEACHER', 'GURU', 'GR'].includes(c)) return Shield
+        if (['STD', 'STUDENT', 'MURID', 'MR'].includes(c)) return Users
         return Shield
     }
 
@@ -61,7 +61,8 @@ export default function RoleList({ roles, onEdit, onDelete }: RoleListProps) {
                 </TableHeader>
                 <TableBody>
                     {roles.map((role) => {
-                        const Icon = getRoleIcon(role.role_code || '')
+                        const roleCode = role.vrole_code || role.role_code || ''
+                        const Icon = getRoleIcon(roleCode)
                         return (
                             <TableRow key={role.id} className="group hover:bg-blue-50/50 transition-colors duration-200 border-b border-gray-100 last:border-0">
                                 <TableCell className="py-4 pl-6">
@@ -70,17 +71,17 @@ export default function RoleList({ roles, onEdit, onDelete }: RoleListProps) {
                                             <Icon className="h-5 w-5" />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-gray-900">{role.role_name}</p>
+                                            <p className="font-semibold text-gray-900">{role.vrole_name || role.role_name}</p>
                                         </div>
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border ${getRoleBadgeColor(role.role_code || '')}`}>
-                                        {role.role_code}
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border ${getRoleBadgeColor(roleCode)}`}>
+                                        {roleCode}
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-gray-500 font-mono text-xs">
-                                    #{role.id}
+                                    #{role.id || role.nid}
                                 </TableCell>
                                 <TableCell className="text-right pr-6">
                                     <div className="flex justify-end gap-2">

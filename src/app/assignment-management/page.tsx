@@ -12,7 +12,7 @@ export default async function Page() {
 
     // Only allow Admin and Teacher roles
     const allowedRoles = ['ADM', 'TCR', 'Admin', 'Teacher', 'Guru']
-    if (!allowedRoles.includes(session.user.roleCode) && !allowedRoles.includes(session.user.roleName)) {
+    if (!allowedRoles.includes(session.user.vrole_code) && !allowedRoles.includes(session.user.vrole_name)) {
         redirect('/dashboard')
     }
 

@@ -245,25 +245,28 @@ export default function DashboardPage() {
     )
   }
 
-  const roleCode = (session?.user?.roleCode as RoleCode)?.toUpperCase()
+  const rawRole = session?.user?.vrole_code || ''
+  const roleCode = rawRole.toUpperCase()
 
-  // Debug log
-  console.log('[DashboardPage] User role code:', session?.user?.roleCode, '→ Normalized:', roleCode)
+  // Debug – visible in browser console
+  console.log('[DashboardPage] vrole_code from session:', rawRole, '→ normalized:', roleCode)
 
-  // Case-insensitive role matching
-  if (roleCode === 'ADM' || roleCode === 'ADMIN') {
+  // Admin
+  if (['ADM', 'ADMIN'].includes(roleCode)) {
     return <AdminDashboard />
   }
 
-  if (roleCode === 'TCR' || roleCode === 'TEACHER' || roleCode === 'GURU') {
+  // Teacher / Guru
+  if (['GR', 'TCR', 'TEACHER', 'GURU'].includes(roleCode)) {
     return <TeacherDashboard />
   }
 
-  if (roleCode === 'STD' || roleCode === 'STUDENT' || roleCode === 'MURID') {
+  // Student / Murid
+  if (['MR', 'STD', 'STUDENT', 'MURID'].includes(roleCode)) {
     return <StudentDashboard />
   }
 
-  // Fallback for unknown roles
-  console.warn('[DashboardPage] Unknown role code:', roleCode, '- showing StudentDashboard')
+  // Fallback – show raw role so it's easy to spot
+  console.warn('[DashboardPage] Unknown role code:', roleCode, '- falling back to StudentDashboard')
   return <StudentDashboard />
 }

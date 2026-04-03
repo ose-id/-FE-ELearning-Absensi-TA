@@ -60,8 +60,11 @@ export default function RoleManagementPage() {
 
         if (!session?.accessToken) return
 
+        const roleId = role.id ?? role.nid
+        if (!roleId) return
+
         try {
-            await roleService.deleteRole(role.id, session.accessToken)
+            await roleService.deleteRole(roleId, session.accessToken)
             toast.success('Role deleted successfully')
             fetchRoles()
         } catch (error: any) {
@@ -77,11 +80,17 @@ export default function RoleManagementPage() {
 
             if (selectedRole) {
                 // Update
+                const roleId = selectedRole.id ?? selectedRole.nid
+                if (!roleId) {
+                    toast.error('Invalid role ID')
+                    return
+                }
                 await roleService.updateRole(
-                    selectedRole.id,
+                    roleId,
                     {
-                        id: selectedRole.id,
-                        ...data
+                        nid: roleId,
+                        vrole_name: data.role_name,
+                        vrole_code: data.role_code
                     },
                     session.accessToken
                 )
@@ -89,7 +98,10 @@ export default function RoleManagementPage() {
             } else {
                 // Create
                 await roleService.createRole(
-                    data,
+                    {
+                        vrole_name: data.role_name,
+                        vrole_code: data.role_code
+                    },
                     session.accessToken
                 )
                 toast.success('Role created successfully')

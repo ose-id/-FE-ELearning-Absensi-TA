@@ -2,27 +2,39 @@
 import { ApiResponse } from './auth-api'
 
 export interface Class {
-    id: number
-    name: string
-    description: string
-    code: string
-    teacher_id: number
-    teacher_name?: string
-    created_at?: string
-    updated_at?: string
+    nid: number
+    nid_department: number
+    vname: string
+    vdesc?: string
+    term?: string
+    nstatus: number
+    dcrea?: string
+    vcrea?: string
+    dmodi?: string
+    vmodi?: string
+    Department?: {
+        nid: number
+        vdepartment_name: string
+    }
 }
 
 export interface CreateClassRequest {
-    name: string
-    description: string;
-    teacher_id: number;
+    ClassName: string
+    DepartmentId: number
+    Description?: string
+    Term?: string
 }
 
 export interface UpdateClassRequest {
-    id: number
-    name: string
-    description: string
-    teacher_id: number
+    ClassName: string
+    DepartmentId: number
+    Description?: string
+    Term?: string
+    Status?: number
+}
+
+export interface EnrollClassRequest {
+    // No body needed, uses token to get student ID
 }
 
 export interface ClassListResponse extends ApiResponse<Class> { }

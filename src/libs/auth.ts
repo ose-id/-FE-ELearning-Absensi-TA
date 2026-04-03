@@ -35,19 +35,42 @@ export const authOptions: NextAuthOptions = {
 
                     if (response.status === '1' && response.data && response.data.length > 0) {
                         const userData = response.data[0]
-                        // Return user object that will be stored in JWT
+
+                        // ── Full debug: see what the login API actually returns ──
+                        console.log('[NextAuth] Full userData from API:', JSON.stringify(userData, null, 2))
+
+                        const id        = userData.nid      || userData.id       || 0
+                        const fullName  = userData.fullname || userData.fullName || userData.username || 'User'
+                        const role_nid  = userData.role_nid || userData.role_id  || 0
+                        const vrole_name = userData.vrole_name || userData.role_name || 'User'
+
+                        // Try every possible field name the backend might return
+                        let vrole_code: string =
+                            userData.vrole_code  ||
+                            userData.role_code   ||
+                            ''
+
+                        // Fallback: derive from role_nid if backend didn't return a code
+                        if (!vrole_code && role_nid) {
+                            if (role_nid === 1)      vrole_code = 'ADM'
+                            else if (role_nid === 2) vrole_code = 'GR'
+                            else if (role_nid === 3) vrole_code = 'MR'
+                        }
+
+                        console.log('[NextAuth] Resolved vrole_code:', vrole_code, '| role_nid:', role_nid)
+
                         return {
-                            id: userData.id.toString(),
+                            id: id.toString(),
                             email: userData.email,
                             username: userData.username,
-                            fullName: userData.fullName,
-                            roleId: userData.role_id.toString(),
-                            roleName: userData.role_name || 'User',
-                            roleCode: userData.role_code,
-                            isActive: true,  // backend doesn't return this field
+                            fullName: fullName,
+                            role_nid: role_nid,
+                            vrole_name: vrole_name,
+                            vrole_code: vrole_code,
+                            isActive: true,
                             accessToken: userData.token,
-                            refreshToken: '',  // backend doesn't return refresh token in this response
-                            expiresIn: 3600,   // default 1 hour
+                            refreshToken: '',
+                            expiresIn: 3600,
                         }
                     }
 
@@ -74,9 +97,9 @@ export const authOptions: NextAuthOptions = {
                     email: user.email,
                     username: user.username,
                     fullName: user.fullName,
-                    roleId: user.roleId,
-                    roleName: user.roleName,
-                    roleCode: user.roleCode,
+                    role_nid: user.role_nid,
+                    vrole_name: user.vrole_name,
+                    vrole_code: user.vrole_code,
                     isActive: user.isActive,
                     accessToken: user.accessToken,
                     refreshToken: user.refreshToken,
@@ -135,9 +158,9 @@ export const authOptions: NextAuthOptions = {
                     email: token.email,
                     username: token.username,
                     fullName: token.fullName,
-                    roleId: token.roleId,
-                    roleName: token.roleName,
-                    roleCode: token.roleCode,
+                    role_nid: token.role_nid,
+                    vrole_name: token.vrole_name,
+                    vrole_code: token.vrole_code,
                     isActive: token.isActive,
                 }
                 session.accessToken = token.accessToken

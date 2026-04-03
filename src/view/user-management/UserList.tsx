@@ -8,7 +8,7 @@ import TableHead from '@/components/ui/table/table-head'
 import TableHeader from '@/components/ui/table/table-header'
 import TableRow from '@/components/ui/table/table-row'
 import Button from '@/components/ui/button'
-import { Edit, Trash2, Mail, User as UserIcon, Shield } from 'lucide-react'
+import { Edit, Trash2, Mail, User as UserIcon, Shield, Lock, Users } from 'lucide-react'
 import { User } from '@/types/user'
 
 interface UserListProps {
@@ -32,22 +32,21 @@ export default function UserList({ users, onEdit, onDelete }: UserListProps) {
         )
     }
 
-    const getRoleBadgeColor = (role: string) => {
-        switch (role?.toUpperCase()) {
-            case 'ADMIN':
-            case 'ADM':
-                return 'bg-gradient-to-r from-purple-500 to-purple-600 text-white'
-            case 'GURU':
-            case 'TEACHER':
-            case 'TCR':
-                return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-            case 'STUDENT':
-            case 'MURID':
-            case 'STD':
-                return 'bg-gradient-to-r from-green-500 to-green-600 text-white'
-            default:
-                return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white'
-        }
+    const getRoleBadgeColor = (role: string | number) => {
+        const roleUpper = typeof role === 'string' ? role?.toUpperCase() : ''
+        const roleNum = typeof role === 'number' ? role : null
+
+        // Check by name
+        if (['ADMIN', 'ADM'].includes(roleUpper)) return 'bg-gradient-to-r from-purple-500 to-purple-600 text-white'
+        if (['TEACHER', 'GURU', 'GR'].includes(roleUpper)) return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+        if (['STUDENT', 'MURID', 'MR', 'STD'].includes(roleUpper)) return 'bg-gradient-to-r from-green-500 to-green-600 text-white'
+
+        // Check by role_nid
+        if (roleNum === 1) return 'bg-gradient-to-r from-purple-500 to-purple-600 text-white'
+        if (roleNum === 2) return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+        if (roleNum === 3) return 'bg-gradient-to-r from-green-500 to-green-600 text-white'
+
+        return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white'
     }
 
     const getInitials = (name: string) => {
@@ -74,6 +73,33 @@ export default function UserList({ users, onEdit, onDelete }: UserListProps) {
         return colors[index]
     }
 
+    const getRoleIcon = (role: string | number) => {
+        const roleUpper = typeof role === 'string' ? role?.toUpperCase() : ''
+        const roleNum = typeof role === 'number' ? role : null
+
+        // Check by name
+        if (['ADMIN', 'ADM'].includes(roleUpper)) return <Lock className="h-3 w-3" />
+        if (['TEACHER', 'GURU', 'GR'].includes(roleUpper)) return <Shield className="h-3 w-3" />
+        if (['STUDENT', 'MURID', 'MR', 'STD'].includes(roleUpper)) return <Users className="h-3 w-3" />
+
+        // Check by role_nid
+        if (roleNum === 1) return <Lock className="h-3 w-3" />
+        if (roleNum === 2) return <Shield className="h-3 w-3" />
+        if (roleNum === 3) return <Users className="h-3 w-3" />
+
+        return <Shield className="h-3 w-3" />
+    }
+
+    const getRoleDisplayName = (user: User) => {
+        if (user.vrole_name) return user.vrole_name
+        if (user.role_name) return user.role_name
+        // Fallback based on role_nid
+        if (user.role_nid === 1) return 'Admin'
+        if (user.role_nid === 2) return 'Guru'
+        if (user.role_nid === 3) return 'Murid'
+        return 'Unknown'
+    }
+
     return (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <Table className="text-gray-900">
@@ -86,9 +112,9 @@ export default function UserList({ users, onEdit, onDelete }: UserListProps) {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {users.map((user, index) => (
+                    {users.map((user) => (
                         <TableRow
-                            key={user.id}
+                            key={(user as any)._uid ?? `${user.role_nid ?? 0}:${user.id}`}
                             className="group hover:bg-blue-50/50 transition-colors duration-200 border-b border-gray-100 last:border-0"
                         >
                             <TableCell className="py-4">
@@ -97,7 +123,14 @@ export default function UserList({ users, onEdit, onDelete }: UserListProps) {
                                         {getInitials(user.fullname)}
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-gray-900">{user.fullname}</p>
+                                        <p className="font-semibold text-gray-900">
+                                            {user.fullname}
+                                            {user.degree && (
+                                                <span className="ml-1 text-xs font-normal text-gray-500">
+                                                    , {user.degree}
+                                                </span>
+                                            )}
+                                        </p>
                                         <div className="flex items-center gap-1.5 mt-0.5">
                                             <UserIcon className="h-3 w-3 text-gray-400" />
                                             <p className="text-xs text-gray-500">@{user.username}</p>
@@ -114,11 +147,11 @@ export default function UserList({ users, onEdit, onDelete }: UserListProps) {
                             <TableCell>
                                 <span
                                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold shadow-sm ${getRoleBadgeColor(
-                                        user.role_name || user.role_code
+                                        user.vrole_name || user.vrole_code || user.role_nid || ''
                                     )}`}
                                 >
-                                    <Shield className="h-3 w-3" />
-                                    {user.role_name}
+                                    {getRoleIcon(user.vrole_name || user.vrole_code || user.role_nid || '')}
+                                    {getRoleDisplayName(user)}
                                 </span>
                             </TableCell>
                             <TableCell className="text-right">
