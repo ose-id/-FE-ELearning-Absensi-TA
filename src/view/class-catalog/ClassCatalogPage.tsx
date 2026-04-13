@@ -307,7 +307,7 @@ export default function ClassCatalogPage() {
                                                 </Button>
                                             ) : (
                                                 <Button
-                                                    variant="primary"
+                                                    variant="default"
                                                     className="w-full"
                                                     onClick={() => handleEnroll(cls.nid)}
                                                     disabled={isEnrolling}

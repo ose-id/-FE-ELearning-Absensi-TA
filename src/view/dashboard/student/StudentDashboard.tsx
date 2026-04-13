@@ -311,13 +311,13 @@ export default function StudentDashboard() {
                                             </span>
                                         </div>
                                         <h4 className="font-semibold text-gray-900 mb-1 line-clamp-1">
-                                            {classItem.name}
+                                            {classItem.vname}
                                         </h4>
                                         <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                                            {classItem.description || 'No description available'}
+                                            {classItem.vdesc || 'No description available'}
                                         </p>
                                         <div className="flex items-center justify-between text-xs text-gray-500">
-                                            <span>Class Code: {classItem.code}</span>
+                                            <span>Class Code: {classItem.nid}</span>
                                             <ArrowRight className="h-4 w-4 text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
                                         </div>
                                     </div>

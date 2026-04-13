@@ -123,7 +123,7 @@ export default function StudentAssignmentCard({
             <div className="mt-4 pt-4 border-t border-gray-100 pl-3">
                 <Button
                     onClick={() => onViewDetail(assignment)}
-                    variant={submissionStatus === 'not_submitted' ? 'primary' : 'outline'}
+                    variant={submissionStatus === 'not_submitted' ? 'default' : 'outline'}
                     className={`w-full ${
                         submissionStatus === 'not_submitted'
                             ? 'bg-blue-600 hover:bg-blue-700'
