@@ -2,8 +2,10 @@ import { authService } from './auth.service'
 import { Role, CreateRoleRequest, UpdateRoleRequest, RoleListResponse } from '@/types/role'
 import { User, CreateUserRequest, UpdateUserRequest, UserListResponse } from '@/types/user'
 
-const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || process.env.AUTH_API_URL || 'https://localhost:7192'
-const CLASS_API_URL = process.env.NEXT_PUBLIC_CLASS_API_URL || process.env.CLASS_API_URL || 'https://localhost:32771'
+// Use NEXT_PUBLIC environment variable for client-side API URL
+// Must be set in .env.local or .env file: NEXT_PUBLIC_AUTH_API_URL=https://localhost:5001
+const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://localhost:5001'
+const CLASS_API_URL = process.env.NEXT_PUBLIC_CLASS_API_URL || 'https://localhost:5003'
 
 class UserService {
     private baseUrl: string
@@ -44,15 +46,29 @@ class UserService {
             const errorData = await res.json().catch(() => ({}))
             console.error('[UserService] Error response:', errorData)
 
-            const errorMessage =
-                errorData.message?.message ||
-                errorData.message?.Message ||
-                errorData.message ||
-                errorData.title ||
-                errorData.errors?.[Object.keys(errorData.errors)[0]]?.[0] ||
-                `API request failed (${res.status})`
+            // Helper to convert potential .NET validation errors into readable strings
+            const parseErrorMessage = (data: any): string => {
+                if (typeof data === 'string') return data;
 
-            throw new Error(errorMessage)
+                // Case 1: FluentValidation style { errors: { FieldName: ["Error Msg"] } }
+                if (data.errors && typeof data.errors === 'object') {
+                    return Object.entries(data.errors)
+                        .map(([field, messages]) => {
+                            const msg = Array.isArray(messages) ? messages[0] : messages;
+                            return `${field}: ${msg}`;
+                        })
+                        .join(', ');
+                }
+
+                // Case 2: Standard { message: "..." } or { title: "..." }
+                return data.message?.message ||
+                       data.message?.Message ||
+                       data.message ||
+                       data.title ||
+                       `API request failed (${res.status})`;
+            };
+
+            throw new Error(parseErrorMessage(errorData))
         }
         return res.json()
     }
@@ -138,7 +154,9 @@ class UserService {
                 phone:        data.phone || '',
                 whatsapp:     data.whatsapp || '',
                 nis:          data.nis || '',
-                class_id:     data.class_id ? Number(data.class_id) : 0,
+                // class_id is optional - student can enroll in classes later via class code
+                // Only send if it's a valid number > 0
+                ...(data.class_id && Number(data.class_id) > 0 ? { class_id: Number(data.class_id) } : {}),
                 parent_name:  data.parent_name || '',
                 parent_phone: data.parent_phone || '',
                 status:       data.status || 'active',
@@ -169,55 +187,35 @@ class UserService {
         })
     }
 
-    // Creates profile in Class API (LMS_ClassDB database) - for Teacher and Student
+    // Creates profile in Class API (LMS_ClassDB database) - for Student only
     async createProfileInClassDb(data: any, token: string): Promise<void> {
         const roleNid = data.role_nid || data.role_id
 
-        // Only Teacher (2) and Student (3) need profile in ClassDB
-        if (roleNid === 1) {
-            console.log('[UserService] Admin does not need ClassDB profile')
+        // Only Student (3) needs profile in ClassDB for class assignments
+        // Admin (1) and Teacher (2) do NOT need ClassDB profile
+        if (roleNid !== 3) {
+            console.log('[UserService] Admin/Teacher do not need ClassDB profile, skipping...')
             return
         }
 
-        const endpoint = roleNid === 3
-            ? `${this.classBaseUrl}/Student`
-            : `${this.classBaseUrl}/Teacher`
+        const endpoint = `${this.classBaseUrl}/Student`
 
         console.log(`[UserService] Creating profile in ClassDB via ${endpoint}...`)
 
-        let profileData: any
-
-        if (roleNid === 3) {
-            // Student payload for ClassDB
-            profileData = {
-                username:    data.username,
-                email:       data.email,
-                fullname:    data.fullname || '',
-                birthdate:   data.birthdate || '',
-                address:     data.address || '',
-                phone:       data.phone || '',
-                whatsapp:    data.whatsapp || '',
-                nis:         data.nis || '',
-                class_id:    data.class_id ? Number(data.class_id) : 0,
-                parent_name: data.parent_name || '',
-                parent_phone: data.parent_phone || '',
-                status:      data.status || 'active',
-            }
-        } else {
-            // Teacher payload for ClassDB
-            profileData = {
-                username:  data.username,
-                email:     data.email,
-                fullname:  data.fullname || '',
-                fullName:  data.fullname || '',
-                nip:       data.nik || data.nip || '',
-                degree:    data.degree || '',
-                birthdate: data.birthdate || '',
-                address:   data.address || '',
-                phone:     data.phone || '',
-                whatsapp:  data.whatsapp || '',
-                status:    data.status || 'active',
-            }
+        // Student payload for ClassDB
+        const profileData = {
+            username:    data.username,
+            email:       data.email,
+            fullname:    data.fullname || '',
+            birthdate:   data.birthdate || '',
+            address:     data.address || '',
+            phone:       data.phone || '',
+            whatsapp:    data.whatsapp || '',
+            nis:         data.nis || '',
+            class_id:    data.class_id ? Number(data.class_id) : 0,
+            parent_name: data.parent_name || '',
+            parent_phone: data.parent_phone || '',
+            status:      data.status || 'active',
         }
 
         await this.fetchWithAuth(endpoint, {
@@ -232,11 +230,15 @@ class UserService {
         try {
             // Step 1: Create profile in Auth API (LMS_Auth)
             await this.createProfile(data, token)
+            console.log('[UserService] User created successfully in Auth API')
 
-            // Step 2: Create profile in Class API (LMS_ClassDB) for Teacher/Student
-            await this.createProfileInClassDb(data, token)
+            // Step 2: Create profile in Class API (LMS_ClassDB) so they are automatically enrolled
+            if ((data.role_nid || data.role_id) === 3) {
+                await this.createProfileInClassDb(data, token)
+                console.log('[UserService] User created successfully in ClassDB')
+            }
 
-            console.log('[UserService] User created successfully in both Auth and ClassDB')
+            console.log('[UserService] User creation completed')
         } catch (error: any) {
             console.error('[UserService] createUser flow error:', error)
             throw error

@@ -42,6 +42,11 @@ const attendanceSchema = z.object({
 
 export type AttendanceFormData = z.infer<typeof attendanceSchema>
 
+
+const FormItem = ({ children }: { children: React.ReactNode }) => (
+    <div className="space-y-2">{children}</div>
+)
+
 interface AttendanceFormProps {
     open: boolean
     onOpenChange: (open: boolean) => void
@@ -96,9 +101,7 @@ export default function AttendanceForm({
         await onSubmit(data)
     }
 
-    const FormItem = ({ children }: { children: React.ReactNode }) => (
-        <div className="space-y-2">{children}</div>
-    )
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

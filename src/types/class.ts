@@ -6,6 +6,10 @@ export interface Class {
     nid_department: number
     vname: string
     vdesc?: string
+    academic_year_id?: number
+    school_term_id?: number
+    academic_year?: string
+    school_term?: string
     term?: string
     nstatus: number
     dcrea?: string
@@ -22,14 +26,16 @@ export interface CreateClassRequest {
     ClassName: string
     DepartmentId: number
     Description?: string
-    Term?: string
+    AcademicYearId: number
+    SchoolTermId: number
 }
 
 export interface UpdateClassRequest {
     ClassName: string
     DepartmentId: number
     Description?: string
-    Term?: string
+    AcademicYearId: number
+    SchoolTermId: number
     Status?: number
 }
 

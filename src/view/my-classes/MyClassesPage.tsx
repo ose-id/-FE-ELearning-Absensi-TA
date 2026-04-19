@@ -34,8 +34,13 @@ export default function MyClassesPage() {
             setClasses(response.data)
             setTotalRecords(response.totalRecords)
         } catch (error: any) {
-            console.error('Failed to fetch enrolled classes:', error)
-            toast.error(error.message || 'Failed to load your classes')
+            if (error.message?.includes('Student not found') || error.message?.includes('404')) {
+                setClasses([])
+                setTotalRecords(0)
+            } else {
+                console.error('Failed to fetch enrolled classes:', error)
+                toast.error(error.message || 'Failed to load your classes')
+            }
         } finally {
             setLoading(false)
         }

@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Loader2 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
@@ -32,15 +33,21 @@ import {
 
 import { Class } from '@/types/class'
 import { Department } from '@/types/department'
+import { lovService, LOVItem } from '@/services/lov.service'
 
 const classSchema = z.object({
     name: z.string().min(1, 'Class name is required'),
     department_id: z.number({ message: "Department is required" }),
     description: z.string().optional(),
-    term: z.string().optional(),
+    academic_year_id: z.number({ message: "Academic Year is required" }),
+    school_term_id: z.number({ message: "School Term is required" }),
 })
 
 export type ClassFormData = z.infer<typeof classSchema>
+
+const FormItem = ({ children }: { children: React.ReactNode }) => (
+    <div className="space-y-2">{children}</div>
+)
 
 interface ClassFormProps {
     open: boolean
@@ -59,15 +66,44 @@ export default function ClassForm({
     isSubmitting,
     departments,
 }: ClassFormProps) {
+    const { data: session } = useSession()
+    const [academicYears, setAcademicYears] = useState<LOVItem[]>([])
+    const [schoolTerms, setSchoolTerms] = useState<LOVItem[]>([])
+    const [loadingLOV, setLoadingLOV] = useState(false)
+
     const form = useForm<ClassFormData>({
         resolver: zodResolver(classSchema),
         defaultValues: {
             name: '',
             department_id: 0,
             description: '',
-            term: '',
+            academic_year_id: 0,
+            school_term_id: 0,
         },
     })
+
+    const fetchLOVData = async () => {
+        if (!session?.accessToken) return
+        try {
+            setLoadingLOV(true)
+            const [years, terms] = await Promise.all([
+                lovService.getAcademicYears(session.accessToken),
+                lovService.getSchoolTerms(session.accessToken),
+            ])
+            setAcademicYears(years)
+            setSchoolTerms(terms)
+        } catch (error) {
+            console.error('Failed to fetch LOV data:', error)
+        } finally {
+            setLoadingLOV(false)
+        }
+    }
+
+    useEffect(() => {
+        if (open) {
+            fetchLOVData()
+        }
+    }, [open, session])
 
     useEffect(() => {
         if (open) {
@@ -76,14 +112,16 @@ export default function ClassForm({
                     name: initialData.vname || '',
                     department_id: initialData.nid_department,
                     description: initialData.vdesc || '',
-                    term: initialData.term || '',
+                    academic_year_id: (initialData as any).academic_year_id || (initialData as any).academicYearId || (initialData as any).nid_academic_year || 0,
+                    school_term_id: (initialData as any).school_term_id || (initialData as any).schoolTermId || (initialData as any).nid_school_term || 0,
                 })
             } else {
                 form.reset({
                     name: '',
                     department_id: 0,
                     description: '',
-                    term: '',
+                    academic_year_id: 0,
+                    school_term_id: 0,
                 })
             }
         }
@@ -93,9 +131,7 @@ export default function ClassForm({
         await onSubmit(data)
     }
 
-    const FormItem = ({ children }: { children: React.ReactNode }) => (
-        <div className="space-y-2">{children}</div>
-    )
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -119,7 +155,7 @@ export default function ClassForm({
                                 name="name"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Class Name</FormLabel>
+                                        <FormLabel required>Class Name</FormLabel>
                                         <FormControl>
                                             <Input placeholder="e.g., X IPA 1" {...field} />
                                         </FormControl>
@@ -130,14 +166,58 @@ export default function ClassForm({
 
                             <Controller
                                 control={form.control}
-                                name="term"
+                                name="academic_year_id"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Term</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g., 2024/2025" {...field} value={field.value || ''} />
-                                        </FormControl>
-                                        <FormMessage>{form.formState.errors.term?.message}</FormMessage>
+                                        <FormLabel required>Academic Year</FormLabel>
+                                        <Select
+                                            onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
+                                            value={field.value ? field.value.toString() : ''}
+                                            disabled={loadingLOV}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder={loadingLOV ? "Loading..." : "Select Academic Year"} />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {academicYears.map((year) => (
+                                                    <SelectItem key={year.nid} value={year.nid.toString()}>
+                                                        {year.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage>{form.formState.errors.academic_year_id?.message}</FormMessage>
+                                    </FormItem>
+                                )}
+                            />
+
+                            <Controller
+                                control={form.control}
+                                name="school_term_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel required>School Term</FormLabel>
+                                        <Select
+                                            onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
+                                            value={field.value ? field.value.toString() : ''}
+                                            disabled={loadingLOV}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder={loadingLOV ? "Loading..." : "Select Term"} />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {schoolTerms.map((term) => (
+                                                    <SelectItem key={term.nid} value={term.nid.toString()}>
+                                                        {term.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage>{form.formState.errors.school_term_id?.message}</FormMessage>
                                     </FormItem>
                                 )}
                             />
@@ -148,7 +228,7 @@ export default function ClassForm({
                             name="department_id"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Department</FormLabel>
+                                    <FormLabel required>Department</FormLabel>
                                     <Select
                                         onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
                                         value={field.value ? field.value.toString() : ''}
@@ -161,7 +241,7 @@ export default function ClassForm({
                                         <SelectContent>
                                             {departments.map((dept) => (
                                                 <SelectItem key={dept.nid} value={dept.nid.toString()}>
-                                                    {dept.vdepartment_name}
+                                                    {(dept as any).label || dept.vdepartment_name}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

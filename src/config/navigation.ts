@@ -12,7 +12,8 @@ import {
     GraduationCap,
     ShieldCheck,
     BookMarked,
-    ClipboardCheck
+    ClipboardCheck,
+    CalendarDays
 } from 'lucide-react'
 import { ROLES, type RoleCode } from './roles'
 
@@ -29,11 +30,9 @@ export const NAV_ITEMS: Record<RoleCode, NavItem[]> = {
         { icon: Users, label: 'User Management', href: '/user-management' },
         { icon: ShieldCheck, label: 'Role Management', href: '/role-management' },
         { icon: Building2, label: 'Department', href: '/department-management' },
-        { icon: BookMarked, label: 'Subject', href: '/subject-management' },
+        { icon: CalendarDays, label: 'Academic Year', href: '/academic-year-management' },
+        { icon: Target, label: 'School Term', href: '/school-term-management' },
         { icon: Building2, label: 'Class', href: '/class-management' },
-        { icon: BookOpen, label: 'Learning Module', href: '/learning-module-management' },
-        { icon: Briefcase, label: 'Assignment', href: '/assignment' },
-        { icon: ClipboardCheck, label: 'Attendance', href: '/attendance' },
         { icon: BarChart3, label: 'Reporting', href: '/reporting' },
         { icon: Settings, label: 'System Settings', href: '/settings' },
     ],

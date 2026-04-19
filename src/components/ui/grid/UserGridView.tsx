@@ -29,6 +29,7 @@ export default function UserGridView<T extends GridItem>({
 }: UserGridViewProps<T>) {
     // Helper functions
     const getInitials = (name: string) => {
+        if (!name) return '??'
         return name
             .split(' ')
             .map(n => n[0])
@@ -48,6 +49,7 @@ export default function UserGridView<T extends GridItem>({
             'bg-gradient-to-br from-red-500 to-red-600',
             'bg-gradient-to-br from-teal-500 to-teal-600',
         ]
+        if (!name) return colors[0]
         const index = name.charCodeAt(0) % colors.length
         return colors[index]
     }

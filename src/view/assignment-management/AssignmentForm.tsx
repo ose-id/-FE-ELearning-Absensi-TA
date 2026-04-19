@@ -51,6 +51,10 @@ const assignmentSchema = z.object({
 
 export type AssignmentFormData = z.infer<typeof assignmentSchema>
 
+const FormItem = ({ children }: { children: React.ReactNode }) => (
+    <div className="space-y-2">{children}</div>
+)
+
 interface AssignmentFormProps {
     open: boolean
     onOpenChange: (open: boolean) => void
@@ -113,9 +117,7 @@ export default function AssignmentForm({
         await onSubmit(data)
     }
 
-    const FormItem = ({ children }: { children: React.ReactNode }) => (
-        <div className="space-y-2">{children}</div>
-    )
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -213,7 +215,7 @@ export default function AssignmentForm({
                                             <SelectContent>
                                                 {classes.map((cls) => (
                                                     <SelectItem key={cls.nid} value={cls.nid.toString()}>
-                                                        {cls.vname}
+                                                        {(cls as any).label || cls.vname}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>

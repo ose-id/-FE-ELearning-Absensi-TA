@@ -114,8 +114,12 @@ export default function StudentDashboard() {
                 setClasses(classesResponse.data)
             }
         } catch (error: any) {
-            console.error('Failed to fetch dashboard data:', error)
-            toast.error(error.message || 'Failed to load dashboard data')
+            if (error.message?.includes('Student not found') || error.message?.includes('404')) {
+                setClasses([])
+            } else {
+                console.error('Failed to fetch dashboard data:', error)
+                toast.error(error.message || 'Failed to load dashboard data')
+            }
         } finally {
             setLoading(false)
         }

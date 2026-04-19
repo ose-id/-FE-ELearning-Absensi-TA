@@ -9,8 +9,12 @@ export interface LearningModule {
     nid_department: number
     nid_teacher: number
     nid_subject: number
+    academic_year_id?: number
+    school_term_id?: number
     venrollment_token?: string
     term?: string
+    academic_year?: string
+    vacademic_year?: string
     nstatus: number
     dcrea?: string
     vcrea?: string
@@ -41,7 +45,8 @@ export interface CreateLearningModuleRequest {
     ClassId: number
     DepartmentId: number
     SubjectId: number
-    Term?: string
+    AcademicYearId: number
+    SchoolTermId: number
 }
 
 export interface UpdateLearningModuleRequest {
@@ -50,7 +55,8 @@ export interface UpdateLearningModuleRequest {
     ClassId: number
     DepartmentId: number
     SubjectId: number
-    Term?: string
+    AcademicYearId: number
+    SchoolTermId: number
     Status?: number
 }
 

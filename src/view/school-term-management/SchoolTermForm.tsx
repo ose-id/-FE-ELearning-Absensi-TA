@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useEffect } from 'react'
@@ -8,7 +7,6 @@ import * as z from 'zod'
 import { Loader2 } from 'lucide-react'
 
 import Button from '@/components/ui/button'
-import Input from '@/components/ui/input'
 
 import Dialog from '@/components/ui/dialog'
 import DialogContent from '@/components/ui/dialog/dialog-content'
@@ -30,43 +28,42 @@ import {
     SelectValue,
 } from '@/components/ui/select/Select'
 
-import { Subject } from '@/types/subject'
-import { Department } from '@/types/department'
+import { SchoolTerm } from '@/services/school-term.service'
+import { AcademicYear } from '@/services/academic-year.service'
 
-const subjectSchema = z.object({
-    subject_name: z.string().min(1, 'Subject name is required'),
-    department_id: z.number({ message: 'Department is required' }),
+const schoolTermSchema = z.object({
+    term_name: z.string().min(1, 'Term name is required'),
+    academic_year_id: z.number({ message: "Academic Year is required" }),
 })
 
-export type SubjectFormData = z.infer<typeof subjectSchema>
-
+export type SchoolTermFormData = z.infer<typeof schoolTermSchema>
 
 const FormItem = ({ children }: { children: React.ReactNode }) => (
     <div className="space-y-2">{children}</div>
 )
 
-interface SubjectFormProps {
+interface SchoolTermFormProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    onSubmit: (data: SubjectFormData) => Promise<void>
-    initialData?: Subject | null
+    onSubmit: (data: SchoolTermFormData) => Promise<void>
+    initialData?: SchoolTerm | null
     isSubmitting: boolean
-    departments: Department[]
+    academicYears: AcademicYear[]
 }
 
-export default function SubjectForm({
+export default function SchoolTermForm({
     open,
     onOpenChange,
     onSubmit,
     initialData,
     isSubmitting,
-    departments,
-}: SubjectFormProps) {
-    const form = useForm<SubjectFormData>({
-        resolver: zodResolver(subjectSchema),
+    academicYears,
+}: SchoolTermFormProps) {
+    const form = useForm<SchoolTermFormData>({
+        resolver: zodResolver(schoolTermSchema),
         defaultValues: {
-            subject_name: '',
-            department_id: 0,
+            term_name: '',
+            academic_year_id: 0,
         },
     })
 
@@ -74,19 +71,19 @@ export default function SubjectForm({
         if (open) {
             if (initialData) {
                 form.reset({
-                    subject_name: initialData.vsubject_name || '',
-                    department_id: initialData.nid_department,
+                    term_name: initialData.vterm_name || '',
+                    academic_year_id: initialData.nid_academic_year,
                 })
             } else {
                 form.reset({
-                    subject_name: '',
-                    department_id: 0,
+                    term_name: '',
+                    academic_year_id: 0,
                 })
             }
         }
     }, [open, initialData, form])
 
-    const handleSubmit = async (data: SubjectFormData) => {
+    const handleSubmit = async (data: SchoolTermFormData) => {
         await onSubmit(data)
     }
 
@@ -97,12 +94,12 @@ export default function SubjectForm({
             <DialogContent className="sm:max-w-[500px] bg-white text-gray-900">
                 <DialogHeader>
                     <DialogTitle>
-                        {initialData ? 'Edit Subject' : 'Create New Subject'}
+                        {initialData ? 'Edit School Term' : 'Create New School Term'}
                     </DialogTitle>
                     <DialogDescription>
                         {initialData
-                            ? 'Update subject details.'
-                            : 'Add a new subject to the system.'}
+                            ? 'Update school term details.'
+                            : 'Add a new school term to the system.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -110,42 +107,53 @@ export default function SubjectForm({
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                         <Controller
                             control={form.control}
-                            name="department_id"
+                            name="academic_year_id"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel required>Department</FormLabel>
+                                    <FormLabel required>Academic Year</FormLabel>
                                     <Select
                                         onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
                                         value={field.value ? field.value.toString() : ''}
                                     >
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select Department" />
+                                                <SelectValue placeholder="Select Academic Year" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {departments.map((dept) => (
-                                                <SelectItem key={dept.nid} value={dept.nid.toString()}>
-                                                    {(dept as any).label || dept.vdepartment_name}
+                                            {academicYears.map((year) => (
+                                                <SelectItem key={year.nid} value={year.nid.toString()}>
+                                                    {year.vacademic_year_name}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    <FormMessage>{form.formState.errors.department_id?.message}</FormMessage>
+                                    <FormMessage>{form.formState.errors.academic_year_id?.message}</FormMessage>
                                 </FormItem>
                             )}
                         />
 
                         <Controller
                             control={form.control}
-                            name="subject_name"
+                            name="term_name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel required>Subject Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g., Mathematics" {...field} />
-                                    </FormControl>
-                                    <FormMessage>{form.formState.errors.subject_name?.message}</FormMessage>
+                                    <FormLabel required>Term Name</FormLabel>
+                                    <Select
+                                        onValueChange={field.onChange}
+                                        value={field.value || ''}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select Term" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="Ganjil">Ganjil</SelectItem>
+                                            <SelectItem value="Genap">Genap</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage>{form.formState.errors.term_name?.message}</FormMessage>
                                 </FormItem>
                             )}
                         />
@@ -156,7 +164,7 @@ export default function SubjectForm({
                             </Button>
                             <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {initialData ? 'Save Changes' : 'Create Subject'}
+                                {initialData ? 'Save Changes' : 'Create School Term'}
                             </Button>
                         </DialogFooter>
                     </form>

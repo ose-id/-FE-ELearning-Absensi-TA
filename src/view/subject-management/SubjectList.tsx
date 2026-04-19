@@ -9,11 +9,10 @@ import TableHeader from '@/components/ui/table/table-header'
 import TableRow from '@/components/ui/table/table-row'
 import Button from '@/components/ui/button'
 import { Subject } from '@/types/subject'
-import { Department } from '@/types/department'
 
 interface SubjectListProps {
     subjects: Subject[]
-    departments?: Department[]
+    departments?: any[]
     onEdit: (subject: Subject) => void
     onDelete: (subject: Subject) => void
 }
@@ -21,8 +20,8 @@ interface SubjectListProps {
 export default function SubjectList({ subjects, departments = [], onEdit, onDelete }: SubjectListProps) {
     const getDepartmentName = (subject: Subject): string => {
         if (subject.Department?.vdepartment_name) return subject.Department.vdepartment_name
-        const dept = departments.find(d => d.nid === subject.nid_department)
-        return dept?.vdepartment_name || `Dept ID: ${subject.nid_department}`
+        const dept = departments.find((d: any) => d.nid === subject.nid_department)
+        return dept?.label || dept?.vdepartment_name || `Dept ID: ${subject.nid_department}`
     }
     if (subjects.length === 0) {
         return (

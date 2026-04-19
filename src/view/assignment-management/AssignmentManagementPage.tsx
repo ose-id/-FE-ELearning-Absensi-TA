@@ -15,6 +15,7 @@ import Input from '@/components/ui/input'
 import { assignmentService } from '@/services/assignment.service'
 import { classService } from '@/services/class.service'
 import { learningModuleService } from '@/services/learning-module.service'
+import { lovService } from '@/services/lov.service'
 import { Assignment } from '@/types/assignment'
 import { Class } from '@/types/class'
 import { LearningModule } from '@/types/learning-module'
@@ -59,7 +60,7 @@ export default function AssignmentManagementPage() {
             }
 
             // Get classes for form dropdown
-            const classesRes = await classService.getClasses(session.accessToken, 1, 100).catch(() => ({ data: [] }))
+            const classesData = await lovService.getClasses(session.accessToken).catch(() => [])
 
             // Get learning modules for form dropdown
             const modulesRes = await learningModuleService.getAllLearningModules(session.accessToken, 1, 100).catch(() => ({ data: [] }))
@@ -68,8 +69,8 @@ export default function AssignmentManagementPage() {
                 setAssignments(assignmentsRes.data)
             }
 
-            if (classesRes && classesRes.data) {
-                setClasses(classesRes.data)
+            if (classesData) {
+                setClasses(classesData as any)
             }
 
             if (modulesRes && modulesRes.data) {

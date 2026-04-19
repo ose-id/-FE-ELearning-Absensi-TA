@@ -36,7 +36,7 @@ export default function LearningModuleList({ modules, onEdit, onDelete, isEditab
                         <TableHead className="text-gray-700 font-semibold">Module Name</TableHead>
                         <TableHead className="text-gray-700 font-semibold">Class</TableHead>
                         <TableHead className="text-gray-700 font-semibold">Subject</TableHead>
-                        <TableHead className="text-gray-700 font-semibold">Term</TableHead>
+                        <TableHead className="text-gray-700 font-semibold">Academic Year</TableHead>
                         <TableHead className="text-gray-700 font-semibold">Status</TableHead>
                         {isEditable && <TableHead className="text-right text-gray-700 font-semibold">Actions</TableHead>}
                     </TableRow>
@@ -52,7 +52,7 @@ export default function LearningModuleList({ modules, onEdit, onDelete, isEditab
                                 {module.Subject?.vsubject_name || `Subject ${module.nid_subject}`}
                             </TableCell>
                             <TableCell className="text-gray-600">
-                                {module.term || '-'}
+                                {module.academic_year || module.vacademic_year || '-'}
                             </TableCell>
                             <TableCell>
                                 <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${module.nstatus === 1 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>

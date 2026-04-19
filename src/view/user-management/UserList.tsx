@@ -50,6 +50,7 @@ export default function UserList({ users, onEdit, onDelete }: UserListProps) {
     }
 
     const getInitials = (name: string) => {
+        if (!name) return '??'
         return name
             .split(' ')
             .map(n => n[0])
@@ -69,6 +70,7 @@ export default function UserList({ users, onEdit, onDelete }: UserListProps) {
             'bg-gradient-to-br from-indigo-400 to-indigo-600',
             'bg-gradient-to-br from-teal-400 to-teal-600',
         ]
+        if (!name) return colors[0]
         const index = name.charCodeAt(0) % colors.length
         return colors[index]
     }

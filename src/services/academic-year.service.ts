@@ -1,13 +1,37 @@
-
-import { Subject, CreateSubjectRequest, UpdateSubjectRequest } from '@/types/subject'
+import { ApiResponse } from '@/types/auth-api'
 
 const CLASS_API_URL = process.env.NEXT_PUBLIC_CLASS_API_URL || process.env.CLASS_API_URL || 'https://localhost:5003'
 
-class SubjectService {
+export interface AcademicYear {
+    nid: number
+    vacademic_year_name: string
+    dstart_date?: string
+    dend_date?: string
+    nstatus: number
+    dcrea?: string
+    vcrea?: string
+    dmodi?: string
+    vmodi?: string
+}
+
+export interface CreateAcademicYearRequest {
+    AcademicYearName: string
+    StartDate?: string
+    EndDate?: string
+}
+
+export interface UpdateAcademicYearRequest {
+    AcademicYearName: string
+    StartDate?: string
+    EndDate?: string
+    Status?: number
+}
+
+class AcademicYearService {
     private baseUrl: string
 
     constructor() {
-        this.baseUrl = `${CLASS_API_URL}/api/Subject`
+        this.baseUrl = `${CLASS_API_URL}/api/AcademicYear`
     }
 
     private async fetchWithAuth(url: string, options: RequestInit = {}) {
@@ -26,7 +50,7 @@ class SubjectService {
         return res.json()
     }
 
-    async createSubject(data: CreateSubjectRequest, token: string): Promise<Subject> {
+    async createAcademicYear(data: CreateAcademicYearRequest, token: string): Promise<AcademicYear> {
         const response = await this.fetchWithAuth(this.baseUrl, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
@@ -35,7 +59,7 @@ class SubjectService {
         return response.data[0]
     }
 
-    async getSubjectById(id: number, token: string): Promise<Subject | null> {
+    async getAcademicYearById(id: number, token: string): Promise<AcademicYear | null> {
         try {
             const response = await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -46,19 +70,17 @@ class SubjectService {
         }
     }
 
-    async getAllSubjects(
+    async getAllAcademicYears(
         token: string,
         pageNumber = 1,
-        pageSize = 100,
-        search?: string,
-        departmentId?: number
-    ): Promise<{ data: Subject[], totalRecords: number }> {
+        pageSize = 10,
+        search?: string
+    ): Promise<{ data: AcademicYear[], totalRecords: number }> {
         const params = new URLSearchParams({
             pageNumber: pageNumber.toString(),
             pageSize: pageSize.toString(),
         })
         if (search) params.append('search', search)
-        if (departmentId) params.append('departmentId', departmentId.toString())
 
         const response = await this.fetchWithAuth(`${this.baseUrl}?${params}`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -69,7 +91,7 @@ class SubjectService {
         }
     }
 
-    async updateSubject(id: number, data: UpdateSubjectRequest, token: string): Promise<Subject> {
+    async updateAcademicYear(id: number, data: UpdateAcademicYearRequest, token: string): Promise<AcademicYear> {
         const response = await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` },
@@ -78,7 +100,7 @@ class SubjectService {
         return response.data[0]
     }
 
-    async deleteSubject(id: number, token: string): Promise<void> {
+    async deleteAcademicYear(id: number, token: string): Promise<void> {
         await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
@@ -86,4 +108,4 @@ class SubjectService {
     }
 }
 
-export const subjectService = new SubjectService()
+export const academicYearService = new AcademicYearService()

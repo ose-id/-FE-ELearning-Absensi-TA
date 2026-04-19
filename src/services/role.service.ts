@@ -1,7 +1,8 @@
 
 import { Role, CreateRoleRequest, UpdateRoleRequest, RoleListResponse } from '@/types/role'
 
-const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || process.env.AUTH_API_URL || 'https://localhost:7192'
+// Use NEXT_PUBLIC environment variable - fallback to port 5001
+const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://localhost:5001'
 
 class RoleService {
     private baseUrl: string

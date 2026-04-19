@@ -14,6 +14,7 @@ import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import Pagination from '@/components/ui/pagination'
 import { classService } from '@/services/class.service'
+import { lovService } from '@/services/lov.service'
 import { Class } from '@/types/class'
 
 export default function ClassCatalogPage() {
@@ -22,6 +23,7 @@ export default function ClassCatalogPage() {
     const [enrolledClassIds, setEnrolledClassIds] = useState<Set<number>>(new Set())
     const [loading, setLoading] = useState(true)
     const [enrollingClassId, setEnrollingClassId] = useState<number | null>(null)
+    const [departments, setDepartments] = useState<any[]>([])
     const [searchTerm, setSearchTerm] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage] = useState(6)
@@ -63,10 +65,20 @@ export default function ClassCatalogPage() {
             setEnrolledClassIds(enrolledIds)
             setStudentNotFound(false)
         } catch (error: any) {
-            if (error.message?.includes('Student not found')) {
+            if (error.message?.includes('Student not found') || error.message?.includes('404')) {
                 setStudentNotFound(true)
                 setEnrolledClassIds(new Set())
             }
+        }
+    }
+
+    const fetchDepartments = async () => {
+        if (!session?.accessToken) return
+        try {
+            const response = await lovService.getDepartments(session.accessToken)
+            setDepartments(response as any)
+        } catch (error: any) {
+            console.error('Failed to fetch departments:', error)
         }
     }
 
@@ -74,6 +86,7 @@ export default function ClassCatalogPage() {
         if (session) {
             fetchAvailableClasses()
             fetchEnrolledClasses()
+            fetchDepartments()
         }
     }, [session, currentPage, searchTerm])
 
@@ -281,7 +294,11 @@ export default function ClassCatalogPage() {
                                                     {cls.vname}
                                                 </h3>
                                                 <span className="inline-block rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-                                                    {cls.Department?.vdepartment_name || `Dept ${cls.nid_department}`}
+                                                    {(() => {
+                                                        if (cls.Department?.vdepartment_name) return cls.Department.vdepartment_name;
+                                                        const dept = departments.find((d: any) => d.nid === cls.nid_department);
+                                                        return dept?.label || dept?.vdepartment_name || `Dept ${cls.nid_department}`;
+                                                    })()}
                                                 </span>
                                             </div>
                                             <p className="text-sm text-gray-600 line-clamp-2 min-h-[40px]">

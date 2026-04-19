@@ -31,6 +31,10 @@ const roleSchema = z.object({
 
 export type RoleFormData = z.infer<typeof roleSchema>
 
+const FormItem = ({ children }: { children: React.ReactNode }) => (
+    <div className="space-y-3">{children}</div>
+)
+
 interface RoleFormProps {
     open: boolean
     onOpenChange: (open: boolean) => void
@@ -74,10 +78,7 @@ export default function RoleForm({
         await onSubmit(data)
     }
 
-    // Helper for emulate FormItem
-    const FormItem = ({ children }: { children: React.ReactNode }) => (
-        <div className="space-y-3">{children}</div>
-    )
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

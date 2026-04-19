@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { Loader2, ClipboardCheck, Check, X, AlertCircle } from 'lucide-react'
+import { Loader2, ClipboardCheck, Check, X, AlertCircle, MessageSquare } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 
@@ -32,6 +32,8 @@ import {
     SelectValue,
 } from '@/components/ui/select/Select'
 
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio'
+
 import { attendanceService } from '@/services/attendance.service'
 import { userService } from '@/services/user.service'
 import { AttendanceRecord, ATTENDANCE_STATUS_LABELS, ATTENDANCE_STATUS_COLORS, RecordAttendanceRequest } from '@/types/attendance'
@@ -52,6 +54,19 @@ const transformToApiRecord = (data: RecordFormData): RecordAttendanceRequest => 
 
 type RecordFormData = z.infer<typeof recordSchema>
 
+// Attendance status for radio buttons
+const ATTENDANCE_OPTIONS = [
+    { value: 1, label: 'Hadir', sublabel: 'Present', color: 'bg-green-100 text-green-800' },
+    { value: 2, label: 'Izin', sublabel: 'Excused', color: 'bg-yellow-100 text-yellow-800' },
+    { value: 3, label: 'Sakit', sublabel: 'Sick', color: 'bg-orange-100 text-orange-800' },
+    { value: 4, label: 'Alpha', sublabel: 'Absent', color: 'bg-red-100 text-red-800' },
+]
+
+
+const FormItem = ({ children }: { children: React.ReactNode }) => (
+    <div className="space-y-2">{children}</div>
+)
+
 interface AttendanceRecordDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
@@ -64,8 +79,7 @@ export default function AttendanceRecordDialog({ open, onOpenChange, attendanceI
     const [existingRecords, setExistingRecords] = useState<AttendanceRecord[]>([])
     const [loading, setLoading] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [isBulkMode, setIsBulkMode] = useState(false)
-    const [bulkRecords, setBulkRecords] = useState<RecordFormData[]>([])
+    const [sendingWA, setSendingWA] = useState(false)
 
     const form = useForm<RecordFormData>({
         resolver: zodResolver(recordSchema),
@@ -75,6 +89,8 @@ export default function AttendanceRecordDialog({ open, onOpenChange, attendanceI
             notes: '',
         },
     })
+
+    const currentStatus = form.watch('status')
 
     useEffect(() => {
         if (open && attendanceId && session?.accessToken) {
@@ -126,32 +142,25 @@ export default function AttendanceRecordDialog({ open, onOpenChange, attendanceI
         }
     }
 
-    const handleBulkSubmit = async () => {
-        if (!session?.accessToken || !attendanceId || bulkRecords.length === 0) return
+    // Send WhatsApp notification (placeholder - backend integration needed)
+    const handleSendWhatsApp = async (record: AttendanceRecord) => {
+        console.log('[WhatsApp Notification] Would send notification for:', {
+            student: record.Student?.vfull_name || record.Student?.vname,
+            parentPhone: record.Student?.parent_phone,
+            status: ATTENDANCE_STATUS_LABELS[record.nstatus],
+            attendanceDate: record.Attendance?.vdate,
+        })
 
-        try {
-            setIsSubmitting(true)
-            const result = await attendanceService.bulkRecordAttendance(
-                attendanceId,
-                { Records: bulkRecords.map(transformToApiRecord) },
-                session.accessToken
-            )
-            toast.success(`${result} attendance records created successfully`)
-            setBulkRecords([])
-            setIsBulkMode(false)
-            fetchExistingRecords()
-        } catch (error: any) {
-            console.error(error)
-            toast.error(error.message || 'Failed to record bulk attendance')
-            throw error
-        } finally {
-            setIsSubmitting(false)
-        }
+        // Placeholder: In production, this would call a backend API
+        // that integrates with WhatsApp Business API
+        setSendingWA(true)
+        setTimeout(() => {
+            toast.info('WhatsApp notification feature is under development')
+            setSendingWA(false)
+        }, 1000)
     }
 
-    const FormItem = ({ children }: { children: React.ReactNode }) => (
-        <div className="space-y-2">{children}</div>
-    )
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -173,9 +182,26 @@ export default function AttendanceRecordDialog({ open, onOpenChange, attendanceI
                                     <span className="text-sm">
                                         {record.Student?.vfull_name || record.Student?.vname || `Student ${record.nid_student}`}
                                     </span>
-                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${ATTENDANCE_STATUS_COLORS[record.nstatus]}`}>
-                                        {ATTENDANCE_STATUS_LABELS[record.nstatus]}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${ATTENDANCE_STATUS_COLORS[record.nstatus]}`}>
+                                            {ATTENDANCE_STATUS_LABELS[record.nstatus]}
+                                        </span>
+                                        {/* WhatsApp Button - only if status is Alfa (4) */}
+                                        {record.nstatus === 4 && record.Student?.parent_phone && (
+                                            <button
+                                                onClick={() => handleSendWhatsApp(record)}
+                                                disabled={sendingWA}
+                                                className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors"
+                                                title="Send WhatsApp notification to parent"
+                                            >
+                                                {sendingWA ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <MessageSquare className="h-4 w-4" />
+                                                )}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -189,7 +215,7 @@ export default function AttendanceRecordDialog({ open, onOpenChange, attendanceI
                             name="student_id"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Student</FormLabel>
+                                    <FormLabel required>Student</FormLabel>
                                     <Select
                                         onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
                                         value={field.value ? field.value.toString() : ''}
@@ -217,23 +243,21 @@ export default function AttendanceRecordDialog({ open, onOpenChange, attendanceI
                             name="status"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Status</FormLabel>
-                                    <Select
-                                        onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
+                                    <FormLabel required>Status</FormLabel>
+                                    <RadioGroup
                                         value={field.value?.toString() || '1'}
+                                        onValueChange={(val) => field.onChange(parseInt(val, 10))}
+                                        className="grid grid-cols-2 gap-3"
                                     >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select Status" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="1">Hadir (Present)</SelectItem>
-                                            <SelectItem value="2">Izin (Excused)</SelectItem>
-                                            <SelectItem value="3">Sakit (Sick)</SelectItem>
-                                            <SelectItem value="4">Alfa (Absent)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                        {ATTENDANCE_OPTIONS.map((option) => (
+                                            <RadioGroupItem key={option.value} value={option.value.toString()}>
+                                                <div className="text-center">
+                                                    <div className="font-medium">{option.label}</div>
+                                                    <div className="text-xs opacity-70">{option.sublabel}</div>
+                                                </div>
+                                            </RadioGroupItem>
+                                        ))}
+                                    </RadioGroup>
                                     <FormMessage>{form.formState.errors.status?.message}</FormMessage>
                                 </FormItem>
                             )}

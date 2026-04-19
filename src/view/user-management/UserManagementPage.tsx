@@ -2,9 +2,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, Loader2, Users, Shield, GraduationCap, UserCheck, Filter, X, LayoutGrid, List } from 'lucide-react'
+import { Plus, Search, Loader2, Users, Shield, GraduationCap, UserCheck, Filter, X, LayoutGrid, List, Upload, Download } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
+import * as XLSX from 'xlsx'
 
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
@@ -30,6 +31,7 @@ export default function UserManagementPage() {
     const [viewMode, setViewMode] = useState<ViewMode>('list')
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(9)
+    const [importing, setImporting] = useState(false)
 
     // Modal State
     const [isFormOpen, setIsFormOpen] = useState(false)
@@ -96,6 +98,107 @@ export default function UserManagementPage() {
         }
     }
 
+    // Export users to Excel
+    const handleExport = () => {
+        if (users.length === 0) {
+            toast.warning('No users to export')
+            return
+        }
+
+        const exportData = users.map(user => ({
+            'Username': user.username || '',
+            'Full Name': user.fullname || '',
+            'Email': user.email || '',
+            'Phone': user.phone || '',
+            'WhatsApp': user.whatsapp || '',
+            'Role': user.vrole_name || user.role_name || '',
+            'Status': user.status || '',
+            'Created At': user.created_at || '',
+        }))
+
+        const ws = XLSX.utils.json_to_sheet(exportData)
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, 'Users')
+
+        // Set column widths
+        ws['!cols'] = [
+            { wch: 20 }, // Username
+            { wch: 25 }, // Full Name
+            { wch: 30 }, // Email
+            { wch: 15 }, // Phone
+            { wch: 15 }, // WhatsApp
+            { wch: 12 }, // Role
+            { wch: 10 }, // Status
+            { wch: 20 }, // Created At
+        ]
+
+        XLSX.writeFile(wb, `users_export_${new Date().toISOString().split('T')[0]}.xlsx`)
+        toast.success('Users exported successfully')
+    }
+
+    // Import users from Excel
+    const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        if (!file) return
+
+        setImporting(true)
+        try {
+            const data = await file.arrayBuffer()
+            const workbook = XLSX.read(data)
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+            const jsonData = XLSX.utils.sheet_to_json(worksheet) as Record<string, any>[]
+
+            if (jsonData.length === 0) {
+                toast.warning('No data found in the file')
+                return
+            }
+
+            // Map Excel columns to user data
+            let successCount = 0
+            let errorCount = 0
+
+            for (const row of jsonData) {
+                try {
+                    const userData = {
+                        username: row['Username'] || row['username'] || '',
+                        email: row['Email'] || row['email'] || '',
+                        fullname: row['Full Name'] || row['fullname'] || '',
+                        phone: row['Phone'] || row['phone'] || '',
+                        whatsapp: row['WhatsApp'] || row['whatsapp'] || '',
+                        role: row['Role'] || row['role'] || 'Murid',
+                        password: 'ChangeMe@123',
+                        status: row['Status'] || row['status'] || 'active',
+                    }
+
+                    if (!userData.username || !userData.email || !userData.fullname) {
+                        errorCount++
+                        continue
+                    }
+
+                    await userService.createUser(userData, session!.accessToken)
+                    successCount++
+                } catch (e) {
+                    errorCount++
+                    console.error('Failed to import row:', row, e)
+                }
+            }
+
+            if (successCount > 0) {
+                toast.success(`Successfully imported ${successCount} users`)
+                fetchUsers()
+            }
+            if (errorCount > 0) {
+                toast.warning(`Failed to import ${errorCount} rows`)
+            }
+        } catch (error: any) {
+            console.error('Import error:', error)
+            toast.error(error.message || 'Failed to import users')
+        } finally {
+            setImporting(false)
+            event.target.value = '' // Reset input
+        }
+    }
+
     const handleFormSubmit = async (data: UserFormData, step?: number) => {
         if (!session?.accessToken) return
 
@@ -117,6 +220,13 @@ export default function UserManagementPage() {
                 else if (data.role?.toLowerCase().includes('teacher') || data.role?.toLowerCase().includes('guru')) roleNid = 2
                 else if (data.role?.toLowerCase().includes('student') || data.role?.toLowerCase().includes('murid')) roleNid = 3
                 else roleNid = 3
+            }
+
+            // Student must have a class assigned
+            if (roleNid === 3 && !data.class_id) {
+                toast.error('Student must select a class')
+                setIsSubmitting(false)
+                return
             }
 
             // Common formatted data for APIs
@@ -241,13 +351,43 @@ export default function UserManagementPage() {
                             Manage system users and their roles efficiently
                         </p>
                     </div>
-                    <Button
-                        onClick={handleCreate}
-                        className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40"
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add User
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <label className="cursor-pointer">
+                            <input
+                                type="file"
+                                accept=".xlsx,.xls"
+                                onChange={handleImport}
+                                className="hidden"
+                                disabled={importing || !session?.accessToken}
+                            />
+                            <span className={`
+                                inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700
+                                transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed
+                            `}>
+                                {importing ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Upload className="h-4 w-4" />
+                                )}
+                                Import
+                            </span>
+                        </label>
+                        <Button
+                            onClick={handleExport}
+                            variant="outline"
+                            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            Export
+                        </Button>
+                        <Button
+                            onClick={handleCreate}
+                            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40"
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add User
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Statistics Section */}

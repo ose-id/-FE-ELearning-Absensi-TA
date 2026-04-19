@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Loader2 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
@@ -34,6 +35,7 @@ import { LearningModule } from '@/types/learning-module'
 import { Department } from '@/types/department'
 import { Class } from '@/types/class'
 import { Subject } from '@/types/subject'
+import { lovService, LOVItem } from '@/services/lov.service'
 
 const learningModuleSchema = z.object({
     module_name: z.string().min(1, 'Module name is required'),
@@ -41,10 +43,15 @@ const learningModuleSchema = z.object({
     class_id: z.number({ message: 'Class is required' }),
     department_id: z.number({ message: 'Department is required' }),
     subject_id: z.number({ message: 'Subject is required' }),
-    term: z.string().optional(),
+    academic_year_id: z.number({ message: 'Academic Year is required' }),
+    school_term_id: z.number({ message: 'School Term is required' }),
 })
 
 export type LearningModuleFormData = z.infer<typeof learningModuleSchema>
+
+const FormItem = ({ children }: { children: React.ReactNode }) => (
+    <div className="space-y-2">{children}</div>
+)
 
 interface LearningModuleFormProps {
     open: boolean
@@ -67,6 +74,11 @@ export default function LearningModuleForm({
     classes,
     subjects,
 }: LearningModuleFormProps) {
+    const { data: session } = useSession()
+    const [academicYears, setAcademicYears] = useState<LOVItem[]>([])
+    const [schoolTerms, setSchoolTerms] = useState<LOVItem[]>([])
+    const [loadingLOV, setLoadingLOV] = useState(false)
+
     const form = useForm<LearningModuleFormData>({
         resolver: zodResolver(learningModuleSchema),
         defaultValues: {
@@ -75,9 +87,33 @@ export default function LearningModuleForm({
             class_id: 0,
             department_id: 0,
             subject_id: 0,
-            term: '',
+            academic_year_id: 0,
+            school_term_id: 0,
         },
     })
+
+    const fetchLOVData = async () => {
+        if (!session?.accessToken) return
+        try {
+            setLoadingLOV(true)
+            const [years, terms] = await Promise.all([
+                lovService.getAcademicYears(session.accessToken),
+                lovService.getSchoolTerms(session.accessToken),
+            ])
+            setAcademicYears(years)
+            setSchoolTerms(terms)
+        } catch (error) {
+            console.error('Failed to fetch LOV data:', error)
+        } finally {
+            setLoadingLOV(false)
+        }
+    }
+
+    useEffect(() => {
+        if (open) {
+            fetchLOVData()
+        }
+    }, [open, session])
 
     useEffect(() => {
         if (open) {
@@ -88,7 +124,8 @@ export default function LearningModuleForm({
                     class_id: initialData.nid_class,
                     department_id: initialData.nid_department,
                     subject_id: initialData.nid_subject,
-                    term: initialData.term || '',
+                    academic_year_id: (initialData as any).academic_year_id || 0,
+                    school_term_id: (initialData as any).school_term_id || 0,
                 })
             } else {
                 form.reset({
@@ -97,7 +134,8 @@ export default function LearningModuleForm({
                     class_id: 0,
                     department_id: 0,
                     subject_id: 0,
-                    term: '',
+                    academic_year_id: 0,
+                    school_term_id: 0,
                 })
             }
         }
@@ -107,9 +145,7 @@ export default function LearningModuleForm({
         await onSubmit(data)
     }
 
-    const FormItem = ({ children }: { children: React.ReactNode }) => (
-        <div className="space-y-2">{children}</div>
-    )
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -133,7 +169,7 @@ export default function LearningModuleForm({
                                 name="department_id"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Department</FormLabel>
+                                        <FormLabel required>Department</FormLabel>
                                         <Select
                                             onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
                                             value={field.value ? field.value.toString() : ''}
@@ -146,7 +182,7 @@ export default function LearningModuleForm({
                                             <SelectContent>
                                                 {departments.map((dept) => (
                                                     <SelectItem key={dept.nid} value={dept.nid.toString()}>
-                                                        {dept.vdepartment_name}
+                                                        {(dept as any).label || dept.vdepartment_name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -161,7 +197,7 @@ export default function LearningModuleForm({
                                 name="class_id"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Class</FormLabel>
+                                        <FormLabel required>Class</FormLabel>
                                         <Select
                                             onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
                                             value={field.value ? field.value.toString() : ''}
@@ -174,7 +210,7 @@ export default function LearningModuleForm({
                                             <SelectContent>
                                                 {classes.map((cls) => (
                                                     <SelectItem key={cls.nid} value={cls.nid.toString()}>
-                                                        {cls.vname}
+                                                        {(cls as any).label || cls.vname}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -191,7 +227,7 @@ export default function LearningModuleForm({
                                 name="subject_id"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Subject</FormLabel>
+                                        <FormLabel required>Subject</FormLabel>
                                         <Select
                                             onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
                                             value={field.value ? field.value.toString() : ''}
@@ -204,7 +240,7 @@ export default function LearningModuleForm({
                                             <SelectContent>
                                                 {subjects.map((subj) => (
                                                     <SelectItem key={subj.nid} value={subj.nid.toString()}>
-                                                        {subj.vsubject_name}
+                                                        {(subj as any).label || subj.vsubject_name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -216,14 +252,58 @@ export default function LearningModuleForm({
 
                             <Controller
                                 control={form.control}
-                                name="term"
+                                name="academic_year_id"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Term (Optional)</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g., 2024/2025" {...field} value={field.value || ''} />
-                                        </FormControl>
-                                        <FormMessage>{form.formState.errors.term?.message}</FormMessage>
+                                        <FormLabel required>Academic Year</FormLabel>
+                                        <Select
+                                            onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
+                                            value={field.value ? field.value.toString() : ''}
+                                            disabled={loadingLOV}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder={loadingLOV ? "Loading..." : "Select Academic Year"} />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {academicYears.map((year) => (
+                                                    <SelectItem key={year.nid} value={year.nid.toString()}>
+                                                        {year.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage>{form.formState.errors.academic_year_id?.message}</FormMessage>
+                                    </FormItem>
+                                )}
+                            />
+
+                            <Controller
+                                control={form.control}
+                                name="school_term_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel required>School Term</FormLabel>
+                                        <Select
+                                            onValueChange={(val: string) => field.onChange(parseInt(val, 10))}
+                                            value={field.value ? field.value.toString() : ''}
+                                            disabled={loadingLOV}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder={loadingLOV ? "Loading..." : "Select Term"} />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {schoolTerms.map((term) => (
+                                                    <SelectItem key={term.nid} value={term.nid.toString()}>
+                                                        {term.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage>{form.formState.errors.school_term_id?.message}</FormMessage>
                                     </FormItem>
                                 )}
                             />
@@ -234,7 +314,7 @@ export default function LearningModuleForm({
                             name="module_name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Module Name</FormLabel>
+                                    <FormLabel required>Module Name</FormLabel>
                                     <FormControl>
                                         <Input placeholder="e.g., Chapter 1 - Introduction" {...field} />
                                     </FormControl>

@@ -6,7 +6,7 @@ import {
     EnrollLearningModuleRequest
 } from '@/types/learning-module'
 
-const CLASS_API_URL = process.env.NEXT_PUBLIC_CLASS_API_URL || process.env.CLASS_API_URL || 'https://localhost:32771'
+const CLASS_API_URL = process.env.NEXT_PUBLIC_CLASS_API_URL || process.env.CLASS_API_URL || 'https://localhost:5003'
 
 class LearningModuleService {
     private baseUrl: string

@@ -11,7 +11,7 @@ import Input from '@/components/ui/input'
 import Pagination from '@/components/ui/pagination'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
 import { classService } from '@/services/class.service'
-import { departmentService } from '@/services/department.service'
+import { lovService } from '@/services/lov.service'
 import { Class } from '@/types/class'
 import { Department } from '@/types/department'
 import ClassList from './ClassList'
@@ -22,7 +22,9 @@ type ViewMode = 'list' | 'grid'
 export default function ClassManagementPage() {
     const { data: session } = useSession()
     const [classes, setClasses] = useState<Class[]>([])
-    const [departments, setDepartments] = useState<Department[]>([])
+    const [departments, setDepartments] = useState<any[]>([])
+    const [academicYears, setAcademicYears] = useState<any[]>([])
+    const [schoolTerms, setSchoolTerms] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [departmentFilter, setDepartmentFilter] = useState<string>('All')
@@ -48,20 +50,24 @@ export default function ClassManagementPage() {
             setLoading(true)
 
             // Parallel fetch
-            const [classesRes, deptsRes] = await Promise.all([
+            const [classesRes, deptsRes, yearsRes, termsRes] = await Promise.all([
                 classService.getClasses(session.accessToken, currentPage, itemsPerPage, searchTerm || undefined).catch(err => {
                     console.error("Failed to fetch classes", err)
                     return { data: [], totalRecords: 0 }
                 }),
-                departmentService.getAllDepartments(session.accessToken, 1, 100).catch(err => {
-                    console.error("Failed to fetch departments", err)
-                    return { data: [] }
-                })
+                lovService.getDepartments(session.accessToken).catch(() => []),
+                lovService.getAcademicYears(session.accessToken).catch(() => []),
+                lovService.getSchoolTerms(session.accessToken).catch(() => [])
             ])
 
             setClasses(classesRes.data)
             setTotalRecords(classesRes.totalRecords)
-            setDepartments(deptsRes.data)
+            setDepartments(deptsRes as any)
+            setAcademicYears(yearsRes as any)
+            setSchoolTerms(termsRes as any);
+            console.log('Loaded Academic Years:', yearsRes);
+            console.log('Loaded School Terms:', termsRes);
+            console.log('Classes:', classesRes.data);
 
         } catch (error: any) {
             console.error('Failed to fetch data:', error)
@@ -114,7 +120,8 @@ export default function ClassManagementPage() {
                         ClassName: data.name,
                         DepartmentId: data.department_id,
                         Description: data.description || '',
-                        Term: data.term,
+                        AcademicYearId: data.academic_year_id,
+                        SchoolTermId: data.school_term_id,
                     },
                     session.accessToken
                 )
@@ -125,7 +132,8 @@ export default function ClassManagementPage() {
                         ClassName: data.name,
                         DepartmentId: data.department_id,
                         Description: data.description || '',
-                        Term: data.term,
+                        AcademicYearId: data.academic_year_id,
+                        SchoolTermId: data.school_term_id,
                     },
                     session.accessToken
                 )
@@ -242,7 +250,7 @@ export default function ClassManagementPage() {
                                             <SelectItem value="All">All Departments</SelectItem>
                                             {departments.map((dept) => (
                                                 <SelectItem key={dept.nid} value={dept.nid.toString()}>
-                                                    {dept.vdepartment_name}
+                                                    {(dept as any).label || dept.vdepartment_name}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -304,6 +312,8 @@ export default function ClassManagementPage() {
                             <ClassList
                                 classes={filteredClasses}
                                 departments={departments}
+                                academicYears={academicYears}
+                                schoolTerms={schoolTerms}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
                                 viewMode={viewMode}

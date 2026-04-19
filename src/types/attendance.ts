@@ -42,6 +42,7 @@ interface StudentBasic {
     vfull_name?: string
     vemail?: string
     vnis?: string
+    parent_phone?: string
 }
 
 // DTOs

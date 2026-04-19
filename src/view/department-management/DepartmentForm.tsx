@@ -30,6 +30,11 @@ const departmentSchema = z.object({
 
 export type DepartmentFormData = z.infer<typeof departmentSchema>
 
+
+const FormItem = ({ children }: { children: React.ReactNode }) => (
+    <div className="space-y-2">{children}</div>
+)
+
 interface DepartmentFormProps {
     open: boolean
     onOpenChange: (open: boolean) => void
@@ -70,9 +75,7 @@ export default function DepartmentForm({
         await onSubmit(data)
     }
 
-    const FormItem = ({ children }: { children: React.ReactNode }) => (
-        <div className="space-y-2">{children}</div>
-    )
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

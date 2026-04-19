@@ -50,28 +50,29 @@ import { Role } from '@/types/role'
 import { roleService } from '@/services/role.service'
 import { Class } from '@/types/class'
 import { classService } from '@/services/class.service'
+import { lovService } from '@/services/lov.service'
 
 // ── Schema ─────────────────────────────────────────────────────────────────
 const userSchema = z.object({
     username:     z.string().min(3, 'Username must be at least 3 characters'),
     email:        z.string().email('Invalid email address'),
-    password:     z.string().optional(),
+    password:     z.string().min(6, 'Password must be at least 6 characters').optional(),
     fullname:     z.string().min(1, 'Full Name is required'),
     birthdate:    z.string().optional(),
     address:      z.string().optional(),
-    phone:        z.string().optional(),
+    phone:        z.string().min(1, 'Phone number is required'),
     whatsapp:     z.string().optional(),
-    // Staff / Teacher
+    // Staff / Teacher (nik is required only for Admin/Teacher, handled in form UI)
     nik:          z.string().optional(),
     degree:       z.string().optional(),
     // Student
     nis:          z.string().optional(),
     class_name:   z.string().optional(),
-    class_id:     z.string().optional(),
+    class_id:     z.string().optional(), // Optional - student can enroll in classes later
     parent_name:  z.string().optional(),
     parent_phone: z.string().optional(),
     // Common
-    role:   z.string(),
+    role:   z.string().min(1, 'Role is required'),
     status: z.string().optional(),
 })
 
@@ -161,8 +162,8 @@ export default function UserForm({
         if (!open || !isStudent || !session?.accessToken) return
         const load = async () => {
             try {
-                const res = await classService.getClasses(session.accessToken)
-                if (res?.data) setClasses(res.data)
+                const res = await lovService.getClasses(session.accessToken)
+                if (res) setClasses(res as any)
             } catch (e) {
                 console.error('Failed to fetch classes', e)
             }
@@ -217,7 +218,11 @@ export default function UserForm({
         if (!initialData && currentStep === 1) {
             // Only validate the fields that belong to Step 1
             const valid = await form.trigger(['role', 'username', 'email', 'password'])
-            if (valid) setCurrentStep(2)
+            if (valid) {
+                setCurrentStep(2)
+            } else {
+                console.log('[UserForm] Step 1 validation failed:', form.formState.errors)
+            }
         } else {
             // Trigger full form validation then submit
             const valid = await form.trigger()
@@ -227,6 +232,8 @@ export default function UserForm({
                 } catch (e) {
                     console.error('[UserForm] submit error', e)
                 }
+            } else {
+                console.log('[UserForm] Step 2 validation failed:', form.formState.errors)
             }
         }
     }
@@ -284,10 +291,10 @@ export default function UserForm({
                                         name="role"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Role Access *</FormLabel>
+                                                <FormLabel required>Role Access</FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value || ''}>
                                                     <FormControl>
-                                                        <SelectTrigger className="bg-blue-50/50">
+                                                        <SelectTrigger>
                                                             <SelectValue placeholder="Select User Role">
                                                                 {field.value && (
                                                                     <div className="flex items-center gap-2">
@@ -323,7 +330,7 @@ export default function UserForm({
                                         name="username"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Username *</FormLabel>
+                                                <FormLabel required>Username</FormLabel>
                                                 <FormControl>
                                                     <div className="relative">
                                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">@</span>
@@ -341,7 +348,7 @@ export default function UserForm({
                                         name="email"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Email Address *</FormLabel>
+                                                <FormLabel required>Email Address</FormLabel>
                                                 <FormControl>
                                                     <div className="relative">
                                                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -359,7 +366,7 @@ export default function UserForm({
                                         name="password"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Password {!initialData && '*'}</FormLabel>
+                                                <FormLabel required={!initialData}>Password</FormLabel>
                                                 <FormControl>
                                                     <div className="relative">
                                                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -400,7 +407,7 @@ export default function UserForm({
                                                         <FormLabel>Role Access</FormLabel>
                                                         <Select onValueChange={field.onChange} value={field.value || ''}>
                                                             <FormControl>
-                                                                <SelectTrigger className="bg-purple-50/50">
+                                                                <SelectTrigger>
                                                                     <SelectValue placeholder="Select Role">
                                                                         {field.value && (
                                                                             <div className="flex items-center gap-2">
@@ -462,7 +469,7 @@ export default function UserForm({
                                         name="fullname"
                                         render={({ field }) => (
                                             <FormItem className="md:col-span-2">
-                                                <FormLabel>Full Name *</FormLabel>
+                                                <FormLabel required>Full Name</FormLabel>
                                                 <FormControl>
                                                     <div className="relative">
                                                         <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -483,8 +490,10 @@ export default function UserForm({
                                                 <FormLabel>Status</FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value || 'active'}>
                                                     <FormControl>
-                                                        <SelectTrigger className="bg-gray-50/50">
-                                                            <SelectValue placeholder="Status" />
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Status">
+                                                                {field.value === 'active' ? 'Active' : field.value === 'inactive' ? 'Inactive' : field.value}
+                                                            </SelectValue>
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
@@ -573,27 +582,30 @@ export default function UserForm({
                                                 )}
                                             />
 
-                                            {/* Class selector */}
+                                            {/* Class selector - REQUIRED for Student */}
                                             <Controller
                                                 control={form.control}
                                                 name="class_id"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Class *</FormLabel>
+                                                        <FormLabel required>Class</FormLabel>
                                                         <Select onValueChange={field.onChange} value={field.value || ''}>
                                                             <FormControl>
-                                                                <SelectTrigger className="bg-gray-50/50">
-                                                                    <SelectValue placeholder="Select Class" />
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select Class">
+                                                                        {field.value ? (classes.find(c => c.nid.toString() === field.value) as any)?.label || classes.find(c => c.nid.toString() === field.value)?.vname || field.value : null}
+                                                                    </SelectValue>
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
                                                                 {classes.map(cls => (
                                                                     <SelectItem key={cls.nid} value={cls.nid.toString()}>
-                                                                        {cls.vname}
+                                                                        {(cls as any).label || cls.vname}
                                                                     </SelectItem>
                                                                 ))}
                                                             </SelectContent>
                                                         </Select>
+                                                        <FormMessage>{form.formState.errors.class_id?.message}</FormMessage>
                                                     </FormItem>
                                                 )}
                                             />
@@ -640,7 +652,7 @@ export default function UserForm({
                                         name="phone"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Phone Number</FormLabel>
+                                                <FormLabel required>Phone Number</FormLabel>
                                                 <FormControl>
                                                     <div className="relative">
                                                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />

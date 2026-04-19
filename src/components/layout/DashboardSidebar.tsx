@@ -1,12 +1,11 @@
 'use client'
 
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { NAV_ITEMS } from '@/config/navigation'
 import { ROLES, type RoleCode } from '@/config/roles'
-import { signOut } from 'next-auth/react'
 import {
   Home,
   Users,
@@ -16,9 +15,9 @@ import {
   Calendar,
   BarChart3,
   Settings,
-  LogOut,
   ChevronLeft,
   ChevronRight,
+  Menu,
 } from 'lucide-react'
 
 import { cn } from '@/utils/commons'
@@ -76,10 +75,6 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [onClickOutside])
 
-  const handleLogout = async () => {
-    await signOut({ callbackUrl: '/' })
-  }
-
   return (
     <>
       {/* Mobile Overlay */}
@@ -91,21 +86,44 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
       )}
 
       {/* Sidebar */}
-      {/* Sidebar */}
       <aside
         ref={sidebarRef}
         className={cn(
           'fixed left-0 top-0 z-30 h-screen shadow-lg lg:static flex flex-col overflow-hidden',
           'bg-gradient-to-b from-[#1e5aa8] to-[#2563eb] lg:m-4 lg:h-[calc(100vh-2rem)] lg:rounded-[20px]',
+          'transition-transform duration-300 ease-in-out',
           expanded ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0 lg:w-20'
         )}
       >
+        {/* Collapse Toggle Button - Moved to TOP */}
+        <div className={cn("p-4 border-b border-white/10", expanded ? "" : "flex justify-center")}>
+          <button
+            onClick={onToggle}
+            title={expanded ? "Collapse sidebar" : "Expand sidebar"}
+            className={cn(
+              "flex items-center gap-3 rounded-lg py-3 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white w-full",
+              expanded ? "px-4" : "justify-center px-2"
+            )}
+          >
+            {expanded ? (
+              <>
+                <ChevronLeft className="h-5 w-5" />
+                <span className="whitespace-nowrap overflow-hidden">
+                  Collapse
+                </span>
+              </>
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+
         {/* Logo */}
         <div className={cn("flex flex-col items-center", expanded ? "px-6 pt-8 pb-6" : "px-2 pt-6 pb-4")}>
-          <div className={cn("flex items-center justify-center rounded-2xl bg-white", expanded ? "h-16 w-16 mb-3" : "h-10 w-10 mb-0")}>
-            <span className={cn("font-bold text-[#1e5aa8]", expanded ? "text-2xl" : "text-xl")}>S</span>
+          <div className={cn("flex items-center justify-center rounded-2xl bg-white transition-all duration-300", expanded ? "h-16 w-16 mb-3" : "h-10 w-10 mb-0")}>
+            <span className={cn("font-bold text-[#1e5aa8] transition-all duration-300", expanded ? "text-2xl" : "text-xl")}>S</span>
           </div>
-          <div className={cn("text-center overflow-hidden", expanded ? "opacity-100 max-h-20" : "opacity-0 max-h-0 lg:hidden")}>
+          <div className={cn("text-center overflow-hidden transition-all duration-300", expanded ? "opacity-100 max-h-20" : "opacity-0 max-h-0 lg:hidden")}>
             <h2 className="text-base font-bold text-white">STOVIA</h2>
             <p className="text-xs text-white/90">Lorem Ipsum Dolor Sit Amet</p>
           </div>
@@ -124,7 +142,7 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
                     href={item.href}
                     title={!expanded ? item.label : undefined}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg py-3 text-sm transition-colors text-white',
+                      'flex items-center gap-3 rounded-lg py-3 text-sm transition-all duration-200 text-white',
                       isActive
                         ? 'bg-black/40 font-medium'
                         : 'hover:bg-white/10',
@@ -132,7 +150,7 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
                     )}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
-                    <span className={cn("whitespace-nowrap overflow-hidden", expanded ? "opacity-100 w-auto" : "opacity-0 w-0 lg:hidden")}>
+                    <span className={cn("whitespace-nowrap overflow-hidden transition-all duration-200", expanded ? "opacity-100 w-auto" : "opacity-0 w-0 lg:hidden")}>
                       {item.label}
                     </span>
                   </Link>
@@ -141,39 +159,6 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
             })}
           </ul>
         </nav>
-
-        {/* Logout Button */}
-        <div className="px-3 pb-2">
-          <button
-            onClick={handleLogout}
-            title={!expanded ? "Log Out" : undefined}
-            className={cn(
-              "flex items-center gap-3 rounded-lg py-3 text-sm font-medium text-red-300 transition-colors hover:bg-white/10 hover:text-red-200 w-full",
-              expanded ? "px-4" : "justify-center px-2"
-            )}
-          >
-            <LogOut className="h-5 w-5 shrink-0" />
-            <span className={cn("whitespace-nowrap overflow-hidden", expanded ? "opacity-100 w-auto" : "opacity-0 w-0 lg:hidden")}>
-              Log Out
-            </span>
-          </button>
-        </div>
-
-        {/* Collapse Toggle Button */}
-        <div className={cn("p-4 border-t border-white/10", expanded ? "" : "flex justify-center")}>
-          <button
-            onClick={onToggle}
-            className={cn(
-              "flex items-center gap-3 rounded-lg py-3 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white w-full",
-              expanded ? "px-4" : "justify-center px-2"
-            )}
-          >
-            {expanded ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-            <span className={cn("overflow-hidden whitespace-nowrap", expanded ? "w-auto opacity-100" : "w-0 opacity-0 lg:hidden")}>
-              Collapse
-            </span>
-          </button>
-        </div>
       </aside>
     </>
   )

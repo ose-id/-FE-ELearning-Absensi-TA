@@ -1,7 +1,6 @@
-
 import { Class, CreateClassRequest, UpdateClassRequest } from '@/types/class'
 
-const CLASS_API_URL = process.env.NEXT_PUBLIC_CLASS_API_URL || process.env.CLASS_API_URL || 'https://localhost:32771'
+const CLASS_API_URL = process.env.NEXT_PUBLIC_CLASS_API_URL || process.env.CLASS_API_URL || 'https://localhost:5003'
 
 class ClassService {
     private baseUrl: string
@@ -61,6 +60,7 @@ class ClassService {
     }
 
     async createClass(data: CreateClassRequest, token: string): Promise<Class> {
+        console.log('[ClassService] Creating class with data:', data)
         const response = await this.fetchWithAuth(this.baseUrl, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
@@ -70,6 +70,7 @@ class ClassService {
     }
 
     async updateClass(id: number, data: UpdateClassRequest, token: string): Promise<Class> {
+        console.log('[ClassService] Updating class:', id, data)
         const response = await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` },

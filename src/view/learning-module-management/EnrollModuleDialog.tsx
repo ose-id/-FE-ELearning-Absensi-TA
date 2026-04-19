@@ -26,6 +26,11 @@ const enrollSchema = z.object({
 
 type EnrollFormData = z.infer<typeof enrollSchema>
 
+
+const FormItem = ({ children }: { children: React.ReactNode }) => (
+    <div className="space-y-2">{children}</div>
+)
+
 interface EnrollModuleDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
@@ -51,9 +56,7 @@ export default function EnrollModuleDialog({
         form.reset()
     }
 
-    const FormItem = ({ children }: { children: React.ReactNode }) => (
-        <div className="space-y-2">{children}</div>
-    )
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -68,7 +71,7 @@ export default function EnrollModuleDialog({
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                         <FormItem>
-                            <FormLabel>Enrollment Token</FormLabel>
+                            <FormLabel required>Enrollment Token</FormLabel>
                             <FormControl>
                                 <div className="relative">
                                     <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />

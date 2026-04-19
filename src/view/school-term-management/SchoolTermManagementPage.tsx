@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, Loader2, BookMarked, Filter, X } from 'lucide-react'
+import { Plus, Search, Loader2, Target, X, Filter } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 
@@ -9,126 +9,132 @@ import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import Pagination from '@/components/ui/pagination'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
-import { subjectService } from '@/services/subject.service'
-import { lovService } from '@/services/lov.service'
-import { Subject } from '@/types/subject'
-import { Department } from '@/types/department'
-import SubjectList from './SubjectList'
-import SubjectForm, { SubjectFormData } from './SubjectForm'
+import { schoolTermService, SchoolTerm } from '@/services/school-term.service'
+import { academicYearService, AcademicYear } from '@/services/academic-year.service'
+import SchoolTermList from './SchoolTermList'
+import SchoolTermForm, { SchoolTermFormData } from './SchoolTermForm'
 
-export default function SubjectManagementPage() {
+export default function SchoolTermManagementPage() {
     const { data: session } = useSession()
-    const [subjects, setSubjects] = useState<Subject[]>([])
-    const [departments, setDepartments] = useState<Department[]>([])
+    const [schoolTerms, setSchoolTerms] = useState<SchoolTerm[]>([])
+    const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
-    const [departmentFilter, setDepartmentFilter] = useState<string>('All')
+    const [academicYearFilter, setAcademicYearFilter] = useState<string>('All')
     const [currentPage, setCurrentPage] = useState(1)
-    const [itemsPerPage, setItemsPerPage] = useState(10)
+    const [itemsPerPage] = useState(10)
     const [totalRecords, setTotalRecords] = useState(0)
 
     const [isFormOpen, setIsFormOpen] = useState(false)
-    const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null)
+    const [selectedSchoolTerm, setSelectedSchoolTerm] = useState<SchoolTerm | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const fetchSubjects = async () => {
+    const fetchSchoolTerms = async () => {
         if (!session?.accessToken) return
 
         try {
             setLoading(true)
-            const response = await subjectService.getAllSubjects(
+            const academicYearId = academicYearFilter !== 'All' ? parseInt(academicYearFilter) : undefined
+            const response = await schoolTermService.getAllSchoolTerms(
                 session.accessToken,
                 currentPage,
                 itemsPerPage,
-                searchTerm || undefined
+                searchTerm || undefined,
+                academicYearId
             )
-            setSubjects(response.data)
+            setSchoolTerms(response.data)
             setTotalRecords(response.totalRecords)
         } catch (error: any) {
-            console.error('Failed to fetch subjects:', error)
-            toast.error(error.message || 'Failed to load subjects')
+            console.error('Failed to fetch school terms:', error)
+            toast.error(error.message || 'Failed to load school terms')
         } finally {
             setLoading(false)
         }
     }
 
-    const fetchDepartments = async () => {
+    const fetchAcademicYears = async () => {
         if (!session?.accessToken) return
         try {
-            const response = await lovService.getDepartments(session.accessToken)
-            setDepartments(response as any)
+            const response = await academicYearService.getAllAcademicYears(session.accessToken, 1, 100)
+            setAcademicYears(response.data)
         } catch (error: any) {
-            console.error('Failed to fetch departments:', error)
+            console.error('Failed to fetch academic years:', error)
         }
     }
 
     useEffect(() => {
         if (session) {
-            fetchSubjects()
-            fetchDepartments()
+            fetchSchoolTerms()
+            fetchAcademicYears()
         }
-    }, [session, currentPage, searchTerm])
+    }, [session, currentPage, searchTerm, academicYearFilter])
 
     const handleCreate = () => {
-        setSelectedSubject(null)
+        setSelectedSchoolTerm(null)
         setIsFormOpen(true)
     }
 
-    const handleEdit = (subject: Subject) => {
-        setSelectedSubject(subject)
+    const handleEdit = (term: SchoolTerm) => {
+        setSelectedSchoolTerm(term)
         setIsFormOpen(true)
     }
 
-    const handleDelete = async (subject: Subject) => {
-        if (!confirm(`Are you sure you want to delete subject "${subject.vsubject_name}"?`)) return
+    const handleDelete = async (term: SchoolTerm) => {
+        if (!confirm(`Are you sure you want to delete school term "${term.vterm_name}"?`)) return
 
         if (!session?.accessToken) return
 
         try {
-            await subjectService.deleteSubject(subject.nid, session.accessToken)
-            toast.success('Subject deleted successfully')
-            fetchSubjects()
+            await schoolTermService.deleteSchoolTerm(term.nid, session.accessToken)
+            toast.success('School term deleted successfully')
+            fetchSchoolTerms()
         } catch (error: any) {
-            toast.error(error.message || 'Failed to delete subject')
+            toast.error(error.message || 'Failed to delete school term')
         }
     }
 
-    const handleFormSubmit = async (data: SubjectFormData) => {
+    const handleFormSubmit = async (data: SchoolTermFormData) => {
         if (!session?.accessToken) return
 
         try {
             setIsSubmitting(true)
 
-            if (selectedSubject) {
-                await subjectService.updateSubject(
-                    selectedSubject.nid,
-                    { SubjectName: data.subject_name, DepartmentId: data.department_id },
+            if (selectedSchoolTerm) {
+                await schoolTermService.updateSchoolTerm(
+                    selectedSchoolTerm.nid,
+                    {
+                        TermName: data.term_name,
+                        AcademicYearId: data.academic_year_id,
+                    },
                     session.accessToken
                 )
-                toast.success('Subject updated successfully')
+                toast.success('School term updated successfully')
             } else {
-                await subjectService.createSubject(
-                    { SubjectName: data.subject_name, DepartmentId: data.department_id },
+                await schoolTermService.createSchoolTerm(
+                    {
+                        TermName: data.term_name,
+                        AcademicYearId: data.academic_year_id,
+                    },
                     session.accessToken
                 )
-                toast.success('Subject created successfully')
+                toast.success('School term created successfully')
             }
 
             setIsFormOpen(false)
-            fetchSubjects()
+            fetchSchoolTerms()
         } catch (error: any) {
             console.error(error)
-            toast.error(error.message || 'Failed to save subject')
+            toast.error(error.message || 'Failed to save school term')
             throw error
         } finally {
             setIsSubmitting(false)
         }
     }
 
-    const filteredSubjects = subjects.filter((subject) => {
+    const filteredSchoolTerms = schoolTerms.filter((term) => {
         if (!searchTerm) return true
-        const term = searchTerm.toLowerCase()
-        return subject.vsubject_name?.toLowerCase().includes(term)
+        const termSearch = searchTerm.toLowerCase()
+        return term.vterm_name?.toLowerCase().includes(termSearch)
     })
 
     const totalPages = Math.ceil(totalRecords / itemsPerPage)
@@ -139,28 +145,28 @@ export default function SubjectManagementPage() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
-                            Subject Management
+                            School Term Management
                         </h1>
                         <p className="text-sm text-gray-600 mt-1">
-                            Manage subjects for your institution
+                            Manage school terms for your institution
                         </p>
                     </div>
                     <Button onClick={handleCreate}>
                         <Plus className="mr-2 h-4 w-4" />
-                        Add Subject
+                        Add School Term
                     </Button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-purple-600" />
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600" />
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">Total Subjects</p>
+                                <p className="text-sm font-medium text-gray-600 mb-1">Total School Terms</p>
                                 <p className="text-3xl font-bold text-gray-900">{totalRecords}</p>
                             </div>
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-purple-50">
-                                <BookMarked className="h-7 w-7 text-purple-600" />
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
+                                <Target className="h-7 w-7 text-blue-600" />
                             </div>
                         </div>
                     </div>
@@ -173,7 +179,7 @@ export default function SubjectManagementPage() {
                                 <Search className="h-5 w-5 text-gray-500" />
                                 <Input
                                     className="border-none bg-transparent text-gray-900 placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
-                                    placeholder="Search subjects..."
+                                    placeholder="Search school terms..."
                                     value={searchTerm}
                                     onChange={(e) => {
                                         setSearchTerm(e.target.value)
@@ -191,9 +197,20 @@ export default function SubjectManagementPage() {
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <p className="text-sm text-gray-600">
-                                    Showing <span className="font-semibold text-gray-900">{filteredSubjects.length}</span> subjects
-                                </p>
+                                <Filter className="h-4 w-4 text-gray-500" />
+                                <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
+                                    <SelectTrigger className="w-[200px]">
+                                        <SelectValue placeholder="All Academic Years" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="All">All Academic Years</SelectItem>
+                                        {academicYears.map((year) => (
+                                            <SelectItem key={year.nid} value={year.nid.toString()}>
+                                                {year.vacademic_year_name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                     </div>
@@ -203,13 +220,13 @@ export default function SubjectManagementPage() {
                             <div className="flex justify-center p-12">
                                 <div className="text-center">
                                     <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-                                    <p className="text-gray-600">Loading subjects...</p>
+                                    <p className="text-gray-600">Loading school terms...</p>
                                 </div>
                             </div>
                         ) : (
-                            <SubjectList
-                                subjects={filteredSubjects}
-                                departments={departments}
+                            <SchoolTermList
+                                schoolTerms={filteredSchoolTerms}
+                                academicYears={academicYears}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
                             />
@@ -225,13 +242,13 @@ export default function SubjectManagementPage() {
                     />
                 )}
 
-                <SubjectForm
+                <SchoolTermForm
                     open={isFormOpen}
                     onOpenChange={setIsFormOpen}
                     onSubmit={handleFormSubmit}
-                    initialData={selectedSubject}
+                    initialData={selectedSchoolTerm}
                     isSubmitting={isSubmitting}
-                    departments={departments}
+                    academicYears={academicYears}
                 />
             </div>
         </div>
