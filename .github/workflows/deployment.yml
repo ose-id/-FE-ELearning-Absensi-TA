@@ -3,7 +3,7 @@ name: Build and Deploy FE Docker Image
 on:
   push:
     branches:
-      - main
+      - development
 
 jobs:
   build-and-deploy:
