@@ -9,9 +9,12 @@ import TableHeader from '@/components/ui/table/table-header'
 import TableRow from '@/components/ui/table/table-row'
 import Button from '@/components/ui/button'
 import { LearningModule } from '@/types/learning-module'
+import { Class } from '@/types/class'
+import { Subject } from '@/types/subject'
 
 interface LearningModuleListProps {
     modules: LearningModule[]
+    onEdit: (module: LearningModule) => void
     onDelete: (module: LearningModule) => void
     classes?: Class[]
     subjects?: Subject[]

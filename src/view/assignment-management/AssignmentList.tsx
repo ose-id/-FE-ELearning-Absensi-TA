@@ -14,6 +14,11 @@ import { Assignment } from '@/types/assignment'
 import { Class } from '@/types/class'
 import { LearningModule } from '@/types/learning-module'
 
+interface AssignmentListProps {
+    assignments: Assignment[]
+    onEdit: (assignment: Assignment) => void
+    onDelete: (assignment: Assignment) => void
+    onViewSubmissions: (assignment: Assignment) => void
     isEditable?: boolean
     isTeacher?: boolean
     classes?: Class[]
