@@ -222,7 +222,9 @@ export default function AttendanceRecordDialog({ open, onOpenChange, attendanceI
                                     >
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select Student" />
+                                                <SelectValue placeholder="Select Student">
+                                                    {students.find(s => s.id === field.value)?.fullname}
+                                                </SelectValue>
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>

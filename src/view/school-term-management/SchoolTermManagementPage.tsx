@@ -200,7 +200,9 @@ export default function SchoolTermManagementPage() {
                                 <Filter className="h-4 w-4 text-gray-500" />
                                 <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
                                     <SelectTrigger className="w-[200px]">
-                                        <SelectValue placeholder="All Academic Years" />
+                                        <SelectValue placeholder="All Academic Years">
+                                            {academicYearFilter === 'All' ? 'All Academic Years' : academicYears.find(y => y.nid.toString() === academicYearFilter)?.vacademic_year_name}
+                                        </SelectValue>
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="All">All Academic Years</SelectItem>

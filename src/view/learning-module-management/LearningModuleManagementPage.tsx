@@ -313,6 +313,8 @@ export default function LearningModuleManagementPage() {
                                     modules={classModules}
                                     onEdit={handleEditModule}
                                     onDelete={handleDeleteModule}
+                                    classes={classes}
+                                    subjects={subjects}
                                     isEditable={canManage}
                                 />
                             )}

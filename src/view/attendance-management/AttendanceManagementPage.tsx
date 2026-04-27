@@ -228,7 +228,9 @@ export default function AttendanceManagementPage() {
                                 <Filter className="h-4 w-4 text-gray-500" />
                                 <Select value={moduleFilter} onValueChange={setModuleFilter}>
                                     <SelectTrigger className="w-[200px]">
-                                        <SelectValue placeholder="All Modules" />
+                                        <SelectValue placeholder="All Modules">
+                                            {moduleFilter === 'All' ? 'All Modules' : learningModules.find(m => m.nid.toString() === moduleFilter)?.vname}
+                                        </SelectValue>
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="All">All Modules</SelectItem>
@@ -257,6 +259,7 @@ export default function AttendanceManagementPage() {
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
                                 onRecord={handleRecordAttendance}
+                                learningModules={learningModules}
                             />
                         )}
                     </div>

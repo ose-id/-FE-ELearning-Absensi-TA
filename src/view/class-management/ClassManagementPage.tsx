@@ -244,7 +244,9 @@ export default function ClassManagementPage() {
                                         setCurrentPage(1)
                                     }}>
                                         <SelectTrigger className="w-[180px]">
-                                            <SelectValue placeholder="All Departments" />
+                                            <SelectValue placeholder="All Departments">
+                                                {departmentFilter === 'All' ? 'All Departments' : departments.find(d => d.nid.toString() === departmentFilter)?.vdepartment_name}
+                                            </SelectValue>
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="All">All Departments</SelectItem>

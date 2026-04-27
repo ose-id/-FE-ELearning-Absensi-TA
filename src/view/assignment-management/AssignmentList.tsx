@@ -11,14 +11,13 @@ import Card from '@/components/ui/card'
 import CardContent from '@/components/ui/card/card-content'
 import { Edit, Trash2, Users, FileText } from 'lucide-react'
 import { Assignment } from '@/types/assignment'
+import { Class } from '@/types/class'
+import { LearningModule } from '@/types/learning-module'
 
-interface AssignmentListProps {
-    assignments: Assignment[]
-    onEdit: (assignment: Assignment) => void
-    onDelete: (assignment: Assignment) => void
-    onViewSubmissions: (assignment: Assignment) => void
     isEditable?: boolean
     isTeacher?: boolean
+    classes?: Class[]
+    learningModules?: LearningModule[]
 }
 
 export default function AssignmentList({
@@ -27,8 +26,22 @@ export default function AssignmentList({
     onDelete,
     onViewSubmissions,
     isEditable = true,
-    isTeacher = false
+    isTeacher = false,
+    classes = [],
+    learningModules = []
 }: AssignmentListProps) {
+    const getClassName = (assignment: Assignment) => {
+        if (assignment.class_name) return assignment.class_name
+        const cls = classes.find(c => c.nid === assignment.class_id)
+        return cls?.vname || `Class ${assignment.class_id}`
+    }
+
+    const getModuleName = (assignment: Assignment) => {
+        if (assignment.learning_module_name) return assignment.learning_module_name
+        const mod = learningModules.find(m => m.nid === assignment.learning_module_id)
+        return mod?.vname || `Module ${assignment.learning_module_id}`
+    }
+
     if (assignments.length === 0) {
         return (
             <div className="text-center py-12">
@@ -87,9 +100,9 @@ export default function AssignmentList({
                                 </div>
                             </TableCell>
                             <TableCell className="text-gray-600 text-sm">
-                                {assignment.learning_module_name || `Module ${assignment.learning_module_id}`}
+                                {getModuleName(assignment)}
                             </TableCell>
-                            <TableCell className="text-gray-600">{assignment.class_name || `Class ${assignment.class_id}`}</TableCell>
+                            <TableCell className="text-gray-600 border border-gray-100">{getClassName(assignment)}</TableCell>
                             <TableCell className="text-gray-600">{formatDate(assignment.due_date)}</TableCell>
                             <TableCell className="text-gray-600">{assignment.max_score}</TableCell>
                             <TableCell>{getStatusBadge(assignment.due_date)}</TableCell>

@@ -9,15 +9,29 @@ import TableHeader from '@/components/ui/table/table-header'
 import TableRow from '@/components/ui/table/table-row'
 import Button from '@/components/ui/button'
 import { Attendance } from '@/types/attendance'
+import { LearningModule } from '@/types/learning-module'
 
 interface AttendanceListProps {
     attendances: Attendance[]
     onEdit: (attendance: Attendance) => void
     onDelete: (attendance: Attendance) => void
     onRecord: (attendanceId: number) => void
+    learningModules?: LearningModule[]
 }
 
-export default function AttendanceList({ attendances, onEdit, onDelete, onRecord }: AttendanceListProps) {
+export default function AttendanceList({ 
+    attendances, 
+    onEdit, 
+    onDelete, 
+    onRecord, 
+    learningModules = [] 
+}: AttendanceListProps) {
+    const getModuleName = (attendance: Attendance) => {
+        if (attendance.LearningModule?.vname) return attendance.LearningModule.vname
+        const mod = learningModules.find(m => m.nid === attendance.nid_learning_module)
+        return mod?.vname || `Module ${attendance.nid_learning_module}`
+    }
+
     if (attendances.length === 0) {
         return (
             <div className="text-center py-12">
@@ -46,7 +60,7 @@ export default function AttendanceList({ attendances, onEdit, onDelete, onRecord
                         <TableRow key={att.nid} className="hover:bg-gray-50 transition-colors">
                             <TableCell className="font-medium text-gray-900">{att.vname}</TableCell>
                             <TableCell className="text-gray-600">
-                                {att.LearningModule?.vname || `Module ${att.nid_learning_module}`}
+                                {getModuleName(att)}
                             </TableCell>
                             <TableCell className="text-gray-600">
                                 {att.nmeeting}

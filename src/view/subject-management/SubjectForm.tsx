@@ -120,7 +120,10 @@ export default function SubjectForm({
                                     >
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select Department" />
+                                                <SelectValue placeholder="Select Department">
+                                                    {departments.find(d => d.nid === field.value)?.vdepartment_name || 
+                                                     (departments.find(d => d.nid === field.value) as any)?.label}
+                                                </SelectValue>
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>

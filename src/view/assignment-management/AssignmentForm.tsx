@@ -181,7 +181,9 @@ export default function AssignmentForm({
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select Module" />
+                                                    <SelectValue placeholder="Select Module">
+                                                        {learningModules.find(m => m.nid === field.value)?.vname}
+                                                    </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -209,7 +211,9 @@ export default function AssignmentForm({
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select Class" />
+                                                    <SelectValue placeholder="Select Class">
+                                                        {classes.find(c => c.nid === field.value)?.vname}
+                                                    </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>

@@ -131,7 +131,9 @@ export default function AttendanceForm({
                                     >
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select Module" />
+                                                <SelectValue placeholder="Select Module">
+                                                    {learningModules.find(m => m.nid === field.value)?.vname}
+                                                </SelectValue>
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>

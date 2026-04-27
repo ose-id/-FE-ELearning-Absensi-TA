@@ -447,7 +447,9 @@ export default function UserManagementPage() {
                             <Filter className="h-4 w-4 text-gray-500" />
                             <Select value={roleFilter} onValueChange={setRoleFilter}>
                                 <SelectTrigger className="w-[140px]">
-                                    <SelectValue placeholder="All Roles" />
+                                    <SelectValue placeholder="All Roles">
+                                        {roleFilter === 'all' ? 'All Roles' : (roleFilter === 'All Roles' ? 'All Roles' : roleFilter.charAt(0).toUpperCase() + roleFilter.slice(1))}
+                                    </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Roles</SelectItem>

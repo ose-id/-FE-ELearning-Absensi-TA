@@ -176,7 +176,10 @@ export default function LearningModuleForm({
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select Department" />
+                                                    <SelectValue placeholder="Select Department">
+                                                        {departments.find(d => d.nid === field.value)?.vdepartment_name || 
+                                                         (departments.find(d => d.nid === field.value) as any)?.label}
+                                                    </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -204,7 +207,9 @@ export default function LearningModuleForm({
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select Class" />
+                                                    <SelectValue placeholder="Select Class">
+                                                        {classes.find(c => c.nid === field.value)?.vname}
+                                                    </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -234,7 +239,9 @@ export default function LearningModuleForm({
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select Subject" />
+                                                    <SelectValue placeholder="Select Subject">
+                                                        {subjects.find(s => s.nid === field.value)?.vsubject_name}
+                                                    </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -263,7 +270,9 @@ export default function LearningModuleForm({
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder={loadingLOV ? "Loading..." : "Select Academic Year"} />
+                                                    <SelectValue placeholder={loadingLOV ? "Loading..." : "Select Academic Year"}>
+                                                        {academicYears.find(y => y.nid === field.value)?.label}
+                                                    </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -292,7 +301,9 @@ export default function LearningModuleForm({
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder={loadingLOV ? "Loading..." : "Select Term"} />
+                                                    <SelectValue placeholder={loadingLOV ? "Loading..." : "Select Term"}>
+                                                        {schoolTerms.find(t => t.nid === field.value)?.label}
+                                                    </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>

@@ -253,6 +253,8 @@ export default function AssignmentManagementPage() {
                             onViewSubmissions={handleViewSubmissions}
                             isEditable={isAdmin || isGuru}
                             isTeacher={isGuru}
+                            classes={classes}
+                            learningModules={learningModules}
                         />
                     )}
                 </CardContent>

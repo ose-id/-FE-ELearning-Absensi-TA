@@ -12,12 +12,32 @@ import { LearningModule } from '@/types/learning-module'
 
 interface LearningModuleListProps {
     modules: LearningModule[]
-    onEdit: (module: LearningModule) => void
     onDelete: (module: LearningModule) => void
+    classes?: Class[]
+    subjects?: Subject[]
     isEditable?: boolean
 }
 
-export default function LearningModuleList({ modules, onEdit, onDelete, isEditable = true }: LearningModuleListProps) {
+export default function LearningModuleList({ 
+    modules, 
+    onEdit, 
+    onDelete, 
+    classes = [], 
+    subjects = [], 
+    isEditable = true 
+}: LearningModuleListProps) {
+    const getClassName = (module: LearningModule) => {
+        if (module.Class?.vname) return module.Class.vname
+        const cls = classes.find(c => c.nid === module.nid_class)
+        return cls?.vname || `Class ${module.nid_class}`
+    }
+
+    const getSubjectName = (module: LearningModule) => {
+        if (module.Subject?.vsubject_name) return module.Subject.vsubject_name
+        const subj = subjects.find(s => s.nid === module.nid_subject)
+        return subj?.vsubject_name || `Subject ${module.nid_subject}`
+    }
+
     if (modules.length === 0) {
         return (
             <div className="text-center py-12">
@@ -46,10 +66,10 @@ export default function LearningModuleList({ modules, onEdit, onDelete, isEditab
                         <TableRow key={module.nid} className="hover:bg-gray-50 transition-colors">
                             <TableCell className="font-medium text-gray-900">{module.vname}</TableCell>
                             <TableCell className="text-gray-600">
-                                {module.Class?.vname || `Class ${module.nid_class}`}
+                                {getClassName(module)}
                             </TableCell>
                             <TableCell className="text-gray-600">
-                                {module.Subject?.vsubject_name || `Subject ${module.nid_subject}`}
+                                {getSubjectName(module)}
                             </TableCell>
                             <TableCell className="text-gray-600">
                                 {module.academic_year || module.vacademic_year || '-'}

@@ -117,7 +117,9 @@ export default function SchoolTermForm({
                                     >
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select Academic Year" />
+                                                <SelectValue placeholder="Select Academic Year">
+                                                    {academicYears.find(y => y.nid === field.value)?.vacademic_year_name}
+                                                </SelectValue>
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -145,7 +147,9 @@ export default function SchoolTermForm({
                                     >
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select Term" />
+                                                <SelectValue placeholder="Select Term">
+                                                    {field.value}
+                                                </SelectValue>
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>

@@ -33,6 +33,7 @@ export const NAV_ITEMS: Record<RoleCode, NavItem[]> = {
         { icon: CalendarDays, label: 'Academic Year', href: '/academic-year-management' },
         { icon: Target, label: 'School Term', href: '/school-term-management' },
         { icon: Building2, label: 'Class', href: '/class-management' },
+        { icon: BookMarked, label: 'Subject', href: '/subject-management' },
         { icon: BarChart3, label: 'Reporting', href: '/reporting' },
         { icon: Settings, label: 'System Settings', href: '/settings' },
     ],
@@ -41,7 +42,6 @@ export const NAV_ITEMS: Record<RoleCode, NavItem[]> = {
     [ROLES.TEACHER]: [
         { icon: Home, label: 'Dashboard', href: '/dashboard' },
         { icon: Building2, label: 'Department', href: '/department-management' },
-        { icon: BookMarked, label: 'Subject', href: '/subject-management' },
         { icon: Building2, label: 'Class', href: '/class-management' },
         { icon: BookOpen, label: 'Learning Module', href: '/learning-module-management' },
         { icon: ClipboardCheck, label: 'Attendance', href: '/attendance' },

@@ -129,8 +129,8 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-2">
+        {/* Navigation - Hidden scrollbar but scrollable */}
+        <nav className="flex-1 overflow-y-auto px-3 py-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/30">
           <ul className="space-y-0.5">
             {currentNavItems.map((item) => {
               const Icon = item.icon
