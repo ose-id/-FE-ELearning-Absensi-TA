@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, Loader2, Users, Shield, GraduationCap, UserCheck, Filter, X, LayoutGrid, List, Upload, Download } from 'lucide-react'
+import { Plus, Search, Loader2, Users, Shield, GraduationCap, UserCheck, Filter, X, LayoutGrid, List, Upload, Download, FileSpreadsheet } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 import * as XLSX from 'xlsx'
@@ -101,39 +101,110 @@ export default function UserManagementPage() {
     // Export users to Excel
     const handleExport = () => {
         if (users.length === 0) {
-            toast.warning('No users to export')
+            toast.warning('Tidak ada data user untuk di-export')
             return
         }
 
         const exportData = users.map(user => ({
             'Username': user.username || '',
-            'Full Name': user.fullname || '',
+            'Nama Lengkap': user.fullname || '',
             'Email': user.email || '',
-            'Phone': user.phone || '',
+            'NIK / NIP': user.nik || user.nip || '',
+            'NIS': user.nis || '',
+            'Nomor Telepon': user.phone || '',
             'WhatsApp': user.whatsapp || '',
-            'Role': user.vrole_name || user.role_name || '',
-            'Status': user.status || '',
-            'Created At': user.created_at || '',
+            'Tanggal Lahir': user.birthdate || '',
+            'Alamat': user.address || '',
+            'Gelar': user.degree || '',
+            'Peran': user.vrole_name || user.role_name || '',
+            'Kelas': user.class_name || '-',
+            'Nama Orang Tua': user.parent_name || '',
+            'Telepon Orang Tua': user.parent_phone || '',
+            'Status': user.status === 'active' ? 'Aktif' : 'Non-Aktif',
+            'Tanggal Dibuat': user.created_at ? new Date(user.created_at).toLocaleDateString('id-ID') : '',
         }))
 
         const ws = XLSX.utils.json_to_sheet(exportData)
         const wb = XLSX.utils.book_new()
-        XLSX.utils.book_append_sheet(wb, ws, 'Users')
+        XLSX.utils.book_append_sheet(wb, ws, 'Data User')
 
         // Set column widths
         ws['!cols'] = [
-            { wch: 20 }, // Username
-            { wch: 25 }, // Full Name
-            { wch: 30 }, // Email
+            { wch: 15 }, // Username
+            { wch: 25 }, // Nama Lengkap
+            { wch: 25 }, // Email
+            { wch: 18 }, // NIK/NIP
+            { wch: 15 }, // NIS
             { wch: 15 }, // Phone
             { wch: 15 }, // WhatsApp
+            { wch: 15 }, // Birthdate
+            { wch: 30 }, // Address
+            { wch: 15 }, // Degree
             { wch: 12 }, // Role
-            { wch: 10 }, // Status
-            { wch: 20 }, // Created At
+            { wch: 15 }, // Class
+            { wch: 25 }, // Parent Name
+            { wch: 15 }, // Parent Phone
+            { wch: 12 }, // Status
+            { wch: 18 }, // Created At
         ]
 
-        XLSX.writeFile(wb, `users_export_${new Date().toISOString().split('T')[0]}.xlsx`)
-        toast.success('Users exported successfully')
+        XLSX.writeFile(wb, `export_user_${new Date().toISOString().split('T')[0]}.xlsx`)
+        toast.success('Data user berhasil di-export')
+    }
+
+    // Download template Excel for import
+    const handleDownloadTemplate = () => {
+        const templateData = [
+            {
+                'username': 'budi_santoso',
+                'email': 'budi@example.com',
+                'password': 'Password123!',
+                'fullname': 'Budi Santoso, S.Pd',
+                'nip': '198501012010011001',
+                'nis': '',
+                'phone': '081234567890',
+                'whatsapp': '081234567890',
+                'birthdate': '1985-01-01',
+                'address': 'Jl. Pendidikan No. 123, Jakarta',
+                'degree': 'S.Pd',
+                'role': 'Guru', // Digunakan oleh frontend untuk deteksi
+                'class_id': '',
+                'parent_name': '',
+                'parent_phone': '',
+                'status': 'active'
+            },
+            {
+                'username': 'ani_murid',
+                'email': 'ani@example.com',
+                'password': 'Password123!',
+                'fullname': 'Ani Wijaya',
+                'nip': '',
+                'nis': '2223001',
+                'phone': '08987654321',
+                'whatsapp': '08987654321',
+                'birthdate': '2010-05-20',
+                'address': 'Jl. Mawar No. 5, Jakarta',
+                'degree': '',
+                'role': 'Murid',
+                'class_id': '1',
+                'parent_name': 'Wijaya Kusuma',
+                'parent_phone': '081122334455',
+                'status': 'active'
+            }
+        ]
+
+        const ws = XLSX.utils.json_to_sheet(templateData)
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, 'Template Import')
+
+        ws['!cols'] = [
+            { wch: 15 }, { wch: 25 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, 
+            { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 30 }, 
+            { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 25 }, { wch: 15 }, { wch: 10 }
+        ]
+
+        XLSX.writeFile(wb, `template_import_user.xlsx`)
+        toast.success('Template berhasil di-download')
     }
 
     // Import users from Excel
@@ -141,10 +212,24 @@ export default function UserManagementPage() {
         const file = event.target.files?.[0]
         if (!file) return
 
+        if (!session?.accessToken) {
+            toast.error('Session expired. Please login again.')
+            return
+        }
+
         setImporting(true)
         try {
+            // Check file extension
+            const fileName = file.name.toLowerCase()
+            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+                toast.error('Please upload a valid Excel file (.xlsx or .xls)')
+                return
+            }
+
+            // Determine which endpoint to use based on the Role column in the file
+            // Read the file first to check the roles
             const data = await file.arrayBuffer()
-            const workbook = XLSX.read(data)
+            const workbook = XLSX.read(data, { type: 'array' })
             const worksheet = workbook.Sheets[workbook.SheetNames[0]]
             const jsonData = XLSX.utils.sheet_to_json(worksheet) as Record<string, any>[]
 
@@ -153,42 +238,73 @@ export default function UserManagementPage() {
                 return
             }
 
-            // Map Excel columns to user data
-            let successCount = 0
-            let errorCount = 0
-
+            // Check the roles in the file to determine which API to call
+            const roles = new Set<string>()
             for (const row of jsonData) {
-                try {
-                    const userData = {
-                        username: row['Username'] || row['username'] || '',
-                        email: row['Email'] || row['email'] || '',
-                        fullname: row['Full Name'] || row['fullname'] || '',
-                        phone: row['Phone'] || row['phone'] || '',
-                        whatsapp: row['WhatsApp'] || row['whatsapp'] || '',
-                        role: row['Role'] || row['role'] || 'Murid',
-                        password: 'ChangeMe@123',
-                        status: row['Status'] || row['status'] || 'active',
-                    }
-
-                    if (!userData.username || !userData.email || !userData.fullname) {
-                        errorCount++
-                        continue
-                    }
-
-                    await userService.createUser(userData, session!.accessToken)
-                    successCount++
-                } catch (e) {
-                    errorCount++
-                    console.error('Failed to import row:', row, e)
+                const role = (row['role'] || row['Role'] || '').toLowerCase()
+                if (role.includes('murid') || role.includes('student') || role === 'mr') {
+                    roles.add('student')
+                } else if (role.includes('guru') || role.includes('teacher') || role === 'gr') {
+                    roles.add('teacher')
+                } else if (role.includes('admin') || role.includes('staff') || role === 'adm') {
+                    roles.add('admin')
                 }
             }
 
-            if (successCount > 0) {
-                toast.success(`Successfully imported ${successCount} users`)
-                fetchUsers()
+            // If mixed roles, show error - import one role at a time
+            if (roles.size > 1) {
+                toast.error('Please import users of the same role at a time. Separate Student, Teacher, and Admin imports.')
+                return
             }
-            if (errorCount > 0) {
-                toast.warning(`Failed to import ${errorCount} rows`)
+
+            // Determine the API endpoint
+            let apiUrl = ''
+            if (roles.has('student')) {
+                apiUrl = `${process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://localhost:5001'}/api/Student/import`
+            } else if (roles.has('teacher')) {
+                apiUrl = `${process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://localhost:5001'}/api/Teacher/import`
+            } else if (roles.has('admin')) {
+                apiUrl = `${process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://localhost:5001'}/api/User/staff/import`
+            } else {
+                toast.error('Invalid role in file. Use: Murid, Student, Guru, Teacher, Admin, or Staff')
+                return
+            }
+
+            // Create FormData and upload the file
+            const formData = new FormData()
+            formData.append('file', file)
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.accessToken}`,
+                },
+                body: formData,
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.message || errorData.title || `Import failed (${response.status})`)
+            }
+
+            const result = await response.json()
+
+            // Show result
+            if (result.data) {
+                const { SuccessCount, FailedCount, Errors } = result.data
+                if (SuccessCount > 0) {
+                    toast.success(`Successfully imported ${SuccessCount} users`)
+                }
+                if (FailedCount > 0) {
+                    toast.warning(`Failed to import ${FailedCount} users`)
+                    if (Errors && Errors.length > 0) {
+                        console.error('Import errors:', Errors)
+                    }
+                }
+                fetchUsers()
+            } else {
+                toast.success('Import completed successfully')
+                fetchUsers()
             }
         } catch (error: any) {
             console.error('Import error:', error)
@@ -373,6 +489,14 @@ export default function UserManagementPage() {
                             </span>
                         </label>
                         <Button
+                            onClick={handleDownloadTemplate}
+                            variant="outline"
+                            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                        >
+                            <FileSpreadsheet className="mr-2 h-4 w-4" />
+                            Template
+                        </Button>
+                        <Button
                             onClick={handleExport}
                             variant="outline"
                             className="border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -448,7 +572,7 @@ export default function UserManagementPage() {
                             <Select value={roleFilter} onValueChange={setRoleFilter}>
                                 <SelectTrigger className="w-[140px]">
                                     <SelectValue placeholder="All Roles">
-                                        {roleFilter === 'all' ? 'All Roles' : (roleFilter === 'All Roles' ? 'All Roles' : roleFilter.charAt(0).toUpperCase() + roleFilter.slice(1))}
+                                        {roleFilter === 'all' || roleFilter === 'All Roles' ? 'All Roles' : roleFilter.charAt(0).toUpperCase() + roleFilter.slice(1)}
                                     </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>

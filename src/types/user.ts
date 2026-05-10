@@ -16,6 +16,7 @@ export interface User {
     phone?: string
     whatsapp?: string
     nik?: string
+    nip?: string  // For Teacher - NIP from API
     nis?: string
     class_name?: string
     class_id?: number
@@ -25,6 +26,8 @@ export interface User {
     status?: string
     created_at?: string
     updated_at?: string
+    dcrea?: string
+    dmodi?: string
 }
 
 export interface CreateUserRequest {
@@ -68,5 +71,5 @@ export interface UpdateUserRequest {
     status?: string
 }
 
-export interface UserListResponse extends ApiResponse<User> { }
-export interface UserDetailResponse extends ApiResponse<User> { }
+export type UserListResponse = ApiResponse<User>
+export type UserDetailResponse = ApiResponse<User>

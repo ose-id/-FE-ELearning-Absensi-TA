@@ -13,7 +13,11 @@ import {
     ShieldCheck,
     BookMarked,
     ClipboardCheck,
-    CalendarDays
+    CalendarDays,
+    Shield,
+    UserCheck,
+    ChevronDown,
+    BookText
 } from 'lucide-react'
 import { ROLES, type RoleCode } from './roles'
 
@@ -21,19 +25,30 @@ type NavItem = {
     icon: any
     label: string
     href: string
+    children?: NavItem[]
 }
 
 export const NAV_ITEMS: Record<RoleCode, NavItem[]> = {
     // Admin Navigation
     [ROLES.ADMIN]: [
         { icon: Home, label: 'Dashboard', href: '/dashboard' },
-        { icon: Users, label: 'User Management', href: '/user-management' },
-        { icon: ShieldCheck, label: 'Role Management', href: '/role-management' },
+        {
+            icon: Users,
+            label: 'User Management',
+            href: '#',
+            children: [
+                { icon: Shield, label: 'Admin Management', href: '/admin-management' },
+                { icon: UserCheck, label: 'Guru Management', href: '/guru-management' },
+                { icon: GraduationCap, label: 'Murid Management', href: '/student-management' },
+            ]
+        },
+        // { icon: ShieldCheck, label: 'Role Management', href: '/role-management' },
         { icon: Building2, label: 'Department', href: '/department-management' },
         { icon: CalendarDays, label: 'Academic Year', href: '/academic-year-management' },
         { icon: Target, label: 'School Term', href: '/school-term-management' },
         { icon: Building2, label: 'Class', href: '/class-management' },
         { icon: BookMarked, label: 'Subject', href: '/subject-management' },
+        { icon: BookText, label: 'Teacher Subject', href: '/teacher-subject-management' },
         { icon: BarChart3, label: 'Reporting', href: '/reporting' },
         { icon: Settings, label: 'System Settings', href: '/settings' },
     ],

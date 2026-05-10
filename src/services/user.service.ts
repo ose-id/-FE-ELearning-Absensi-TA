@@ -136,7 +136,16 @@ class UserService {
     // Creates profile in Auth API (LMS_Auth database)
     async createProfile(data: any, token: string): Promise<void> {
         const roleNid = data.role_nid || data.role_id
-        const endpoint = this.getEndpointByRole(roleNid)
+
+        // Override endpoint based on role - for Guru (role 2), use /api/Teacher
+        // Not /api/User/staff because we need Teacher profile for Learning Module
+        let endpoint: string
+        if (roleNid === 2) {
+            // Guru: use /api/Teacher to create both User and Teacher profile
+            endpoint = `${this.baseUrl}/Teacher`
+        } else {
+            endpoint = this.getEndpointByRole(roleNid)
+        }
 
         console.log(`[UserService] Creating user via ${endpoint}...`)
 

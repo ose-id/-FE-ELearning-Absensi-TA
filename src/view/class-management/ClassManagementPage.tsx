@@ -122,6 +122,7 @@ export default function ClassManagementPage() {
                         Description: data.description || '',
                         AcademicYearId: data.academic_year_id,
                         SchoolTermId: data.school_term_id,
+                        Status: selectedClass.nstatus,
                     },
                     session.accessToken
                 )

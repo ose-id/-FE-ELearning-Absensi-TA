@@ -47,6 +47,7 @@ export interface CreateLearningModuleRequest {
     SubjectId: number
     AcademicYearId: number
     SchoolTermId: number
+    TeacherId?: number // Required when Admin creates, optional for Guru (uses current user)
 }
 
 export interface UpdateLearningModuleRequest {

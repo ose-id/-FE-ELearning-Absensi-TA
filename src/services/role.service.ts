@@ -76,6 +76,17 @@ class RoleService {
             headers: { Authorization: `Bearer ${token}` }
         })
     }
+
+    // Get users by role (e.g., get all teachers with role_nid = 2)
+    async getUsersByRole(token: string, roleNid: number): Promise<{ data: any[], totalRecords: number }> {
+        const response = await this.fetchWithAuth(`${AUTH_API_URL}/api/Teacher`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        return {
+            data: this.getData(response),
+            totalRecords: this.getData(response).length
+        }
+    }
 }
 
 export const roleService = new RoleService()

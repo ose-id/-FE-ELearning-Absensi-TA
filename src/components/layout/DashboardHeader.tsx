@@ -1,6 +1,7 @@
 'use client'
 
 import { useSession, signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import {
   Bell,
   Menu,
@@ -26,6 +27,7 @@ interface HeaderProps {
 
 export default function DashboardHeader({ onMenuClick, sidebarExpanded }: HeaderProps) {
   const { data: session } = useSession()
+  const router = useRouter()
   const [mounted, setMounted] = useState(false) // Added mounted state
 
   useEffect(() => {
@@ -77,7 +79,7 @@ export default function DashboardHeader({ onMenuClick, sidebarExpanded }: Header
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/change-password')}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>

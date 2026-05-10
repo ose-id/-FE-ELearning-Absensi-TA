@@ -31,8 +31,7 @@ export interface AuthResponseData {
     role_code?: string
 }
 
-export interface LoginResponse extends ApiResponse<AuthResponseData> {
-}
+export type LoginResponse = ApiResponse<AuthResponseData>
 
 export interface UserData {
     id: string
@@ -59,12 +58,11 @@ export interface RefreshTokenRequest {
     refreshToken: string
 }
 
-export interface RefreshTokenResponse extends ApiResponse<{
+export type RefreshTokenResponse = ApiResponse<{
     token: string
     refresh_token: string
     expires_in: number
-}> {
-}
+}>
 
 export interface LogoutRequest {
     token: string
@@ -74,53 +72,4 @@ export interface ApiErrorResponse extends ApiResponse<never> {
     status: 'Error'
 }
 
-// NextAuth extended types
-declare module 'next-auth' {
-    interface Session {
-        user: {
-            id: string
-            email: string
-            username: string
-            fullName: string
-            role_nid: number
-            vrole_name: string
-            vrole_code: string
-            isActive: boolean
-        }
-        accessToken: string
-        refreshToken: string
-        expiresIn: number
-    }
 
-    interface User {
-        id: string
-        email: string
-        username: string
-        fullName: string
-        role_nid: number
-        vrole_name: string
-        vrole_code: string
-        isActive: boolean
-        accessToken: string
-        refreshToken: string
-        expiresIn: number
-    }
-}
-
-declare module 'next-auth/jwt' {
-    interface JWT {
-        id: string
-        email: string
-        username: string
-        fullName: string
-        role_nid: number
-        vrole_name: string
-        vrole_code: string
-        isActive: boolean
-        accessToken: string
-        refreshToken: string
-        expiresIn: number
-        iat: number
-        exp: number
-    }
-}

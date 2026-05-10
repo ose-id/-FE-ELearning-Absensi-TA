@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  ChevronDown,
 } from 'lucide-react'
 
 import { cn } from '@/utils/commons'
@@ -33,6 +34,9 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
   const pathname = usePathname()
   const { data: session } = useSession()
   const sidebarRef = useRef<HTMLDivElement>(null)
+
+  // State for expanded submenus
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
 
   // Normalize role code to handle potential backend variations
   const getNormalizedRole = (role?: string): RoleCode => {
@@ -59,6 +63,12 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
 
   // Get nav items for current role, fallback to student or empty array
   const currentNavItems = NAV_ITEMS[userRole] || NAV_ITEMS[ROLES.STUDENT]
+
+  // Check if a menu item has active child
+  const hasActiveChild = (item: typeof NAV_ITEMS[RoleCode][number]) => {
+    if (!item.children) return false
+    return item.children.some(child => pathname === child.href)
+  }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -135,6 +145,63 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
             {currentNavItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
+              const hasChildren = item.children && item.children.length > 0
+              const isSubmenuOpen = openSubmenu === item.label
+              const hasActiveChildItem = hasActiveChild(item)
+
+              if (hasChildren) {
+                return (
+                  <li key={item.href} className="space-y-0.5">
+                    <button
+                      onClick={() => setOpenSubmenu(isSubmenuOpen ? null : item.label)}
+                      title={!expanded ? item.label : undefined}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg py-3 text-sm transition-all duration-200 text-white w-full',
+                        hasActiveChildItem
+                          ? 'bg-black/40 font-medium'
+                          : 'hover:bg-white/10',
+                        expanded ? 'px-4' : 'justify-center px-2'
+                      )}
+                    >
+                      <Icon className="h-5 w-5 shrink-0" />
+                      <span className={cn("whitespace-nowrap overflow-hidden transition-all duration-200", expanded ? "opacity-100 w-auto" : "opacity-0 w-0 lg:hidden")}>
+                        {item.label}
+                      </span>
+                      {expanded && (
+                        <ChevronDown className={cn("h-4 w-4 ml-auto transition-transform duration-200", isSubmenuOpen ? "rotate-180" : "")} />
+                      )}
+                    </button>
+                    {/* Submenu items */}
+                    {expanded && isSubmenuOpen && (
+                      <ul className="ml-4 mt-1 space-y-0.5 border-l-2 border-white/10 pl-3">
+                        {item.children?.map((child) => {
+                          const ChildIcon = child.icon
+                          const isChildActive = pathname === child.href
+                          return (
+                            <li key={child.href}>
+                              <Link
+                                href={child.href}
+                                className={cn(
+                                  'flex items-center gap-3 rounded-lg py-2.5 text-sm transition-all duration-200 text-white/80 hover:text-white',
+                                  isChildActive
+                                    ? 'bg-white/10 font-medium text-white'
+                                    : 'hover:bg-white/5',
+                                  'pl-3'
+                                )}
+                              >
+                                <ChildIcon className="h-4 w-4 shrink-0" />
+                                <span className="whitespace-nowrap overflow-hidden">
+                                  {child.label}
+                                </span>
+                              </Link>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
+                  </li>
+                )
+              }
 
               return (
                 <li key={item.href}>

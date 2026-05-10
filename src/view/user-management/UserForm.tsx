@@ -2,7 +2,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import {
@@ -43,14 +43,14 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select/Select'
+} from '@/components/ui/select'
 
 import { User } from '@/types/user'
 import { Role } from '@/types/role'
 import { roleService } from '@/services/role.service'
 import { Class } from '@/types/class'
 import { classService } from '@/services/class.service'
-import { lovService } from '@/services/lov.service'
+import { lovService, type LOVItem } from '@/services/lov.service'
 
 // ── Schema ─────────────────────────────────────────────────────────────────
 const userSchema = z.object({
@@ -60,7 +60,7 @@ const userSchema = z.object({
     fullname:     z.string().min(1, 'Full Name is required'),
     birthdate:    z.string().optional(),
     address:      z.string().optional(),
-    phone:        z.string().min(1, 'Phone number is required'),
+    phone:        z.string().optional(), // Optional - can be empty for existing users
     whatsapp:     z.string().optional(),
     // Staff / Teacher (nik is required only for Admin/Teacher, handled in form UI)
     nik:          z.string().optional(),
@@ -94,6 +94,7 @@ interface UserFormProps {
     onSubmit: (data: UserFormData) => Promise<void>
     initialData?: User | null
     isSubmitting: boolean
+    fixedRoleNid?: number // If provided, role is fixed to this role_nid (for specific management pages)
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -103,12 +104,22 @@ export default function UserForm({
     onSubmit,
     initialData,
     isSubmitting,
+    fixedRoleNid,
 }: UserFormProps) {
     const { data: session } = useSession()
 
     const [roles,   setRoles]   = useState<Role[]>([])
-    const [classes, setClasses] = useState<Class[]>([])
-    const [currentStep, setCurrentStep] = useState(1)
+    const [classes, setClasses] = useState<(Class | LOVItem)[]>([])
+    const [currentStep, setCurrentStep] = useState(initialData ? 2 : 1)
+    const [prevOpen, setPrevOpen] = useState(open)
+
+    // Sync currentStep when dialog opens/closes without using useEffect
+    if (open !== prevOpen) {
+        setPrevOpen(open)
+        if (open) {
+            setCurrentStep(initialData ? 2 : 1)
+        }
+    }
 
     // ── Form ─────────────────────────────────────────────────────────────
     const emptyDefaults: UserFormData = {
@@ -137,18 +148,24 @@ export default function UserForm({
     })
 
     // ── Role watchers ─────────────────────────────────────────────────────
-    const role = form.watch('role')
-    const check = (kw: string) => role?.toLowerCase().includes(kw.toLowerCase()) ?? false
-    const isStudent = check('student') || check('murid') || check('mr')
-    const isTeacher = check('teacher') || check('guru')  || check('gr')
-    const isAdmin   = check('admin')   || check('adm')   || check('staff')
+    const role = useWatch({
+        control: form.control,
+        name: 'role',
+    })
+    const check = (kw: string) => (role || '').toLowerCase().includes(kw.toLowerCase())
+
+    // Use fixedRoleNid if provided, otherwise determine from role string
+    const isStudent = fixedRoleNid === 3 || check('student') || check('murid') || check('mr')
+    const isTeacher = fixedRoleNid === 2 || check('teacher') || check('guru')  || check('gr')
+    const isAdmin   = fixedRoleNid === 1 || check('admin')   || check('adm')   || check('staff')
 
     // ── Fetch roles ───────────────────────────────────────────────────────
     useEffect(() => {
-        if (!open || !session?.accessToken) return
+        const token = session?.accessToken
+        if (!open || !token) return
         const load = async () => {
             try {
-                const res = await roleService.getRoles(session.accessToken)
+                const res = await roleService.getRoles(token)
                 if (res?.data) setRoles(res.data)
             } catch (e) {
                 console.error('Failed to fetch roles', e)
@@ -159,23 +176,21 @@ export default function UserForm({
 
     // ── Fetch classes (only when student role chosen) ─────────────────────
     useEffect(() => {
-        if (!open || !isStudent || !session?.accessToken) return
+        const token = session?.accessToken
+        if (!open || !isStudent || !token) return
         const load = async () => {
             try {
-                const res = await lovService.getClasses(session.accessToken)
-                if (res) setClasses(res as any)
+                const res = await lovService.getClasses(token)
+                if (res) setClasses(res)
             } catch (e) {
                 console.error('Failed to fetch classes', e)
             }
         }
         load()
     }, [open, isStudent, session])
-
     // ── Reset form on open / initialData change ───────────────────────────
     useEffect(() => {
         if (!open) return
-
-        setCurrentStep(initialData ? 2 : 1)
 
         if (initialData) {
             let roleName = ''
@@ -196,18 +211,28 @@ export default function UserForm({
                 address:      initialData.address      || '',
                 phone:        initialData.phone        || '',
                 whatsapp:     initialData.whatsapp     || '',
-                nik:          initialData.nik          || '',
+                // Map API fields correctly: API returns 'nip' for Teacher, 'nik' for Staff
+                nik:          initialData.nik || (initialData as User & { nip?: string }).nip || '',
                 degree:       initialData.degree       || '',
                 nis:          initialData.nis          || '',
                 class_name:   initialData.class_name   || '',
                 class_id:     initialData.class_id?.toString() || '',
                 parent_name:  initialData.parent_name  || '',
                 parent_phone: initialData.parent_phone || '',
-                role:         roleName,
+                role:         fixedRoleNid ? (fixedRoleNid === 1 ? 'Admin' : fixedRoleNid === 2 ? 'Guru' : 'Murid') : roleName,
                 status:       initialData.status       || 'active',
             })
         } else {
-            form.reset(emptyDefaults)
+            // If fixedRoleNid is provided, pre-set the role
+            if (fixedRoleNid) {
+                const defaultRole = fixedRoleNid === 1 ? 'Admin' : fixedRoleNid === 2 ? 'Guru' : 'Murid'
+                form.reset({
+                    ...emptyDefaults,
+                    role: defaultRole,
+                })
+            } else {
+                form.reset(emptyDefaults)
+            }
         }
     }, [open, initialData, roles])   // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -292,33 +317,41 @@ export default function UserForm({
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel required>Role Access</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value || ''}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select User Role">
-                                                                {field.value && (
+                                                {fixedRoleNid ? (
+                                                    // Read-only display when role is fixed
+                                                    <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm">
+                                                        <div className={`h-2 w-2 rounded-full ${roleColor(field.value)}`} />
+                                                        <span className="font-medium text-gray-700">{field.value}</span>
+                                                    </div>
+                                                ) : (
+                                                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select User Role">
+                                                                    {field.value && (
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className={`h-2 w-2 rounded-full ${roleColor(field.value)}`} />
+                                                                            <span>{field.value}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </SelectValue>
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {roles.map((r, i) => (
+                                                                <SelectItem
+                                                                    key={r.nid ?? r.vrole_code ?? i}
+                                                                    value={r.vrole_name || r.role_name || ''}
+                                                                >
                                                                     <div className="flex items-center gap-2">
-                                                                        <div className={`h-2 w-2 rounded-full ${roleColor(field.value)}`} />
-                                                                        <span>{field.value}</span>
+                                                                        <div className={`h-2 w-2 rounded-full ${roleColor(r.vrole_name || r.role_name)}`} />
+                                                                        <span>{r.vrole_name || r.role_name}</span>
                                                                     </div>
-                                                                )}
-                                                            </SelectValue>
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {roles.map((r, i) => (
-                                                            <SelectItem
-                                                                key={r.nid ?? r.vrole_code ?? i}
-                                                                value={r.vrole_name || r.role_name || ''}
-                                                            >
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className={`h-2 w-2 rounded-full ${roleColor(r.vrole_name || r.role_name)}`} />
-                                                                    <span>{r.vrole_name || r.role_name}</span>
-                                                                </div>
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                )}
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -379,6 +412,12 @@ export default function UserForm({
                                                     </div>
                                                 </FormControl>
                                                 <FormMessage />
+                                                {initialData && (
+                                                    <p className="text-[11px] text-blue-600 font-medium mt-1.5 flex items-center gap-1 bg-blue-50/50 p-1.5 rounded-md border border-blue-100">
+                                                        <Shield className="h-3 w-3" />
+                                                        Kosongkan jika tidak ingin mengubah password
+                                                    </p>
+                                                )}
                                             </FormItem>
                                         )}
                                     />
@@ -405,33 +444,41 @@ export default function UserForm({
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Role Access</FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value || ''}>
-                                                            <FormControl>
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder="Select Role">
-                                                                        {field.value && (
+                                                        {fixedRoleNid ? (
+                                                            // Read-only display when role is fixed
+                                                            <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm">
+                                                                <div className={`h-2 w-2 rounded-full ${roleColor(field.value)}`} />
+                                                                <span className="font-medium text-gray-700">{field.value}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <Select onValueChange={field.onChange} value={field.value || ''}>
+                                                                <FormControl>
+                                                                    <SelectTrigger>
+                                                                        <SelectValue placeholder="Select Role">
+                                                                            {field.value && (
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <div className={`h-2 w-2 rounded-full ${roleColor(field.value)}`} />
+                                                                                    <span>{field.value}</span>
+                                                                                </div>
+                                                                            )}
+                                                                        </SelectValue>
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent>
+                                                                    {roles.map((r, i) => (
+                                                                        <SelectItem
+                                                                            key={r.nid ?? r.vrole_code ?? i}
+                                                                            value={r.vrole_name || r.role_name || ''}
+                                                                        >
                                                                             <div className="flex items-center gap-2">
-                                                                                <div className={`h-2 w-2 rounded-full ${roleColor(field.value)}`} />
-                                                                                <span>{field.value}</span>
+                                                                                <div className={`h-2 w-2 rounded-full ${roleColor(r.vrole_name || r.role_name)}`} />
+                                                                                <span>{r.vrole_name || r.role_name}</span>
                                                                             </div>
-                                                                        )}
-                                                                    </SelectValue>
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent>
-                                                                {roles.map((r, i) => (
-                                                                    <SelectItem
-                                                                        key={r.nid ?? r.vrole_code ?? i}
-                                                                        value={r.vrole_name || r.role_name || ''}
-                                                                    >
-                                                                        <div className="flex items-center gap-2">
-                                                                            <div className={`h-2 w-2 rounded-full ${roleColor(r.vrole_name || r.role_name)}`} />
-                                                                            <span>{r.vrole_name || r.role_name}</span>
-                                                                        </div>
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        )}
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -442,7 +489,7 @@ export default function UserForm({
                                                 name="username"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Username</FormLabel>
+                                                        <FormLabel required>Username</FormLabel>
                                                         <FormControl>
                                                             <div className="relative">
                                                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">@</span>
@@ -450,6 +497,32 @@ export default function UserForm({
                                                             </div>
                                                         </FormControl>
                                                         <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            {/* Password (Edit Mode) */}
+                                            <Controller
+                                                control={form.control}
+                                                name="password"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Password Baru</FormLabel>
+                                                        <FormControl>
+                                                            <div className="relative">
+                                                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                                                <Input
+                                                                    type="password"
+                                                                    placeholder="Kosongkan jika tidak diubah"
+                                                                    className="pl-10"
+                                                                    {...field}
+                                                                />
+                                                            </div>
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                        <p className="text-[11px] text-blue-600 font-medium mt-1.5 flex items-center gap-1 bg-blue-50/50 p-1.5 rounded-md border border-blue-100">
+                                                            <Shield className="h-3 w-3" />
+                                                            Isi jika ingin mereset password user ini
+                                                        </p>
                                                     </FormItem>
                                                 )}
                                             />
@@ -487,7 +560,7 @@ export default function UserForm({
                                         name="status"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Status</FormLabel>
+                                                <FormLabel required>Status</FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value || 'active'}>
                                                     <FormControl>
                                                         <SelectTrigger>
@@ -531,7 +604,7 @@ export default function UserForm({
                                                 name="nik"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>{isAdmin ? 'NIP / NIK' : 'NIP (Teacher ID)'}</FormLabel>
+                                                        <FormLabel required>{isAdmin ? 'NIP / NIK' : 'NIP (Teacher ID)'}</FormLabel>
                                                         <FormControl>
                                                             <div className="relative">
                                                                 <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -548,7 +621,7 @@ export default function UserForm({
                                                 name="degree"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Degree (Gelar)</FormLabel>
+                                                        <FormLabel required>Degree (Gelar)</FormLabel>
                                                         <FormControl>
                                                             <div className="relative">
                                                                 <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -570,7 +643,7 @@ export default function UserForm({
                                                 name="nis"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>NIS (Student ID)</FormLabel>
+                                                        <FormLabel required>NIS (Student ID)</FormLabel>
                                                         <FormControl>
                                                             <div className="relative">
                                                                 <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -593,14 +666,19 @@ export default function UserForm({
                                                             <FormControl>
                                                                 <SelectTrigger>
                                                                     <SelectValue placeholder="Select Class">
-                                                                        {field.value ? (classes.find(c => c.nid.toString() === field.value) as any)?.label || classes.find(c => c.nid.toString() === field.value)?.vname || field.value : null}
+                                                                        {(() => {
+                                                                            if (!field.value) return null
+                                                                            const cls = classes.find(c => c.nid.toString() === field.value)
+                                                                            if (!cls) return field.value
+                                                                            return ('label' in cls ? cls.label : (cls as Class).vname) || field.value
+                                                                        })()}
                                                                     </SelectValue>
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
                                                                 {classes.map(cls => (
                                                                     <SelectItem key={cls.nid} value={cls.nid.toString()}>
-                                                                        {(cls as any).label || cls.vname}
+                                                                        {'label' in cls ? cls.label : (cls as Class).vname}
                                                                     </SelectItem>
                                                                 ))}
                                                             </SelectContent>

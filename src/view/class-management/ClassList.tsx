@@ -7,7 +7,6 @@ import TableCell from '@/components/ui/table/table-cell'
 import TableHead from '@/components/ui/table/table-head'
 import TableHeader from '@/components/ui/table/table-header'
 import TableRow from '@/components/ui/table/table-row'
-import Button from '@/components/ui/button'
 import { Class } from '@/types/class'
 
 interface ClassListProps {
@@ -49,9 +48,8 @@ export default function ClassList({ classes, departments = [], academicYears = [
     if (classes.length === 0) {
         return (
             <div className="text-center py-12">
-                <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 font-medium">No classes found</p>
-                <p className="text-sm text-gray-500 mt-1">Try adjusting your search or filters</p>
+                <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No classes found</p>
             </div>
         )
     }
@@ -72,22 +70,20 @@ export default function ClassList({ classes, departments = [], academicYears = [
                             </div>
                             {isEditable && (
                                 <div className="flex gap-1">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
+                                    <button
                                         onClick={() => onEdit(cls)}
-                                        className="h-8 w-8 text-blue-600 hover:text-blue-900 hover:bg-blue-50"
+                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                        title="Edit"
                                     >
                                         <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
+                                    </button>
+                                    <button
                                         onClick={() => onDelete(cls)}
-                                        className="h-8 w-8 text-red-600 hover:text-red-900 hover:bg-red-50"
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Delete"
                                     >
                                         <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -120,60 +116,56 @@ export default function ClassList({ classes, departments = [], academicYears = [
 
     // List view (table)
     return (
-        <div className="rounded-xl border border-gray-200 overflow-hidden">
-            <Table className="text-gray-900">
-                <TableHeader>
-                    <TableRow className="bg-gray-50 hover:bg-gray-50">
-                        <TableHead className="text-gray-700 font-semibold">Class Name</TableHead>
-                        <TableHead className="text-gray-700 font-semibold">Department</TableHead>
-                        <TableHead className="text-gray-700 font-semibold">Academic Year</TableHead>
-                        <TableHead className="text-gray-700 font-semibold">School Term</TableHead>
-                        <TableHead className="text-right text-gray-700 font-semibold">Actions</TableHead>
+        <Table>
+            <TableHeader>
+                <TableRow className="border-b border-gray-200">
+                    <TableHead className="text-gray-600 font-semibold">Class Name</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Department</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Academic Year</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">School Term</TableHead>
+                    <TableHead className="text-right text-gray-600 font-semibold">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {classes.map((cls) => (
+                    <TableRow key={cls.nid} className="border-b border-gray-100 hover:bg-gray-50">
+                        <TableCell className="font-medium text-gray-900">
+                            {cls.vname}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                            {getDepartmentName(cls)}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                            {getAcademicYear(cls)}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                            {getSchoolTerm(cls)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                                {isEditable && (
+                                    <>
+                                        <button
+                                            onClick={() => onEdit(cls)}
+                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Edit"
+                                        >
+                                            <Edit className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => onDelete(cls)}
+                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Delete"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </TableCell>
                     </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {classes.map((cls) => (
-                        <TableRow key={cls.nid} className="hover:bg-gray-50 transition-colors">
-                            <TableCell className="font-medium text-gray-900">
-                                {cls.vname}
-                            </TableCell>
-                            <TableCell className="text-gray-600">
-                                {getDepartmentName(cls)}
-                            </TableCell>
-                            <TableCell className="text-gray-600">
-                                {getAcademicYear(cls)}
-                            </TableCell>
-                            <TableCell className="text-gray-600">
-                                {getSchoolTerm(cls)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                    {isEditable && (
-                                        <>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => onEdit(cls)}
-                                                className="h-8 w-8 text-blue-600 hover:text-blue-900 hover:bg-blue-50"
-                                            >
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => onDelete(cls)}
-                                                className="h-8 w-8 text-red-600 hover:text-red-900 hover:bg-red-50"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
+                ))}
+            </TableBody>
+        </Table>
     )
 }

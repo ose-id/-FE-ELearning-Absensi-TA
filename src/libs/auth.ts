@@ -71,6 +71,7 @@ export const authOptions: NextAuthOptions = {
                             accessToken: userData.token,
                             refreshToken: '',
                             expiresIn: 3600,
+                            mustChangePassword: credentials.password === 'ChangeMe@123' && (role_nid === 2 || role_nid === 3),
                         }
                     }
 
@@ -104,6 +105,7 @@ export const authOptions: NextAuthOptions = {
                     accessToken: user.accessToken,
                     refreshToken: user.refreshToken,
                     expiresIn: user.expiresIn,
+                    mustChangePassword: user.mustChangePassword,
                 }
             }
 
@@ -162,6 +164,7 @@ export const authOptions: NextAuthOptions = {
                     vrole_name: token.vrole_name,
                     vrole_code: token.vrole_code,
                     isActive: token.isActive,
+                    mustChangePassword: token.mustChangePassword,
                 }
                 session.accessToken = token.accessToken
                 session.refreshToken = token.refreshToken

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, Loader2, BookOpen, Filter, X, Key, GraduationCap, ArrowLeft, Users } from 'lucide-react'
+import { Plus, Search, Loader2, BookOpen, Filter, X, Key, GraduationCap, ArrowLeft, Users, FileText, ClipboardList, ClipboardCheck } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 
@@ -10,16 +10,25 @@ import Input from '@/components/ui/input'
 import Pagination from '@/components/ui/pagination'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
 import { learningModuleService } from '@/services/learning-module.service'
+import { materialService } from '@/services/material.service'
+import { quizService } from '@/services/quiz.service'
 import { departmentService } from '@/services/department.service'
 import { classService } from '@/services/class.service'
 import { subjectService } from '@/services/subject.service'
 import { lovService } from '@/services/lov.service'
 import { LearningModule } from '@/types/learning-module'
+import { Material } from '@/types/material'
+import { Quiz } from '@/types/quiz'
 import { Department } from '@/types/department'
 import { Class } from '@/types/class'
 import { Subject } from '@/types/subject'
 import LearningModuleList from './LearningModuleList'
 import LearningModuleForm, { LearningModuleFormData } from './LearningModuleForm'
+import MaterialList from './MaterialList'
+import MaterialForm, { MaterialFormData } from './MaterialForm'
+import QuizList from './QuizList'
+import QuizForm, { QuizFormData } from './QuizForm'
+import QuestionForm, { QuestionFormData } from './QuestionForm'
 import EnrollModuleDialog from './EnrollModuleDialog'
 
 export default function LearningModuleManagementPage() {
@@ -39,8 +48,21 @@ export default function LearningModuleManagementPage() {
     const [selectedClass, setSelectedClass] = useState<Class | null>(null)
     const [selectedModule, setSelectedModule] = useState<LearningModule | null>(null)
 
+    // Materials state
+    const [materials, setMaterials] = useState<Material[]>([])
+    const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null)
+
+    // Quiz state
+    const [quizzes, setQuizzes] = useState<Quiz[]>([])
+    const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
+    const [showQuestionForm, setShowQuestionForm] = useState(false)
+    const [selectedQuestion, setSelectedQuestion] = useState<any>(null)
+    const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1)
+
     // Modal State
     const [isFormOpen, setIsFormOpen] = useState(false)
+    const [isMaterialFormOpen, setIsMaterialFormOpen] = useState(false)
+    const [isQuizFormOpen, setIsQuizFormOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Enroll dialog
@@ -87,6 +109,31 @@ export default function LearningModuleManagementPage() {
             setModules(response.data)
         } catch (error: any) {
             console.error('Failed to fetch modules:', error)
+        }
+    }
+
+    const fetchMaterials = async (learningModuleId: number) => {
+        if (!session?.accessToken) return
+
+        try {
+            const response = await materialService.getMaterialsByLearningModule(
+                learningModuleId,
+                session.accessToken
+            )
+            setMaterials(response.data)
+        } catch (error: any) {
+            console.error('Failed to fetch materials:', error)
+        }
+    }
+
+    const fetchQuizzes = async (learningModuleId: number) => {
+        if (!session?.accessToken) return
+
+        try {
+            const response = await quizService.getQuizzesByModule(learningModuleId, session.accessToken)
+            setQuizzes(response.data)
+        } catch (error: any) {
+            console.error('Failed to fetch quizzes:', error)
         }
     }
 
@@ -144,6 +191,42 @@ export default function LearningModuleManagementPage() {
     const handleEditModule = (module: LearningModule) => {
         setSelectedModule(module)
         setIsFormOpen(true)
+        // Fetch materials and quizzes for this module
+        fetchMaterials(module.nid)
+        fetchQuizzes(module.nid)
+    }
+
+    const handleCreateMaterial = () => {
+        setSelectedMaterial(null)
+        setIsMaterialFormOpen(true)
+    }
+
+    const handleEditMaterial = (material: Material) => {
+        setSelectedMaterial(material)
+        setIsMaterialFormOpen(true)
+    }
+
+    const handleCreateQuiz = () => {
+        setSelectedQuiz(null)
+        setIsQuizFormOpen(true)
+    }
+
+    const handleEditQuiz = (quiz: Quiz) => {
+        setSelectedQuiz(quiz)
+        setIsQuizFormOpen(true)
+    }
+
+    const handleViewQuestions = (quiz: Quiz) => {
+        setSelectedQuiz(quiz)
+        setShowQuestionForm(true)
+        setSelectedQuestion(null)
+        setCurrentQuestionNumber(1)
+    }
+
+    const handleAddQuestion = () => {
+        setSelectedQuestion(null)
+        setCurrentQuestionNumber(quizzes.length + 1)
+        setShowQuestionForm(true)
     }
 
     const handleDeleteModule = async (module: LearningModule) => {
@@ -157,6 +240,174 @@ export default function LearningModuleManagementPage() {
             fetchModules()
         } catch (error: any) {
             toast.error(error.message || 'Failed to delete module')
+        }
+    }
+
+    const handleDeleteMaterial = async (material: Material) => {
+        if (!confirm(`Apakah Anda yakin ingin menghapus materi "${material.vtitle}"?`)) return
+
+        if (!session?.accessToken) return
+
+        try {
+            await materialService.deleteMaterial(material.nid, session.accessToken)
+            toast.success('Materi berhasil dihapus')
+            if (selectedModule) {
+                fetchMaterials(selectedModule.nid)
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Gagal menghapus materi')
+        }
+    }
+
+    const handleMaterialFormSubmit = async (data: MaterialFormData, file?: File) => {
+        if (!session?.accessToken) return
+
+        try {
+            setIsSubmitting(true)
+
+            if (selectedMaterial) {
+                // Update existing material
+                await materialService.updateMaterial(
+                    selectedMaterial.nid,
+                    {
+                        Title: data.title,
+                        Description: data.description,
+                    },
+                    session.accessToken
+                )
+                toast.success('Materi berhasil diperbarui')
+                if (selectedModule) {
+                    fetchMaterials(selectedModule.nid)
+                }
+            } else {
+                // Create new material
+                await materialService.createMaterial(
+                    {
+                        Title: data.title,
+                        Description: data.description,
+                        LearningModuleId: data.learning_module_id,
+                    },
+                    session.accessToken
+                )
+                toast.success('Materi berhasil dibuat')
+                if (selectedModule) {
+                    fetchMaterials(selectedModule.nid)
+                }
+            }
+
+            setIsMaterialFormOpen(false)
+            setSelectedMaterial(null)
+        } catch (error: any) {
+            console.error(error)
+            toast.error(error.message || 'Gagal menyimpan materi')
+            throw error
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const handleDeleteQuiz = async (quiz: Quiz) => {
+        if (!confirm(`Apakah Anda yakin ingin menghapus quiz "${quiz.vtitle}"?`)) return
+
+        if (!session?.accessToken) return
+
+        try {
+            await quizService.deleteQuiz(quiz.nid, session.accessToken)
+            toast.success('Quiz berhasil dihapus')
+            if (selectedModule) {
+                fetchQuizzes(selectedModule.nid)
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Gagal menghapus quiz')
+        }
+    }
+
+    const handleQuizFormSubmit = async (data: QuizFormData) => {
+        if (!session?.accessToken || !selectedModule) return
+
+        try {
+            setIsSubmitting(true)
+
+            if (selectedQuiz) {
+                await quizService.updateQuiz(selectedQuiz.nid, {
+                    Title: data.title,
+                    Description: data.description,
+                    Duration: data.duration,
+                    MaxScore: data.max_score,
+                    PassingScore: data.passing_score,
+                    Status: data.status,
+                    StartDate: data.start_date,
+                    EndDate: data.end_date,
+                }, session.accessToken)
+                toast.success('Quiz berhasil diperbarui')
+            } else {
+                await quizService.createQuiz({
+                    Title: data.title,
+                    Description: data.description,
+                    LearningModuleId: selectedModule.nid,
+                    Duration: data.duration,
+                    MaxScore: data.max_score,
+                    PassingScore: data.passing_score,
+                    Status: data.status,
+                    StartDate: data.start_date,
+                    EndDate: data.end_date,
+                }, session.accessToken)
+                toast.success('Quiz berhasil dibuat')
+            }
+
+            setIsQuizFormOpen(false)
+            setSelectedQuiz(null)
+            if (selectedModule) {
+                fetchQuizzes(selectedModule.nid)
+            }
+        } catch (error: any) {
+            console.error(error)
+            toast.error(error.message || 'Gagal menyimpan quiz')
+            throw error
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const handleQuestionFormSubmit = async (data: QuestionFormData) => {
+        if (!session?.accessToken || !selectedQuiz) return
+
+        try {
+            setIsSubmitting(true)
+
+            const optionsStr = data.options ? JSON.stringify(data.options) : undefined
+
+            if (selectedQuestion) {
+                await quizService.updateQuestion(selectedQuestion.nid, {
+                    Order: data.points,
+                    Question: data.question,
+                    Type: data.type,
+                    Points: data.points,
+                    AnswerKey: data.answer_key,
+                    Options: optionsStr,
+                }, session.accessToken)
+                toast.success('Pertanyaan berhasil diperbarui')
+            } else {
+                await quizService.createQuestion({
+                    QuizId: selectedQuiz.nid,
+                    Order: currentQuestionNumber,
+                    Question: data.question,
+                    Type: data.type,
+                    Points: data.points,
+                    AnswerKey: data.answer_key,
+                    Options: optionsStr,
+                }, session.accessToken)
+                toast.success('Pertanyaan berhasil ditambahkan')
+            }
+
+            setShowQuestionForm(false)
+            setSelectedQuestion(null)
+        } catch (error: any) {
+            console.error(error)
+            toast.error(error.message || 'Gagal menyimpan pertanyaan')
+            throw error
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -182,6 +433,17 @@ export default function LearningModuleManagementPage() {
                 )
                 toast.success('Learning module updated successfully')
             } else {
+                const teacherId = parseInt(session?.user?.id || '0')
+                console.log('Creating LearningModule with:', {
+                    ModuleName: data.module_name,
+                    Description: data.description,
+                    ClassId: selectedClass.nid,
+                    DepartmentId: data.department_id,
+                    SubjectId: data.subject_id,
+                    AcademicYearId: data.academic_year_id,
+                    SchoolTermId: data.school_term_id,
+                    TeacherId: teacherId,
+                })
                 await learningModuleService.createLearningModule(
                     {
                         ModuleName: data.module_name,
@@ -191,6 +453,7 @@ export default function LearningModuleManagementPage() {
                         SubjectId: data.subject_id,
                         AcademicYearId: data.academic_year_id,
                         SchoolTermId: data.school_term_id,
+                        TeacherId: teacherId,
                     },
                     session.accessToken
                 )
@@ -261,7 +524,7 @@ export default function LearningModuleManagementPage() {
                             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
                         >
                             <ArrowLeft className="h-5 w-5" />
-                            <span>Back to Class List</span>
+                            <span>Kembali ke Daftar Kelas</span>
                         </button>
                     </div>
 
@@ -274,12 +537,64 @@ export default function LearningModuleManagementPage() {
                             </p>
                         </div>
                         <div className="p-6">
-                            <p className="text-gray-600">{selectedClass.vdesc || 'No description available'}</p>
+                            <p className="text-gray-600">{selectedClass.vdesc || 'Tidak ada deskripsi'}</p>
                             <div className="flex gap-4 mt-4 text-sm text-gray-500">
                                 <span className="flex items-center gap-1">
                                     <BookOpen className="h-4 w-4" />
-                                    {classModules.length} Modules
+                                    {classModules.length} Modul
                                 </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Statistics Cards - Detail Kelas */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600" />
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600 mb-1">Materi</p>
+                                    <p className="text-3xl font-bold text-gray-900">{classModules.length}</p>
+                                </div>
+                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
+                                    <BookOpen className="h-7 w-7 text-blue-600" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-600" />
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600 mb-1">Tugas</p>
+                                    <p className="text-3xl font-bold text-gray-900">0</p>
+                                </div>
+                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
+                                    <ClipboardList className="h-7 w-7 text-green-600" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-purple-600" />
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600 mb-1">Quiz</p>
+                                    <p className="text-3xl font-bold text-gray-900">0</p>
+                                </div>
+                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-purple-50">
+                                    <FileText className="h-7 w-7 text-purple-600" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-red-600" />
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600 mb-1">Ujian</p>
+                                    <p className="text-3xl font-bold text-gray-900">0</p>
+                                </div>
+                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+                                    <ClipboardCheck className="h-7 w-7 text-red-600" />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -287,11 +602,11 @@ export default function LearningModuleManagementPage() {
                     {/* Modules Section */}
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
                         <div className="border-b border-gray-200 p-6 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-gray-900">Learning Modules</h3>
+                            <h3 className="text-lg font-semibold text-gray-900">Materi Pembelajaran</h3>
                             {canManage && (
                                 <Button onClick={handleCreateModule}>
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Add Module
+                                    Tambah Materi
                                 </Button>
                             )}
                         </div>
@@ -300,11 +615,11 @@ export default function LearningModuleManagementPage() {
                             {classModules.length === 0 ? (
                                 <div className="text-center py-8">
                                     <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                                    <p className="text-gray-500">No learning modules for this class yet</p>
+                                    <p className="text-gray-500">Belum ada modul pembelajaran untuk kelas ini</p>
                                     {canManage && (
                                         <Button onClick={handleCreateModule} className="mt-4">
                                             <Plus className="mr-2 h-4 w-4" />
-                                            Create First Module
+                                            Buat Modul Pertama
                                         </Button>
                                     )}
                                 </div>
@@ -321,7 +636,82 @@ export default function LearningModuleManagementPage() {
                         </div>
                     </div>
 
-                    {/* Form Dialog */}
+                    {/* Materials Section - File/Materi Pelajaran */}
+                    {selectedModule && (
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                            <div className="border-b border-gray-200 p-6 flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-gray-900">File Materi - {selectedModule.vname}</h3>
+                                {canManage && (
+                                    <Button onClick={handleCreateMaterial}>
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Tambah File Materi
+                                    </Button>
+                                )}
+                            </div>
+
+                            <div className="p-6">
+                                {materials.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                                        <p className="text-gray-500">Belum ada file materi untuk modul ini</p>
+                                        {canManage && (
+                                            <Button onClick={handleCreateMaterial} className="mt-4">
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                Upload File Pertama
+                                            </Button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <MaterialList
+                                        materials={materials}
+                                        onEdit={handleEditMaterial}
+                                        onDelete={handleDeleteMaterial}
+                                        isEditable={canManage}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Quiz Section */}
+                    {selectedModule && (
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                            <div className="border-b border-gray-200 p-6 flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-gray-900">Quiz / Ujian - {selectedModule.vname}</h3>
+                                {canManage && (
+                                    <Button onClick={handleCreateQuiz} className="bg-purple-600 hover:bg-purple-700">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Tambah Quiz
+                                    </Button>
+                                )}
+                            </div>
+
+                            <div className="p-6">
+                                {quizzes.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <ClipboardList className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                                        <p className="text-gray-500">Belum ada quiz untuk modul ini</p>
+                                        {canManage && (
+                                            <Button onClick={handleCreateQuiz} className="mt-4 bg-purple-600 hover:bg-purple-700">
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                Buat Quiz Pertama
+                                            </Button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <QuizList
+                                        quizzes={quizzes}
+                                        onEdit={handleEditQuiz}
+                                        onDelete={handleDeleteQuiz}
+                                        onViewQuestions={handleViewQuestions}
+                                        isEditable={canManage}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Form Dialog Learning Module */}
                     {canManage && (
                         <LearningModuleForm
                             open={isFormOpen}
@@ -334,6 +724,42 @@ export default function LearningModuleManagementPage() {
                             subjects={subjects}
                         />
                     )}
+
+                    {/* Form Dialog Material */}
+                    {canManage && (
+                        <MaterialForm
+                            open={isMaterialFormOpen}
+                            onOpenChange={setIsMaterialFormOpen}
+                            onSubmit={handleMaterialFormSubmit}
+                            initialData={selectedMaterial}
+                            isSubmitting={isSubmitting}
+                            learningModules={classModules}
+                        />
+                    )}
+
+                    {/* Form Dialog Quiz */}
+                    {canManage && (
+                        <QuizForm
+                            open={isQuizFormOpen}
+                            onOpenChange={setIsQuizFormOpen}
+                            onSubmit={handleQuizFormSubmit}
+                            initialData={selectedQuiz}
+                            isSubmitting={isSubmitting}
+                            learningModules={classModules}
+                        />
+                    )}
+
+                    {/* Form Dialog Question */}
+                    {canManage && selectedQuiz && (
+                        <QuestionForm
+                            open={showQuestionForm}
+                            onOpenChange={setShowQuestionForm}
+                            onSubmit={handleQuestionFormSubmit}
+                            initialData={selectedQuestion}
+                            isSubmitting={isSubmitting}
+                            questionNumber={currentQuestionNumber}
+                        />
+                    )}
                 </div>
             </div>
         )
@@ -343,37 +769,53 @@ export default function LearningModuleManagementPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
             <div className="mx-auto max-w-7xl space-y-6">
-                {/* Header Section */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
-                            Learning Module Management
-                        </h1>
-                        <p className="text-sm text-gray-600 mt-1">
-                            {isGuru ? 'Manage learning modules for your classes' : 'Browse and enroll to learning modules'}
-                        </p>
-                    </div>
-                    <div className="flex gap-2">
-                        {isMurid && (
-                            <Button onClick={() => setIsEnrollOpen(true)} className="bg-green-600 hover:bg-green-700">
-                                <Key className="mr-2 h-4 w-4" />
-                                Enroll with Token
-                            </Button>
-                        )}
-                    </div>
-                </div>
-
-                {/* Statistics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Statistics Cards - Pembelajaran */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600" />
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">Total Classes</p>
-                                <p className="text-3xl font-bold text-gray-900">{totalRecords}</p>
+                                <p className="text-sm font-medium text-gray-600 mb-1">Materi</p>
+                                <p className="text-3xl font-bold text-gray-900">{modules.length}</p>
                             </div>
                             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
                                 <BookOpen className="h-7 w-7 text-blue-600" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-600" />
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-gray-600 mb-1">Tugas</p>
+                                <p className="text-3xl font-bold text-gray-900">0</p>
+                            </div>
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
+                                <ClipboardList className="h-7 w-7 text-green-600" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-purple-600" />
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-gray-600 mb-1">Quiz</p>
+                                <p className="text-3xl font-bold text-gray-900">0</p>
+                            </div>
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-purple-50">
+                                <FileText className="h-7 w-7 text-purple-600" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-red-600" />
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-gray-600 mb-1">Ujian</p>
+                                <p className="text-3xl font-bold text-gray-900">0</p>
+                            </div>
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+                                <ClipboardCheck className="h-7 w-7 text-red-600" />
                             </div>
                         </div>
                     </div>
@@ -387,7 +829,7 @@ export default function LearningModuleManagementPage() {
                                 <Search className="h-5 w-5 text-gray-500" />
                                 <Input
                                     className="border-none bg-transparent text-gray-900 placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
-                                    placeholder="Search classes..."
+                                    placeholder="Cari kelas..."
                                     value={searchTerm}
                                     onChange={(e) => {
                                         setSearchTerm(e.target.value)
@@ -406,7 +848,7 @@ export default function LearningModuleManagementPage() {
 
                             <div className="flex items-center gap-3">
                                 <p className="text-sm text-gray-600">
-                                    Showing <span className="font-semibold text-gray-900">{filteredClasses.length}</span> classes
+                                    Menampilkan <span className="font-semibold text-gray-900">{filteredClasses.length}</span> kelas
                                 </p>
                             </div>
                         </div>

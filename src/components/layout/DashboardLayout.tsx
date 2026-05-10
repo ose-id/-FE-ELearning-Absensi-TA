@@ -5,12 +5,17 @@ import { TooltipProvider } from '@/contexts/tooltipProviders'
 import { NextAuthProvider } from '@/contexts/nextAuthProviders'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar from './DashboardSidebar'
+import { useSession } from 'next-auth/react'
+import { usePathname, useRouter } from 'next/navigation'
 
 interface DashboardLayoutProps {
   children: ReactNode
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession()
+  const pathname = usePathname()
+  const router = useRouter()
   const [sidebarExpanded, setSidebarExpanded] = useState(false)
 
   // Initialize sidebar state based on screen width
@@ -29,6 +34,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // Forced password change logic
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.mustChangePassword) {
+      if (pathname !== '/change-password') {
+        router.push('/change-password')
+      }
+    }
+  }, [session, status, pathname, router])
 
   const handleClickOutside = () => {
     setSidebarExpanded(false)
