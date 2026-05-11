@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/select/Select'
 
 import { LearningModule } from '@/types/learning-module'
-import { Department } from '@/types/department'
+
 import { Class } from '@/types/class'
 import { Subject } from '@/types/subject'
 import { lovService, LOVItem } from '@/services/lov.service'
@@ -59,7 +59,7 @@ interface LearningModuleFormProps {
     onSubmit: (data: LearningModuleFormData) => Promise<void>
     initialData?: LearningModule | null
     isSubmitting: boolean
-    departments: Department[]
+    departments: LOVItem[]
     classes: Class[]
     subjects: Subject[]
 }
@@ -124,8 +124,8 @@ export default function LearningModuleForm({
                     class_id: initialData.nid_class,
                     department_id: initialData.nid_department,
                     subject_id: initialData.nid_subject,
-                    academic_year_id: (initialData as any).academic_year_id || 0,
-                    school_term_id: (initialData as any).school_term_id || 0,
+                    academic_year_id: initialData.academic_year_id || 0,
+                    school_term_id: initialData.school_term_id || 0,
                 })
             } else {
                 form.reset({
@@ -177,15 +177,14 @@ export default function LearningModuleForm({
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select Department">
-                                                        {departments.find(d => d.nid === field.value)?.vdepartment_name || 
-                                                         (departments.find(d => d.nid === field.value) as any)?.label}
+                                                        {departments.find(d => d.nid === field.value)?.label}
                                                     </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
                                                 {departments.map((dept) => (
                                                     <SelectItem key={dept.nid} value={dept.nid.toString()}>
-                                                        {(dept as any).label || dept.vdepartment_name}
+                                                        {dept.label}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -215,7 +214,7 @@ export default function LearningModuleForm({
                                             <SelectContent>
                                                 {classes.map((cls) => (
                                                     <SelectItem key={cls.nid} value={cls.nid.toString()}>
-                                                        {(cls as any).label || cls.vname}
+                                                        {cls.vname}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -247,7 +246,7 @@ export default function LearningModuleForm({
                                             <SelectContent>
                                                 {subjects.map((subj) => (
                                                     <SelectItem key={subj.nid} value={subj.nid.toString()}>
-                                                        {(subj as any).label || subj.vsubject_name}
+                                                        {subj.vsubject_name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>

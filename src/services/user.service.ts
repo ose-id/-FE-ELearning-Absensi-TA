@@ -196,35 +196,51 @@ class UserService {
         })
     }
 
-    // Creates profile in Class API (LMS_ClassDB database) - for Student only
+    // Creates profile in Class API (LMS_ClassDB database) - for Student and Teacher
     async createProfileInClassDb(data: any, token: string): Promise<void> {
         const roleNid = data.role_nid || data.role_id
 
-        // Only Student (3) needs profile in ClassDB for class assignments
-        // Admin (1) and Teacher (2) do NOT need ClassDB profile
-        if (roleNid !== 3) {
-            console.log('[UserService] Admin/Teacher do not need ClassDB profile, skipping...')
+        // Student (3) and Teacher (2) need profile in ClassDB
+        if (roleNid !== 2 && roleNid !== 3) {
+            console.log('[UserService] Role does not need ClassDB profile, skipping...')
             return
         }
 
-        const endpoint = `${this.classBaseUrl}/Student`
+        const endpoint = roleNid === 2 ? `${this.classBaseUrl}/Teacher` : `${this.classBaseUrl}/Student`
 
         console.log(`[UserService] Creating profile in ClassDB via ${endpoint}...`)
 
-        // Student payload for ClassDB
-        const profileData = {
-            username:    data.username,
-            email:       data.email,
-            fullname:    data.fullname || '',
-            birthdate:   data.birthdate || '',
-            address:     data.address || '',
-            phone:       data.phone || '',
-            whatsapp:    data.whatsapp || '',
-            nis:         data.nis || '',
-            class_id:    data.class_id ? Number(data.class_id) : 0,
-            parent_name: data.parent_name || '',
-            parent_phone: data.parent_phone || '',
-            status:      data.status || 'active',
+        let profileData: any
+        if (roleNid === 2) {
+            // Teacher payload for ClassDB
+            profileData = {
+                username:  data.username,
+                email:     data.email,
+                fullname:  data.fullname || '',
+                birthdate: data.birthdate || '',
+                address:   data.address || '',
+                phone:     data.phone || '',
+                whatsapp:  data.whatsapp || '',
+                nip:       data.nik || data.nip || '',
+                degree:    data.degree || '',
+                status:    data.status || 'active',
+            }
+        } else {
+            // Student payload for ClassDB
+            profileData = {
+                username:    data.username,
+                email:       data.email,
+                fullname:    data.fullname || '',
+                birthdate:   data.birthdate || '',
+                address:     data.address || '',
+                phone:       data.phone || '',
+                whatsapp:    data.whatsapp || '',
+                nis:         data.nis || '',
+                class_id:    data.class_id ? Number(data.class_id) : 0,
+                parent_name: data.parent_name || '',
+                parent_phone: data.parent_phone || '',
+                status:      data.status || 'active',
+            }
         }
 
         await this.fetchWithAuth(endpoint, {
@@ -241,10 +257,11 @@ class UserService {
             await this.createProfile(data, token)
             console.log('[UserService] User created successfully in Auth API')
 
-            // Step 2: Create profile in Class API (LMS_ClassDB) so they are automatically enrolled
-            if ((data.role_nid || data.role_id) === 3) {
+            // Step 2: Create profile in Class API (LMS_ClassDB)
+            const roleNid = data.role_nid || data.role_id
+            if (roleNid === 2 || roleNid === 3) {
                 await this.createProfileInClassDb(data, token)
-                console.log('[UserService] User created successfully in ClassDB')
+                console.log('[UserService] Profile created successfully in ClassDB')
             }
 
             console.log('[UserService] User creation completed')

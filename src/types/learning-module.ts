@@ -48,6 +48,7 @@ export interface CreateLearningModuleRequest {
     AcademicYearId: number
     SchoolTermId: number
     TeacherId?: number // Required when Admin creates, optional for Guru (uses current user)
+    NidTeacher?: number // Legacy alias for TeacherId used by some backend versions
 }
 
 export interface UpdateLearningModuleRequest {
@@ -65,5 +66,5 @@ export interface EnrollLearningModuleRequest {
     EnrollmentToken: string
 }
 
-export interface LearningModuleListResponse extends ApiResponse<LearningModule> { }
-export interface LearningModuleDetailResponse extends ApiResponse<LearningModule> { }
+export type LearningModuleListResponse = ApiResponse<LearningModule>
+export type LearningModuleDetailResponse = ApiResponse<LearningModule>

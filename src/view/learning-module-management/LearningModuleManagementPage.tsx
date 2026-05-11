@@ -15,11 +15,10 @@ import { quizService } from '@/services/quiz.service'
 import { departmentService } from '@/services/department.service'
 import { classService } from '@/services/class.service'
 import { subjectService } from '@/services/subject.service'
-import { lovService } from '@/services/lov.service'
-import { LearningModule } from '@/types/learning-module'
+import { lovService, LOVItem } from '@/services/lov.service'
+import { LearningModule, CreateLearningModuleRequest } from '@/types/learning-module'
 import { Material } from '@/types/material'
-import { Quiz } from '@/types/quiz'
-import { Department } from '@/types/department'
+import { Quiz, QuizQuestion } from '@/types/quiz'
 import { Class } from '@/types/class'
 import { Subject } from '@/types/subject'
 import LearningModuleList from './LearningModuleList'
@@ -31,11 +30,17 @@ import QuizForm, { QuizFormData } from './QuizForm'
 import QuestionForm, { QuestionFormData } from './QuestionForm'
 import EnrollModuleDialog from './EnrollModuleDialog'
 
+/** Extracts a human-readable message from an unknown catch value */
+function getErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof Error) return error.message || fallback
+    return fallback
+}
+
 export default function LearningModuleManagementPage() {
     const { data: session } = useSession()
     const [classes, setClasses] = useState<Class[]>([])
     const [modules, setModules] = useState<LearningModule[]>([])
-    const [departments, setDepartments] = useState<Department[]>([])
+    const [departments, setDepartments] = useState<LOVItem[]>([])
     const [subjects, setSubjects] = useState<Subject[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
@@ -56,7 +61,7 @@ export default function LearningModuleManagementPage() {
     const [quizzes, setQuizzes] = useState<Quiz[]>([])
     const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
     const [showQuestionForm, setShowQuestionForm] = useState(false)
-    const [selectedQuestion, setSelectedQuestion] = useState<any>(null)
+    const [selectedQuestion, setSelectedQuestion] = useState<QuizQuestion | null>(null)
     const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1)
 
     // Modal State
@@ -88,9 +93,9 @@ export default function LearningModuleManagementPage() {
             )
             setClasses(response.data)
             setTotalRecords(response.totalRecords)
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to fetch classes:', error)
-            toast.error(error.message || 'Failed to load classes')
+            toast.error(getErrorMessage(error, 'Failed to load classes'))
         } finally {
             setLoading(false)
         }
@@ -107,7 +112,7 @@ export default function LearningModuleManagementPage() {
                 searchTerm || undefined
             )
             setModules(response.data)
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to fetch modules:', error)
         }
     }
@@ -121,7 +126,7 @@ export default function LearningModuleManagementPage() {
                 session.accessToken
             )
             setMaterials(response.data)
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to fetch materials:', error)
         }
     }
@@ -132,7 +137,7 @@ export default function LearningModuleManagementPage() {
         try {
             const response = await quizService.getQuizzesByModule(learningModuleId, session.accessToken)
             setQuizzes(response.data)
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to fetch quizzes:', error)
         }
     }
@@ -141,8 +146,8 @@ export default function LearningModuleManagementPage() {
         if (!session?.accessToken) return
         try {
             const response = await lovService.getDepartments(session.accessToken)
-            setDepartments(response as any)
-        } catch (error: any) {
+            setDepartments(response)
+        } catch (error: unknown) {
             console.error('Failed to fetch departments:', error)
         }
     }
@@ -152,7 +157,7 @@ export default function LearningModuleManagementPage() {
         try {
             const response = await subjectService.getAllSubjects(session.accessToken, 1, 100)
             setSubjects(response.data)
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to fetch subjects:', error)
         }
     }
@@ -238,8 +243,8 @@ export default function LearningModuleManagementPage() {
             await learningModuleService.deleteLearningModule(module.nid, session.accessToken)
             toast.success('Learning module deleted successfully')
             fetchModules()
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to delete module')
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Failed to delete module'))
         }
     }
 
@@ -254,8 +259,8 @@ export default function LearningModuleManagementPage() {
             if (selectedModule) {
                 fetchMaterials(selectedModule.nid)
             }
-        } catch (error: any) {
-            toast.error(error.message || 'Gagal menghapus materi')
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Gagal menghapus materi'))
         }
     }
 
@@ -297,9 +302,9 @@ export default function LearningModuleManagementPage() {
 
             setIsMaterialFormOpen(false)
             setSelectedMaterial(null)
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error)
-            toast.error(error.message || 'Gagal menyimpan materi')
+            toast.error(getErrorMessage(error, 'Gagal menyimpan materi'))
             throw error
         } finally {
             setIsSubmitting(false)
@@ -317,8 +322,8 @@ export default function LearningModuleManagementPage() {
             if (selectedModule) {
                 fetchQuizzes(selectedModule.nid)
             }
-        } catch (error: any) {
-            toast.error(error.message || 'Gagal menghapus quiz')
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Gagal menghapus quiz'))
         }
     }
 
@@ -360,9 +365,9 @@ export default function LearningModuleManagementPage() {
             if (selectedModule) {
                 fetchQuizzes(selectedModule.nid)
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error)
-            toast.error(error.message || 'Gagal menyimpan quiz')
+            toast.error(getErrorMessage(error, 'Gagal menyimpan quiz'))
             throw error
         } finally {
             setIsSubmitting(false)
@@ -402,9 +407,9 @@ export default function LearningModuleManagementPage() {
 
             setShowQuestionForm(false)
             setSelectedQuestion(null)
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error)
-            toast.error(error.message || 'Gagal menyimpan pertanyaan')
+            toast.error(getErrorMessage(error, 'Gagal menyimpan pertanyaan'))
             throw error
         } finally {
             setIsSubmitting(false)
@@ -434,7 +439,7 @@ export default function LearningModuleManagementPage() {
                 toast.success('Learning module updated successfully')
             } else {
                 const teacherId = parseInt(session?.user?.id || '0')
-                console.log('Creating LearningModule with:', {
+                const payload: CreateLearningModuleRequest = {
                     ModuleName: data.module_name,
                     Description: data.description,
                     ClassId: selectedClass.nid,
@@ -442,29 +447,21 @@ export default function LearningModuleManagementPage() {
                     SubjectId: data.subject_id,
                     AcademicYearId: data.academic_year_id,
                     SchoolTermId: data.school_term_id,
+                    // Sending both to be safe, as some backend versions use NidTeacher
                     TeacherId: teacherId,
-                })
-                await learningModuleService.createLearningModule(
-                    {
-                        ModuleName: data.module_name,
-                        Description: data.description,
-                        ClassId: selectedClass.nid,
-                        DepartmentId: data.department_id,
-                        SubjectId: data.subject_id,
-                        AcademicYearId: data.academic_year_id,
-                        SchoolTermId: data.school_term_id,
-                        TeacherId: teacherId,
-                    },
-                    session.accessToken
-                )
+                    NidTeacher: teacherId
+                }
+
+                console.log('Creating LearningModule with:', payload)
+                await learningModuleService.createLearningModule(payload, session.accessToken)
                 toast.success('Learning module created successfully')
             }
 
             setIsFormOpen(false)
             fetchModules()
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error)
-            toast.error(error.message || 'Failed to save module')
+            toast.error(getErrorMessage(error, 'Failed to save module'))
             throw error
         } finally {
             setIsSubmitting(false)
@@ -483,9 +480,9 @@ export default function LearningModuleManagementPage() {
             toast.success('Successfully enrolled to module!')
             setIsEnrollOpen(false)
             fetchModules()
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error)
-            toast.error(error.message || 'Failed to enroll')
+            toast.error(getErrorMessage(error, 'Failed to enroll'))
             throw error
         } finally {
             setIsEnrolling(false)
@@ -899,8 +896,8 @@ export default function LearningModuleManagementPage() {
                                                     <span className="inline-block rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
                                                         {(() => {
                                                             if (cls.Department?.vdepartment_name) return cls.Department.vdepartment_name;
-                                                            const dept = departments.find((d: any) => d.nid === cls.nid_department);
-                                                            return (dept as any)?.label || dept?.vdepartment_name || `Dept ${cls.nid_department}`;
+                                                            const dept = departments.find(d => d.nid === cls.nid_department);
+                                                            return dept?.label || `Dept ${cls.nid_department}`;
                                                         })()}
                                                     </span>
                                                 </div>
