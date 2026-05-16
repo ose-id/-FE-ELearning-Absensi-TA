@@ -9,6 +9,8 @@ export interface LearningModule {
     nid_department: number
     nid_teacher: number
     nid_subject: number
+    nid_academic_year?: number
+    nid_school_term?: number
     academic_year_id?: number
     school_term_id?: number
     venrollment_token?: string
@@ -20,23 +22,20 @@ export interface LearningModule {
     vcrea?: string
     dmodi?: string
     vmodi?: string
-    Class?: {
-        nid: number
-        vname: string
-    }
-    Department?: {
-        nid: number
-        vdepartment_name: string
-    }
-    Subject?: {
-        nid: number
-        vsubject_name: string
-    }
-    Teacher?: {
-        nid: number
-        vname?: string
-        vfull_name?: string
-    }
+    // Nested objects — API returns lowercase (class, department, subject)
+    // but some code uses PascalCase, so we support both
+    Class?: { nid: number; vname: string }
+    class?: { nid: number; vname: string }
+    Department?: { nid: number; vdepartment_name: string }
+    department?: { nid: number; vdepartment_name: string }
+    Subject?: { nid: number; vsubject_name: string }
+    subject?: { nid: number; vsubject_name: string }
+    Teacher?: { nid: number; vname?: string; vfull_name?: string }
+    teacher?: { nid: number; vname?: string; vfull_name?: string }
+    AcademicYear?: { nid: number; vyear?: string; vacademic_year_name?: string }
+    academicYear?: { nid: number; vyear?: string; vacademic_year_name?: string }
+    SchoolTerm?: { nid: number; vname?: string; vterm_name?: string }
+    schoolTerm?: { nid: number; vname?: string; vterm_name?: string }
 }
 
 export interface CreateLearningModuleRequest {

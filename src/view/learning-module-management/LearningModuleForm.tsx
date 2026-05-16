@@ -124,8 +124,8 @@ export default function LearningModuleForm({
                     class_id: initialData.nid_class,
                     department_id: initialData.nid_department,
                     subject_id: initialData.nid_subject,
-                    academic_year_id: initialData.academic_year_id || 0,
-                    school_term_id: initialData.school_term_id || 0,
+                    academic_year_id: initialData.nid_academic_year || initialData.academic_year_id || 0,
+                    school_term_id: initialData.nid_school_term || initialData.school_term_id || 0,
                 })
             } else {
                 form.reset({

@@ -98,57 +98,80 @@ export default function UserManagementPage() {
         }
     }
 
-    // Export users to Excel
+    // Export users to Excel - matching import template fields
     const handleExport = () => {
         if (users.length === 0) {
             toast.warning('Tidak ada data user untuk di-export')
             return
         }
 
-        const exportData = users.map(user => ({
-            'Username': user.username || '',
-            'Nama Lengkap': user.fullname || '',
-            'Email': user.email || '',
-            'NIK / NIP': user.nik || user.nip || '',
-            'NIS': user.nis || '',
-            'Nomor Telepon': user.phone || '',
-            'WhatsApp': user.whatsapp || '',
-            'Tanggal Lahir': user.birthdate || '',
-            'Alamat': user.address || '',
-            'Gelar': user.degree || '',
-            'Peran': user.vrole_name || user.role_name || '',
-            'Kelas': user.class_name || '-',
-            'Nama Orang Tua': user.parent_name || '',
-            'Telepon Orang Tua': user.parent_phone || '',
-            'Status': user.status === 'active' ? 'Aktif' : 'Non-Aktif',
-            'Tanggal Dibuat': user.created_at ? new Date(user.created_at).toLocaleDateString('id-ID') : '',
-        }))
+        // Separate by role_nid: 3=Student, 2=Teacher, 1=Admin
+        const students = users.filter(u => u.role_nid === 3)
+        const teachers = users.filter(u => u.role_nid === 2)
+        const admins = users.filter(u => u.role_nid === 1)
 
-        const ws = XLSX.utils.json_to_sheet(exportData)
-        const wb = XLSX.utils.book_new()
-        XLSX.utils.book_append_sheet(wb, ws, 'Data User')
+        const ws = XLSX.utils.book_new()
 
-        // Set column widths
-        ws['!cols'] = [
-            { wch: 15 }, // Username
-            { wch: 25 }, // Nama Lengkap
-            { wch: 25 }, // Email
-            { wch: 18 }, // NIK/NIP
-            { wch: 15 }, // NIS
-            { wch: 15 }, // Phone
-            { wch: 15 }, // WhatsApp
-            { wch: 15 }, // Birthdate
-            { wch: 30 }, // Address
-            { wch: 15 }, // Degree
-            { wch: 12 }, // Role
-            { wch: 15 }, // Class
-            { wch: 25 }, // Parent Name
-            { wch: 15 }, // Parent Phone
-            { wch: 12 }, // Status
-            { wch: 18 }, // Created At
-        ]
+        // Export Students sheet
+        if (students.length > 0) {
+            const studentData = students.map(user => ({
+                'username': user.username || '',
+                'email': user.email || '',
+                'password': '',
+                'fullname': user.fullname || '',
+                'nis': user.nis || '',
+                'class_id': user.class_id || '',
+                'phone': user.phone || '',
+                'whatsapp': user.whatsapp || '',
+                'birthdate': user.birthdate || '',
+                'address': user.address || '',
+                'parent_name': user.parent_name || '',
+                'parent_phone': user.parent_phone || '',
+                'status': user.status || '',
+            }))
+            const wsStudents = XLSX.utils.json_to_sheet(studentData)
+            XLSX.utils.book_append_sheet(ws, wsStudents, 'Students')
+        }
 
-        XLSX.writeFile(wb, `export_user_${new Date().toISOString().split('T')[0]}.xlsx`)
+        // Export Teachers sheet
+        if (teachers.length > 0) {
+            const teacherData = teachers.map(user => ({
+                'username': user.username || '',
+                'email': user.email || '',
+                'password': '',
+                'fullname': user.fullname || '',
+                'nip': user.nip || '',
+                'degree': user.degree || '',
+                'phone': user.phone || '',
+                'whatsapp': user.whatsapp || '',
+                'birthdate': user.birthdate || '',
+                'address': user.address || '',
+                'status': user.status || '',
+            }))
+            const wsTeachers = XLSX.utils.json_to_sheet(teacherData)
+            XLSX.utils.book_append_sheet(ws, wsTeachers, 'Teachers')
+        }
+
+        // Export Admins sheet
+        if (admins.length > 0) {
+            const adminData = admins.map(user => ({
+                'username': user.username || '',
+                'email': user.email || '',
+                'password': '',
+                'fullname': user.fullname || '',
+                'nip': user.nip || '',
+                'degree': user.degree || '',
+                'phone': user.phone || '',
+                'whatsapp': user.whatsapp || '',
+                'birthdate': user.birthdate || '',
+                'address': user.address || '',
+                'status': user.status || '',
+            }))
+            const wsAdmins = XLSX.utils.json_to_sheet(adminData)
+            XLSX.utils.book_append_sheet(ws, wsAdmins, 'Admins')
+        }
+
+        XLSX.writeFile(ws, `users_export_${new Date().toISOString().split('T')[0]}.xlsx`)
         toast.success('Data user berhasil di-export')
     }
 

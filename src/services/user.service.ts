@@ -250,25 +250,13 @@ class UserService {
         })
     }
 
-    // Creates user in BOTH Auth API (LMS_Auth) AND Class API (LMS_ClassDB)
+    // Creates user in Auth API (LMS_Auth)
+    // Note: ClassDB profile is automatically created by backend when creating user in Auth API
     async createUser(data: any, token: string): Promise<void> {
-        try {
-            // Step 1: Create profile in Auth API (LMS_Auth)
-            await this.createProfile(data, token)
-            console.log('[UserService] User created successfully in Auth API')
-
-            // Step 2: Create profile in Class API (LMS_ClassDB)
-            const roleNid = data.role_nid || data.role_id
-            if (roleNid === 2 || roleNid === 3) {
-                await this.createProfileInClassDb(data, token)
-                console.log('[UserService] Profile created successfully in ClassDB')
-            }
-
-            console.log('[UserService] User creation completed')
-        } catch (error: any) {
-            console.error('[UserService] createUser flow error:', error)
-            throw error
-        }
+        // Step 1: Create profile in Auth API (LMS_Auth)
+        // Backend will automatically create ClassDB profile
+        await this.createProfile(data, token)
+        console.log('[UserService] User created successfully (ClassDB profile auto-created by backend)')
     }
 
     async updateUser(id: number, roleNid: number, data: any, token: string): Promise<void> {
@@ -290,11 +278,38 @@ class UserService {
             }
         }
 
+        // Include password if provided (for password change)
+        if (data.password) {
+            updatedData.password = data.password
+        }
+
         await this.fetchWithAuth(`${endpoint}/${id}`, {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` },
             body: JSON.stringify(updatedData),
         })
+    }
+
+    // Change password via Auth API
+    async changePassword(userId: number, newPassword: string, token: string): Promise<void> {
+        const authEndpoint = `${AUTH_API_URL}/api/Auth/changepassword`
+
+        const response = await fetch(authEndpoint, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                userId: userId,
+                newPassword: newPassword,
+            }),
+        })
+
+        if (!response.ok) {
+            const result = await response.json().catch(() => ({}))
+            throw new Error(result.message || 'Failed to change password')
+        }
     }
 
     async deleteUser(id: number, roleNid: number, token: string): Promise<void> {

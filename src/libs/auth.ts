@@ -79,9 +79,10 @@ export const authOptions: NextAuthOptions = {
                         ? response.message.Error
                         : 'Authentication failed'
                     throw new Error(errorMsg)
-                } catch (error: any) {
+                } catch (error) {
                     console.error('[NextAuth] Login error:', error)
-                    throw new Error(error.message || 'Authentication failed')
+                    const errorMessage = error instanceof Error ? error.message : 'Authentication failed'
+                    throw new Error(errorMessage)
                 }
             },
         }),
@@ -117,7 +118,7 @@ export const authOptions: NextAuthOptions = {
 
             // Check if token is expired and refresh it
             const now = Math.floor(Date.now() / 1000)
-            const tokenExpiresAt = token.iat + (token.expiresIn || 3600)
+            const tokenExpiresAt = (token.iat as number) + ((token.expiresIn as number) || 3600)
 
             if (now < tokenExpiresAt) {
                 console.log('[NextAuth JWT] Token still valid')
@@ -128,8 +129,8 @@ export const authOptions: NextAuthOptions = {
 
             try {
                 const refreshResponse = await authService.refreshToken({
-                    token: token.accessToken,
-                    refreshToken: token.refreshToken,
+                    token: token.accessToken as string,
+                    refreshToken: token.refreshToken as string,
                 })
 
                 if (refreshResponse.status === '1' && refreshResponse.data && refreshResponse.data.length > 0) {

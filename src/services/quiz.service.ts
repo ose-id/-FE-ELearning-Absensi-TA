@@ -1,6 +1,6 @@
 import { Quiz, QuizQuestion, StudentQuizAttempt, CreateQuizRequest, UpdateQuizRequest, CreateQuestionRequest, UpdateQuestionRequest } from '@/types/quiz'
 
-const QUIZ_API_URL = process.env.NEXT_PUBLIC_QUIZ_API_URL || process.env.QUIZ_API_URL || 'https://localhost:32773'
+const QUIZ_API_URL = process.env.NEXT_PUBLIC_ASSIGNMENT_API_URL || process.env.ASSIGNMENT_API_URL || 'https://localhost:5005'
 
 class QuizService {
     private baseUrl: string
@@ -11,22 +11,31 @@ class QuizService {
 
     private async fetchWithAuth(url: string, options: RequestInit = {}) {
         console.log(`[QuizService] Fetching: ${url}`)
-        const res = await fetch(url, {
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
-        })
 
-        console.log(`[QuizService] Response status: ${res.status} ${res.statusText}`)
+        try {
+            const res = await fetch(url, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                },
+            })
 
-        if (!res.ok) {
-            const errorData = await res.json().catch(() => ({}))
-            console.error(`[QuizService] Error response:`, errorData)
-            throw new Error(errorData.message?.message || errorData.title || errorData.message || `API request failed (${res.status})`)
+            console.log(`[QuizService] Response status: ${res.status} ${res.statusText}`)
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}))
+                console.error(`[QuizService] Error response:`, errorData)
+                throw new Error(errorData.message?.message || errorData.title || errorData.message || `API request failed (${res.status})`)
+            }
+            return res.json()
+        } catch (error: any) {
+            console.error(`[QuizService] Network error:`, error)
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                throw new Error('Quiz service tidak tersedia. Pastikan service sedang running.')
+            }
+            throw error
         }
-        return res.json()
     }
 
     // Quiz CRUD
@@ -64,12 +73,12 @@ class QuizService {
     }
 
     async getQuizzesByModule(learningModuleId: number, token: string): Promise<{ data: Quiz[], totalRecords: number }> {
-        const response = await this.fetchWithAuth(`${this.baseUrl}/learning-module/${learningModuleId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
+        // Backend doesn't have direct endpoint, so fetch all and filter client-side
+        const response = await this.getQuizzes(token, undefined, 1, 100)
+        const filtered = response.data.filter(q => q.nid_learning_module === learningModuleId)
         return {
-            data: response.data || [],
-            totalRecords: response.totalRecords || 0
+            data: filtered,
+            totalRecords: filtered.length
         }
     }
 

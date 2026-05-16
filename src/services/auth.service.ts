@@ -174,6 +174,42 @@ class AuthService {
             throw error
         }
     }
+
+    /**
+     * Change user password
+     */
+    async changePassword(userId: number, newPassword: string, currentPassword: string, token: string): Promise<any> {
+        try {
+            const response = await fetch(`${this.baseUrl}/password`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    currentPassword: currentPassword,
+                    newPassword: newPassword,
+                }),
+            })
+
+            const result = await response.json().catch(() => ({}))
+
+            if (!response.ok) {
+                const errorMessage =
+                    result.message?.Error ||
+                    result.message ||
+                    result.title ||
+                    'Failed to change password'
+                throw new Error(errorMessage)
+            }
+
+            return result
+        } catch (error) {
+            console.error('[AuthService] Change password error:', error)
+            throw error
+        }
+    }
 }
 
 export const authService = new AuthService()

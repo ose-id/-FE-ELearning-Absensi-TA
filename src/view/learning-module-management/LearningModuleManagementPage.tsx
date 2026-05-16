@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, Loader2, BookOpen, Filter, X, Key, GraduationCap, ArrowLeft, Users, FileText, ClipboardList, ClipboardCheck } from 'lucide-react'
+import { Plus, Search, Loader2, BookOpen, Filter, X, Key, GraduationCap, ArrowLeft, Users, FileText, ClipboardList, ClipboardCheck, Edit, Trash2 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 
@@ -12,6 +12,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { learningModuleService } from '@/services/learning-module.service'
 import { materialService } from '@/services/material.service'
 import { quizService } from '@/services/quiz.service'
+import { examService } from '@/services/exam.service'
 import { departmentService } from '@/services/department.service'
 import { classService } from '@/services/class.service'
 import { subjectService } from '@/services/subject.service'
@@ -19,14 +20,15 @@ import { lovService, LOVItem } from '@/services/lov.service'
 import { LearningModule, CreateLearningModuleRequest } from '@/types/learning-module'
 import { Material } from '@/types/material'
 import { Quiz, QuizQuestion } from '@/types/quiz'
+import { Exam } from '@/types/exam'
 import { Class } from '@/types/class'
 import { Subject } from '@/types/subject'
-import LearningModuleList from './LearningModuleList'
 import LearningModuleForm, { LearningModuleFormData } from './LearningModuleForm'
 import MaterialList from './MaterialList'
 import MaterialForm, { MaterialFormData } from './MaterialForm'
 import QuizList from './QuizList'
 import QuizForm, { QuizFormData } from './QuizForm'
+import ExamForm, { ExamFormData } from './ExamForm'
 import QuestionForm, { QuestionFormData } from './QuestionForm'
 import EnrollModuleDialog from './EnrollModuleDialog'
 
@@ -42,6 +44,8 @@ export default function LearningModuleManagementPage() {
     const [modules, setModules] = useState<LearningModule[]>([])
     const [departments, setDepartments] = useState<LOVItem[]>([])
     const [subjects, setSubjects] = useState<Subject[]>([])
+    const [academicYears, setAcademicYears] = useState<LOVItem[]>([])
+    const [schoolTerms, setSchoolTerms] = useState<LOVItem[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [departmentFilter, setDepartmentFilter] = useState<string>('All')
@@ -63,6 +67,11 @@ export default function LearningModuleManagementPage() {
     const [showQuestionForm, setShowQuestionForm] = useState(false)
     const [selectedQuestion, setSelectedQuestion] = useState<QuizQuestion | null>(null)
     const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1)
+
+    // Exam state
+    const [exams, setExams] = useState<Exam[]>([])
+    const [selectedExam, setSelectedExam] = useState<Exam | null>(null)
+    const [isExamFormOpen, setIsExamFormOpen] = useState(false)
 
     // Modal State
     const [isFormOpen, setIsFormOpen] = useState(false)
@@ -105,11 +114,14 @@ export default function LearningModuleManagementPage() {
         if (!session?.accessToken) return
 
         try {
+            // Only fetch learning modules assigned to this teacher
+            const teacherId = parseInt(session.user?.id || '0')
             const response = await learningModuleService.getAllLearningModules(
                 session.accessToken,
                 1,
                 100,
-                searchTerm || undefined
+                searchTerm || undefined,
+                teacherId
             )
             setModules(response.data)
         } catch (error: unknown) {
@@ -142,6 +154,17 @@ export default function LearningModuleManagementPage() {
         }
     }
 
+    const fetchExams = async (learningModuleId: number) => {
+        if (!session?.accessToken) return
+
+        try {
+            const response = await examService.getExamsByModule(learningModuleId, session.accessToken)
+            setExams(response.data)
+        } catch (error: unknown) {
+            console.error('Failed to fetch exams:', error)
+        }
+    }
+
     const fetchDepartments = async () => {
         if (!session?.accessToken) return
         try {
@@ -149,6 +172,26 @@ export default function LearningModuleManagementPage() {
             setDepartments(response)
         } catch (error: unknown) {
             console.error('Failed to fetch departments:', error)
+        }
+    }
+
+    const fetchAcademicYears = async () => {
+        if (!session?.accessToken) return
+        try {
+            const response = await lovService.getAcademicYears(session.accessToken)
+            setAcademicYears(response)
+        } catch (error: unknown) {
+            console.error('Failed to fetch academic years:', error)
+        }
+    }
+
+    const fetchSchoolTerms = async () => {
+        if (!session?.accessToken) return
+        try {
+            const response = await lovService.getSchoolTerms(session.accessToken)
+            setSchoolTerms(response)
+        } catch (error: unknown) {
+            console.error('Failed to fetch school terms:', error)
         }
     }
 
@@ -166,6 +209,8 @@ export default function LearningModuleManagementPage() {
         if (session) {
             fetchClasses()
             fetchDepartments()
+            fetchAcademicYears()
+            fetchSchoolTerms()
             if (canManage) {
                 fetchSubjects()
             }
@@ -193,12 +238,26 @@ export default function LearningModuleManagementPage() {
         setIsFormOpen(true)
     }
 
-    const handleEditModule = (module: LearningModule) => {
+    const handleSelectModule = (module: LearningModule) => {
         setSelectedModule(module)
-        setIsFormOpen(true)
-        // Fetch materials and quizzes for this module
         fetchMaterials(module.nid)
         fetchQuizzes(module.nid)
+        fetchExams(module.nid)
+    }
+
+    const handleEditModuleClick = (module: LearningModule) => {
+        setSelectedModule(module)
+        setIsFormOpen(true)
+        fetchMaterials(module.nid)
+        fetchQuizzes(module.nid)
+        fetchExams(module.nid)
+    }
+
+    const handleBackFromModule = () => {
+        setSelectedModule(null)
+        setMaterials([])
+        setQuizzes([])
+        setExams([])
     }
 
     const handleCreateMaterial = () => {
@@ -327,6 +386,22 @@ export default function LearningModuleManagementPage() {
         }
     }
 
+    const handleDeleteExam = async (exam: Exam) => {
+        if (!confirm(`Apakah Anda yakin ingin menghapus ujian "${exam.vtitle}"?`)) return
+
+        if (!session?.accessToken) return
+
+        try {
+            await examService.deleteExam(exam.nid, session.accessToken)
+            toast.success('Ujian berhasil dihapus')
+            if (selectedModule) {
+                fetchExams(selectedModule.nid)
+            }
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Gagal menghapus ujian'))
+        }
+    }
+
     const handleQuizFormSubmit = async (data: QuizFormData) => {
         if (!session?.accessToken || !selectedModule) return
 
@@ -368,6 +443,57 @@ export default function LearningModuleManagementPage() {
         } catch (error: unknown) {
             console.error(error)
             toast.error(getErrorMessage(error, 'Gagal menyimpan quiz'))
+            throw error
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const handleExamFormSubmit = async (data: ExamFormData) => {
+        if (!session?.accessToken || !selectedModule) return
+
+        try {
+            setIsSubmitting(true)
+
+            if (selectedExam) {
+                await examService.updateExam(selectedExam.nid, {
+                    Title: data.title,
+                    Description: data.description,
+                    Duration: data.duration,
+                    PassGrade: data.pass_grade,
+                    StartDate: data.start_date,
+                    EndDate: data.end_date,
+                    ShowResults: data.show_results,
+                    Fullscreen: data.fullscreen,
+                    Cutoff: data.cutoff,
+                    Status: data.status,
+                }, session.accessToken)
+                toast.success('Ujian berhasil diperbarui')
+            } else {
+                await examService.createExam({
+                    LearningModuleId: selectedModule.nid,
+                    Title: data.title,
+                    Description: data.description,
+                    Duration: data.duration,
+                    PassGrade: data.pass_grade,
+                    StartDate: data.start_date || new Date().toISOString(),
+                    EndDate: data.end_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                    ShowResults: data.show_results,
+                    Fullscreen: data.fullscreen,
+                    Cutoff: data.cutoff,
+                    Status: data.status,
+                }, session.accessToken)
+                toast.success('Ujian berhasil dibuat')
+            }
+
+            setIsExamFormOpen(false)
+            setSelectedExam(null)
+            if (selectedModule) {
+                fetchExams(selectedModule.nid)
+            }
+        } catch (error: unknown) {
+            console.error(error)
+            toast.error(getErrorMessage(error, 'Gagal menyimpan ujian'))
             throw error
         } finally {
             setIsSubmitting(false)
@@ -489,8 +615,38 @@ export default function LearningModuleManagementPage() {
         }
     }
 
-    // Filter modules by selected class
-    const classModules = modules.filter(m => m.nid_class === selectedClass?.nid)
+    // Filter modules by selected class and sort by creation date (oldest first)
+    const classModules = modules
+        .filter(m => m.nid_class === selectedClass?.nid)
+        .sort((a, b) => {
+            const dateA = a.dcrea ? new Date(a.dcrea).getTime() : 0
+            const dateB = b.dcrea ? new Date(b.dcrea).getTime() : 0
+            return dateA - dateB
+        })
+
+    const getAcademicYearLabel = (module: LearningModule) => {
+        const ay = module.AcademicYear || module.academicYear
+        if (ay?.vyear) return ay.vyear
+        if (ay?.vacademic_year_name) return ay.vacademic_year_name
+        const ayId = module.nid_academic_year || module.academic_year_id
+        if (ayId) {
+            const found = academicYears.find(y => y.nid === ayId)
+            if (found) return found.label
+        }
+        return '-'
+    }
+
+    const getSchoolTermLabel = (module: LearningModule) => {
+        const st = module.SchoolTerm || module.schoolTerm
+        if (st?.vname) return st.vname
+        if (st?.vterm_name) return st.vterm_name
+        const stId = module.nid_school_term || module.school_term_id
+        if (stId) {
+            const found = schoolTerms.find(t => t.nid === stId)
+            if (found) return found.label
+        }
+        return '-'
+    }
 
     const filteredClasses = classes.filter((cls) => {
         const term = searchTerm.toLowerCase().trim()
@@ -514,199 +670,165 @@ export default function LearningModuleManagementPage() {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
                 <div className="mx-auto max-w-7xl space-y-6">
-                    {/* Header */}
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={handleBackFromClass}
-                            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-                        >
-                            <ArrowLeft className="h-5 w-5" />
-                            <span>Kembali ke Daftar Kelas</span>
-                        </button>
+                    {/* Compact Header */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <button onClick={handleBackFromClass} className="p-2 hover:bg-white rounded-lg transition-colors" title="Kembali">
+                                <ArrowLeft className="h-5 w-5 text-gray-600" />
+                            </button>
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">{selectedClass.vname}</h2>
+                                <p className="text-sm text-gray-500">
+                                    {selectedClass.Department?.vdepartment_name || selectedClass.vdesc || `Dept ${selectedClass.nid_department}`} • {classModules.length} Modul
+                                </p>
+                            </div>
+                        </div>
+                        {canManage && (
+                            <Button onClick={handleCreateModule} size="sm">
+                                <Plus className="mr-1 h-4 w-4" /> Tambah Modul
+                            </Button>
+                        )}
                     </div>
 
-                    {/* Class Info Card */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
-                            <h2 className="text-2xl font-bold text-white">{selectedClass.vname}</h2>
-                            <p className="text-blue-100 mt-1">
-                                {selectedClass.Department?.vdepartment_name || `Department ${selectedClass.nid_department}`}
-                            </p>
-                        </div>
-                        <div className="p-6">
-                            <p className="text-gray-600">{selectedClass.vdesc || 'Tidak ada deskripsi'}</p>
-                            <div className="flex gap-4 mt-4 text-sm text-gray-500">
-                                <span className="flex items-center gap-1">
-                                    <BookOpen className="h-4 w-4" />
-                                    {classModules.length} Modul
-                                </span>
+                    {/* Split Panel Layout */}
+                    <div className="flex gap-4" style={{ height: 'calc(100vh - 140px)' }}>
+                        {/* LEFT: Module List Sidebar */}
+                        <div className="w-80 flex-shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
+                            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                                <h3 className="text-sm font-semibold text-gray-700">Daftar Modul</h3>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Statistics Cards - Detail Kelas */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600" />
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600 mb-1">Materi</p>
-                                    <p className="text-3xl font-bold text-gray-900">{classModules.length}</p>
-                                </div>
-                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
-                                    <BookOpen className="h-7 w-7 text-blue-600" />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-600" />
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600 mb-1">Tugas</p>
-                                    <p className="text-3xl font-bold text-gray-900">0</p>
-                                </div>
-                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
-                                    <ClipboardList className="h-7 w-7 text-green-600" />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-purple-600" />
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600 mb-1">Quiz</p>
-                                    <p className="text-3xl font-bold text-gray-900">0</p>
-                                </div>
-                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-purple-50">
-                                    <FileText className="h-7 w-7 text-purple-600" />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-red-600" />
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600 mb-1">Ujian</p>
-                                    <p className="text-3xl font-bold text-gray-900">0</p>
-                                </div>
-                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-                                    <ClipboardCheck className="h-7 w-7 text-red-600" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Modules Section */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                        <div className="border-b border-gray-200 p-6 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-gray-900">Materi Pembelajaran</h3>
-                            {canManage && (
-                                <Button onClick={handleCreateModule}>
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Tambah Materi
-                                </Button>
-                            )}
-                        </div>
-
-                        <div className="p-6">
-                            {classModules.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                                    <p className="text-gray-500">Belum ada modul pembelajaran untuk kelas ini</p>
-                                    {canManage && (
-                                        <Button onClick={handleCreateModule} className="mt-4">
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Buat Modul Pertama
-                                        </Button>
-                                    )}
-                                </div>
-                            ) : (
-                                <LearningModuleList
-                                    modules={classModules}
-                                    onEdit={handleEditModule}
-                                    onDelete={handleDeleteModule}
-                                    classes={classes}
-                                    subjects={subjects}
-                                    isEditable={canManage}
-                                />
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Materials Section - File/Materi Pelajaran */}
-                    {selectedModule && (
-                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                            <div className="border-b border-gray-200 p-6 flex items-center justify-between">
-                                <h3 className="text-lg font-semibold text-gray-900">File Materi - {selectedModule.vname}</h3>
-                                {canManage && (
-                                    <Button onClick={handleCreateMaterial}>
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Tambah File Materi
-                                    </Button>
-                                )}
-                            </div>
-
-                            <div className="p-6">
-                                {materials.length === 0 ? (
-                                    <div className="text-center py-8">
-                                        <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                                        <p className="text-gray-500">Belum ada file materi untuk modul ini</p>
-                                        {canManage && (
-                                            <Button onClick={handleCreateMaterial} className="mt-4">
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                Upload File Pertama
-                                            </Button>
-                                        )}
+                            <div className="flex-1 overflow-y-auto">
+                                {classModules.length === 0 ? (
+                                    <div className="text-center py-8 px-4">
+                                        <BookOpen className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                                        <p className="text-sm text-gray-500">Belum ada modul</p>
                                     </div>
                                 ) : (
-                                    <MaterialList
-                                        materials={materials}
-                                        onEdit={handleEditMaterial}
-                                        onDelete={handleDeleteMaterial}
-                                        isEditable={canManage}
-                                    />
+                                    <div className="divide-y divide-gray-100">
+                                        {classModules.map((module) => {
+                                            const subj = module.Subject || module.subject
+                                            const isActive = selectedModule?.nid === module.nid
+                                            return (
+                                                <div key={module.nid} onClick={() => handleSelectModule(module)}
+                                                    className={`px-4 py-3 cursor-pointer transition-all ${isActive ? 'bg-blue-50 border-l-4 border-l-blue-500' : 'hover:bg-gray-50 border-l-4 border-l-transparent'}`}>
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className={`text-sm font-medium truncate ${isActive ? 'text-blue-900' : 'text-gray-900'}`}>{module.vname}</p>
+                                                            <div className="flex flex-col mt-0.5">
+                                                                <p className="text-xs text-gray-500">{subj?.vsubject_name || `Mapel ${module.nid_subject}`}</p>
+                                                                <p className="text-[10px] text-gray-400">
+                                                                    {getAcademicYearLabel(module)} • {getSchoolTermLabel(module)}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${module.nstatus === 1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                                            {module.nstatus === 1 ? 'Aktif' : 'Off'}
+                                                        </span>
+                                                    </div>
+                                                    {canManage && (
+                                                        <div className="flex gap-1 mt-2">
+                                                            <button onClick={(e) => { e.stopPropagation(); handleEditModuleClick(module) }} className="p-1 text-blue-500 hover:bg-blue-100 rounded" title="Edit"><Edit className="h-3 w-3" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteModule(module) }} className="p-1 text-red-500 hover:bg-red-100 rounded" title="Hapus"><Trash2 className="h-3 w-3" /></button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
                                 )}
                             </div>
                         </div>
-                    )}
 
-                    {/* Quiz Section */}
-                    {selectedModule && (
-                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                            <div className="border-b border-gray-200 p-6 flex items-center justify-between">
-                                <h3 className="text-lg font-semibold text-gray-900">Quiz / Ujian - {selectedModule.vname}</h3>
-                                {canManage && (
-                                    <Button onClick={handleCreateQuiz} className="bg-purple-600 hover:bg-purple-700">
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Tambah Quiz
-                                    </Button>
-                                )}
-                            </div>
-
-                            <div className="p-6">
-                                {quizzes.length === 0 ? (
-                                    <div className="text-center py-8">
-                                        <ClipboardList className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                                        <p className="text-gray-500">Belum ada quiz untuk modul ini</p>
+                        {/* RIGHT: Module Detail Panel */}
+                        <div className="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
+                            {selectedModule ? (<>
+                                {/* Module Info Header */}
+                                <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h3 className="text-lg font-bold text-gray-900">{selectedModule.vname}</h3>
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                {(selectedModule.Subject || selectedModule.subject)?.vsubject_name || `Mapel ${selectedModule.nid_subject}`} • {(selectedModule.Class || selectedModule.class)?.vname || `Kelas ${selectedModule.nid_class}`}
+                                            </p>
+                                        </div>
                                         {canManage && (
-                                            <Button onClick={handleCreateQuiz} className="mt-4 bg-purple-600 hover:bg-purple-700">
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                Buat Quiz Pertama
-                                            </Button>
+                                            <div className="flex gap-2">
+                                                <Button onClick={handleCreateMaterial} size="sm" variant="outline" className="text-xs h-8"><FileText className="mr-1 h-3 w-3" /> + Materi</Button>
+                                                <Button onClick={handleCreateQuiz} size="sm" variant="outline" className="text-xs h-8 bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"><ClipboardList className="mr-1 h-3 w-3" /> + Quiz</Button>
+                                                <Button onClick={() => { setSelectedExam(null); setIsExamFormOpen(true) }} size="sm" variant="outline" className="text-xs h-8 bg-red-50 border-red-200 text-red-700 hover:bg-red-100"><ClipboardCheck className="mr-1 h-3 w-3" /> + Ujian</Button>
+                                            </div>
                                         )}
                                     </div>
-                                ) : (
-                                    <QuizList
-                                        quizzes={quizzes}
-                                        onEdit={handleEditQuiz}
-                                        onDelete={handleDeleteQuiz}
-                                        onViewQuestions={handleViewQuestions}
-                                        isEditable={canManage}
-                                    />
-                                )}
-                            </div>
+                                </div>
+                                {/* Content: Materials, Quiz & Exam */}
+                                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 divide-x divide-gray-100 overflow-hidden">
+                                    <div className="flex flex-col overflow-hidden">
+                                        <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
+                                            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><FileText className="h-4 w-4 text-blue-500" /> Materi</h4>
+                                            <span className="text-xs text-gray-400">{materials.length}</span>
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto p-3">
+                                            {materials.length === 0 ? (
+                                                <div className="text-center py-8"><FileText className="h-8 w-8 text-gray-200 mx-auto mb-2" /><p className="text-xs text-gray-400">Belum ada materi</p></div>
+                                            ) : (<MaterialList materials={materials} onEdit={handleEditMaterial} onDelete={handleDeleteMaterial} isEditable={canManage} />)}
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col overflow-hidden">
+                                        <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
+                                            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><ClipboardList className="h-4 w-4 text-purple-500" /> Quiz</h4>
+                                            <span className="text-xs text-gray-400">{quizzes.length}</span>
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto p-3">
+                                            {quizzes.length === 0 ? (
+                                                <div className="text-center py-8"><ClipboardList className="h-8 w-8 text-gray-200 mx-auto mb-2" /><p className="text-xs text-gray-400">Belum ada quiz</p></div>
+                                            ) : (<QuizList quizzes={quizzes} onEdit={handleEditQuiz} onDelete={handleDeleteQuiz} onViewQuestions={handleViewQuestions} isEditable={canManage} />)}
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col overflow-hidden">
+                                        <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
+                                            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><ClipboardCheck className="h-4 w-4 text-red-500" /> Ujian</h4>
+                                            <span className="text-xs text-gray-400">{exams.length}</span>
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto p-3">
+                                            {exams.length === 0 ? (
+                                                <div className="text-center py-8"><ClipboardCheck className="h-8 w-8 text-gray-200 mx-auto mb-2" /><p className="text-xs text-gray-400">Belum ada ujian</p></div>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    {exams.map(exam => (
+                                                        <div key={exam.nid} className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <p className="font-medium text-sm text-gray-900">{exam.vtitle}</p>
+                                                                    <p className="text-xs text-gray-500 mt-1">{exam.nduration} menit</p>
+                                                                </div>
+                                                                <span className={`px-2 py-0.5 rounded text-xs ${exam.nstatus === 1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                                                                    {exam.nstatus === 1 ? 'Aktif' : 'Nonaktif'}
+                                                                </span>
+                                                            </div>
+                                                            {canManage && (
+                                                                <div className="flex gap-2 mt-2">
+                                                                    <button onClick={() => setSelectedExam(exam)} className="text-xs text-blue-600 hover:underline">Edit</button>
+                                                                    <button onClick={() => handleDeleteExam(exam)} className="text-xs text-red-600 hover:underline">Hapus</button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </>) : (
+                                <div className="flex-1 flex items-center justify-center">
+                                    <div className="text-center">
+                                        <BookOpen className="h-16 w-16 text-gray-200 mx-auto mb-4" />
+                                        <p className="text-gray-400 text-lg font-medium">Pilih modul</p>
+                                        <p className="text-gray-300 text-sm mt-1">Klik modul di sebelah kiri untuk melihat detail</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
 
                     {/* Form Dialog Learning Module */}
                     {canManage && (
@@ -743,6 +865,19 @@ export default function LearningModuleManagementPage() {
                             initialData={selectedQuiz}
                             isSubmitting={isSubmitting}
                             learningModules={classModules}
+                        />
+                    )}
+
+                    {/* Form Dialog Exam */}
+                    {canManage && (
+                        <ExamForm
+                            open={isExamFormOpen}
+                            onOpenChange={setIsExamFormOpen}
+                            onSubmit={handleExamFormSubmit}
+                            initialData={selectedExam}
+                            isSubmitting={isSubmitting}
+                            learningModules={classModules}
+                            selectedModuleId={selectedModule?.nid}
                         />
                     )}
 

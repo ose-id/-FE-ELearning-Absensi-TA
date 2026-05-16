@@ -66,13 +66,10 @@ export default function ChangePasswordView() {
 
     setLoading(true)
     try {
-      await userService.updateUser(
+      // Use userService to change password
+      await userService.changePassword(
         Number(session.user.id),
-        session.user.role_nid,
-        {
-          ...session.user,
-          password: values.newPassword,
-        },
+        values.newPassword,
         session.accessToken
       )
 

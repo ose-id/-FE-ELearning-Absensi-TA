@@ -12,6 +12,7 @@ import Pagination from '@/components/ui/pagination'
 import UserGridView from '@/components/ui/grid'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
 import { roleService } from '@/services/role.service'
+import { userService } from '@/services/user.service'
 import { User } from '@/types/user'
 import { Role } from '@/types/role'
 import UserList from './UserList'
@@ -153,23 +154,47 @@ export default function BaseUserManagementPage({
         }
     }
 
-    // Export users to Excel
+    // Export users to Excel - matching import template fields
     const handleExport = () => {
         if (users.length === 0) {
             toast.warning(`No ${category} to export`)
             return
         }
 
-        const exportData = users.map(user => ({
-            'Username': user.username || '',
-            'Full Name': user.fullname || '',
-            'Email': user.email || '',
-            'Phone': user.phone || '',
-            'WhatsApp': user.whatsapp || '',
-            'Role': user.vrole_name || user.role_name || '',
-            'Status': user.status || '',
-            'Created At': user.created_at || '',
-        }))
+        let exportData: any[]
+
+        if (category === 'student') {
+            exportData = users.map(user => ({
+                'username': user.username || '',
+                'email': user.email || '',
+                'password': '',  // Don't export passwords for security
+                'fullname': user.fullname || '',
+                'nis': user.nis || '',
+                'class_id': user.class_id || '',
+                'phone': user.phone || '',
+                'whatsapp': user.whatsapp || '',
+                'birthdate': user.birthdate || '',
+                'address': user.address || '',
+                'parent_name': user.parent_name || '',
+                'parent_phone': user.parent_phone || '',
+                'status': user.status || '',
+            }))
+        } else {
+            // Teacher or Admin
+            exportData = users.map(user => ({
+                'username': user.username || '',
+                'email': user.email || '',
+                'password': '',  // Don't export passwords for security
+                'fullname': user.fullname || '',
+                'nip': user.nip || '',
+                'degree': user.degree || '',
+                'phone': user.phone || '',
+                'whatsapp': user.whatsapp || '',
+                'birthdate': user.birthdate || '',
+                'address': user.address || '',
+                'status': user.status || '',
+            }))
+        }
 
         const ws = XLSX.utils.json_to_sheet(exportData)
         const wb = XLSX.utils.book_new()
@@ -182,43 +207,61 @@ export default function BaseUserManagementPage({
     const handleDownloadTemplate = () => {
         const templateData = [
             {
-                'Username': 'johndoe',
-                'Full Name': 'John Doe',
-                'Email': 'john.doe@example.com',
-                'Phone': '+6281234567890',
-                'WhatsApp': '+6281234567890',
-                'Status': 'active',
-                ...(category === 'student' ? {
-                    'NIS': '12345',
-                    'Class ID': '1',
-                    'Parent Name': 'Jane Doe',
-                    'Parent Phone': '+6281234567891',
-                } : {
-                    'NIK': '1234567890123456',
-                    'Degree': 'S.Kom',
-                })
+                'username': 'johndoe',
+                'email': 'john.doe@example.com',
+                'password': 'ChangeMe@123',
+                'fullname': 'John Doe',
+                'nip': '1234567890123456',  // NIP for teacher/admin
+                'degree': 'S.Kom',
+                'phone': '+6281234567890',
+                'whatsapp': '+6281234567890',
+                'birthdate': '1990-01-01',
+                'address': 'Jl. Example No. 123, Jakarta',
+                'status': 'active',
             }
         ]
 
-        const ws = XLSX.utils.json_to_sheet(templateData)
+        // For students, use different template
+        const studentTemplateData = [
+            {
+                'username': 'anisaja',
+                'email': 'ani@example.com',
+                'password': 'ChangeMe@123',
+                'fullname': 'Ani Saja',
+                'nis': '12345',  // NIS for student
+                'class_id': '1',
+                'phone': '+6281234567890',
+                'whatsapp': '+6281234567890',
+                'birthdate': '2010-01-01',
+                'address': 'Jl. Example No. 123, Jakarta',
+                'parent_name': 'Budi',
+                'parent_phone': '+6281234567891',
+                'status': 'active',
+            }
+        ]
+
+        const ws = XLSX.utils.json_to_sheet(category === 'student' ? studentTemplateData : templateData)
 
         // Set column widths
         ws['!cols'] = [
-            { wch: 20 }, // Username
-            { wch: 30 }, // Full Name
-            { wch: 35 }, // Email
-            { wch: 15 }, // Phone
-            { wch: 15 }, // WhatsApp
-            { wch: 10 }, // Status
+            { wch: 20 }, // username
+            { wch: 35 }, // email
+            { wch: 20 }, // password
+            { wch: 30 }, // fullname
             ...(category === 'student' ? [
-                { wch: 15 }, // NIS
-                { wch: 10 }, // Class ID
-                { wch: 25 }, // Parent Name
-                { wch: 15 }, // Parent Phone
+                { wch: 15 }, // nis
+                { wch: 10 }, // class_id
+                { wch: 25 }, // parent_name
+                { wch: 15 }, // parent_phone
             ] : [
-                { wch: 20 }, // NIK
-                { wch: 15 }, // Degree
-            ])
+                { wch: 20 }, // nip
+                { wch: 15 }, // degree
+            ]),
+            { wch: 15 }, // phone
+            { wch: 15 }, // whatsapp
+            { wch: 15 }, // birthdate
+            { wch: 40 }, // address
+            { wch: 10 }, // status
         ]
 
         const wb = XLSX.utils.book_new()
@@ -231,6 +274,11 @@ export default function BaseUserManagementPage({
     const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0]
         if (!file) return
+
+        if (!session?.accessToken) {
+            toast.error('Session expired. Please login again.')
+            return
+        }
 
         setImporting(true)
         try {
@@ -250,65 +298,57 @@ export default function BaseUserManagementPage({
 
             for (const row of jsonData) {
                 try {
-                    // Build payload based on category (matching user.service.ts format)
-                    let importPayload: any
+                    // Build payload matching userService.createUser format
+                    let importData: any
 
                     if (category === 'student') {
-                        // Student payload (/api/Student)
-                        importPayload = {
-                            username:     row['Username'] || row['username'] || '',
-                            email:        row['Email'] || row['email'] || '',
-                            password:     'ChangeMe@123',
-                            fullname:     row['Full Name'] || row['fullname'] || '',
-                            birthdate:    row['Birthdate'] || row['birthdate'] || '',
-                            address:      row['Address'] || row['address'] || '',
-                            phone:        row['Phone'] || row['phone'] || '',
-                            whatsapp:     row['WhatsApp'] || row['whatsapp'] || '',
-                            nis:          row['NIS'] || row['nis'] || '',
-                            ...(row['Class ID'] && Number(row['Class ID']) > 0 ? { class_id: Number(row['Class ID']) } : {}),
-                            parent_name:  row['Parent Name'] || row['parent_name'] || '',
-                            parent_phone: row['Parent Phone'] || row['parent_phone'] || '',
-                            status:       row['Status'] || row['status'] || 'active',
+                        // Student payload
+                        importData = {
+                            username: row['username'] || row['Username'] || '',
+                            email: row['email'] || row['Email'] || '',
+                            password: row['password'] || row['Password'] || 'ChangeMe@123',
+                            fullname: row['fullname'] || row['fullname'] || '',
+                            birthdate: row['birthdate'] || row['Birthdate'] || '',
+                            address: row['address'] || row['Address'] || '',
+                            phone: row['phone'] || row['Phone'] || '',
+                            whatsapp: row['whatsapp'] || row['WhatsApp'] || '',
+                            nis: row['nis'] || row['NIS'] || '',
+                            class_id: row['class_id'] || row['Class ID'] || '',
+                            parent_name: row['parent_name'] || row['Parent Name'] || '',
+                            parent_phone: row['parent_phone'] || row['Parent Phone'] || '',
+                            status: row['status'] || row['Status'] || 'active',
+                            role_nid: 3,
                         }
                     } else {
-                        // Admin / Teacher payload (/api/User/staff or /api/Teacher)
-                        importPayload = {
-                            username:  row['Username'] || row['username'] || '',
-                            email:     row['Email'] || row['email'] || '',
-                            password:  'ChangeMe@123',
-                            fullName:  row['Full Name'] || row['fullname'] || '',
-                            fullname:  row['Full Name'] || row['fullname'] || '',
-                            nip:       row['NIK'] || row['nik'] || row['NIP'] || row['nip'] || '',
-                            degree:    row['Degree'] || row['degree'] || row['Gelar'] || '',
-                            birthdate: row['Birthdate'] || row['birthdate'] || '',
-                            address:   row['Address'] || row['address'] || '',
-                            phone:     row['Phone'] || row['phone'] || '',
-                            whatsapp:  row['WhatsApp'] || row['whatsapp'] || '',
-                            status:    row['Status'] || row['status'] || 'active',
-                            role_nid:  roleNid,
+                        // Teacher/Admin payload
+                        importData = {
+                            username: row['username'] || row['Username'] || '',
+                            email: row['email'] || row['Email'] || '',
+                            password: row['password'] || row['Password'] || 'ChangeMe@123',
+                            fullname: row['fullname'] || row['Full Name'] || '',
+                            fullName: row['fullname'] || row['Full Name'] || '',
+                            nip: row['nip'] || row['NIP'] || row['nik'] || row['NIK'] || '',
+                            degree: row['degree'] || row['Degree'] || '',
+                            birthdate: row['birthdate'] || row['Birthdate'] || '',
+                            address: row['address'] || row['Address'] || '',
+                            phone: row['phone'] || row['Phone'] || '',
+                            whatsapp: row['whatsapp'] || row['WhatsApp'] || '',
+                            status: row['status'] || row['Status'] || 'active',
+                            role_nid: roleNid,
                         }
                     }
 
-                    if (!importPayload.username || !importPayload.email || !importPayload.fullname) {
+                    // Validate required fields
+                    if (!importData.username || !importData.email || !importData.fullname) {
+                        console.warn('Skipping row with missing required fields:', importData)
                         errorCount++
                         continue
                     }
 
-                    const response = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${session!.accessToken}`
-                        },
-                        body: JSON.stringify(importPayload)
-                    })
-
-                    if (response.ok) {
-                        successCount++
-                    } else {
-                        errorCount++
-                    }
-                } catch (e) {
+                    // Use userService.createUser (same as "Add User" button)
+                    await userService.createUser(importData, session.accessToken)
+                    successCount++
+                } catch (e: any) {
                     errorCount++
                     console.error('Failed to import row:', row, e)
                 }
@@ -323,7 +363,8 @@ export default function BaseUserManagementPage({
             }
         } catch (error: any) {
             console.error('Import error:', error)
-            toast.error(error.message || 'Failed to import users')
+            const errorDetail = error?.message || String(error)
+            toast.error(errorDetail)
         } finally {
             setImporting(false)
             event.target.value = ''
