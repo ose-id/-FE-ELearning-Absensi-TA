@@ -12,6 +12,8 @@ export interface Quiz {
     nmax_score: number
     npassing_score?: number
     nstatus: number // 0: draft, 1: active
+    nmax_attempts?: number
+    nshow_results?: number // 0: hide score, 1: show score
     dstart?: string // tanggal mulai
     dend?: string // tanggal selesai
     dcrea?: string
@@ -66,6 +68,8 @@ export interface CreateQuizRequest {
     Status?: number
     StartDate?: string
     EndDate?: string
+    ShowResults?: number
+    nshow_results?: number
 }
 
 export interface UpdateQuizRequest {
@@ -77,6 +81,8 @@ export interface UpdateQuizRequest {
     Status?: number
     StartDate?: string
     EndDate?: string
+    ShowResults?: number
+    nshow_results?: number
 }
 
 export interface CreateQuestionRequest {
@@ -103,7 +109,7 @@ export interface SubmitQuizRequest {
     Answers: QuizAnswer[]
 }
 
-export interface QuizListResponse extends ApiResponse<Quiz> { }
-export interface QuizDetailResponse extends ApiResponse<Quiz> { }
-export interface QuestionListResponse extends ApiResponse<QuizQuestion> { }
-export interface AttemptListResponse extends ApiResponse<StudentQuizAttempt> { }
+export type QuizListResponse = ApiResponse<Quiz>
+export type QuizDetailResponse = ApiResponse<Quiz>
+export type QuestionListResponse = ApiResponse<QuizQuestion>
+export type AttemptListResponse = ApiResponse<StudentQuizAttempt>

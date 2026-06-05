@@ -3,7 +3,7 @@ import { ApiResponse } from './auth-api'
 export interface Material {
     nid: number
     vtitle: string
-    vdesc?: string
+    vdescription?: string
     nid_learning_module: number
     vfile_path?: string
     vfile_name?: string
@@ -31,7 +31,9 @@ export interface UpdateMaterialRequest {
     FileName?: string
     FileType?: string
     FileSize?: number
+    Status?: number
 }
+
 
 export interface MaterialListResponse extends ApiResponse<Material> { }
 export interface MaterialDetailResponse extends ApiResponse<Material> { }

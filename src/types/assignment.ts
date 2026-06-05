@@ -30,20 +30,19 @@ export interface Submission {
 export interface CreateAssignmentRequest {
     title: string
     description: string
-    class_id: number
-    learning_module_id: number
-    due_date: string
-    max_score: number
+    learningModuleId: number
+    dueDate: string
+    allowLateSubmission?: boolean
+    enableCutoff?: boolean
 }
 
 export interface UpdateAssignmentRequest {
-    id: number
     title: string
     description: string
-    class_id: number
-    learning_module_id: number
-    due_date: string
-    max_score: number
+    dueDate: string
+    allowLateSubmission?: boolean
+    enableCutoff?: boolean
+    status: number
 }
 
 export interface SubmitAssignmentRequest {

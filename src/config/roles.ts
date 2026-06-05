@@ -1,8 +1,8 @@
 
 export const ROLES = {
-    ADMIN: 'Adm',
-    TEACHER: 'TCR',
-    STUDENT: 'STD',
+    ADMIN: 'ADM',
+    TEACHER: 'GR',
+    STUDENT: 'MR',
 } as const
 
 export type RoleCode = (typeof ROLES)[keyof typeof ROLES]

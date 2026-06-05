@@ -1,7 +1,7 @@
-import ClassCatalogPage from '@/view/class-catalog/ClassCatalogPage'
+import ClassCatalogPage from '@/view/learning-module/ClassCatalogPage'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 
-export default function ClassCatalog() {
+export default function LearningModulePage() {
   return (
     <DashboardLayout>
       <ClassCatalogPage />

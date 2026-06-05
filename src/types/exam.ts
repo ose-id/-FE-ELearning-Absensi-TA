@@ -23,31 +23,45 @@ export interface Exam {
     }
 }
 
+export interface ExamQuestion {
+    nid: number
+    nid_exam: number
+    norder: number
+    vquestion: string
+    vtype: 'multiple_choice' | 'true_false' | 'essay'
+    npoints: number
+    vanswer_key?: string
+    voptions?: string
+    dcrea?: string
+    dmodi?: string
+}
+
 export interface CreateExamRequest {
-    LearningModuleId: number
-    Title: string
-    Description?: string
-    Duration: number
-    StartDate: string
-    EndDate: string
-    PassGrade: number
-    ShowResults: number
-    Fullscreen: number
-    Cutoff: number
-    Status: number
+    nid_learning_module: number
+    vtitle: string
+    vdescription?: string
+    nduration: number
+    dstart: string
+    dend: string
+    npass_grade: number
+    nshow_results: number
+    nfullscreen: number
+    ncutoff: number
+    nstatus: number
 }
 
 export interface UpdateExamRequest {
-    Title?: string
-    Description?: string
-    Duration?: number
-    StartDate?: string
-    EndDate?: string
-    PassGrade?: number
-    ShowResults?: number
-    Fullscreen?: number
-    Cutoff?: number
-    Status?: number
+    nid_learning_module: number
+    vtitle: string
+    vdescription?: string
+    nduration: number
+    dstart: string
+    dend: string
+    npass_grade: number
+    nshow_results: number
+    nfullscreen: number
+    ncutoff: number
+    nstatus: number
 }
 
 export interface ExamListResponse extends ApiResponse<Exam> { }

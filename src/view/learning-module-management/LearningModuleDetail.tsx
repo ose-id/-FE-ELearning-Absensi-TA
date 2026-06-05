@@ -1,0 +1,363 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Plus, ArrowLeft, Users, BookOpen, FileText, ClipboardList, ClipboardCheck, Copy, Check, FileQuestion, PenLine, Trash2 } from 'lucide-react'
+
+import { LearningModule } from '@/types/learning-module'
+import { Material } from '@/types/material'
+import { Quiz } from '@/types/quiz'
+import { Exam } from '@/types/exam'
+import { Assignment } from '@/types/assignment'
+
+interface LearningModuleDetailProps {
+    module: LearningModule
+    materials: Material[]
+    quizzes: Quiz[]
+    exams: Exam[]
+    assignments?: Assignment[]
+    canManage: boolean
+    onBack: () => void
+    onCreateMaterial: () => void
+    onDeleteMaterial: (material: Material) => void
+    onCreateQuiz?: () => void
+    onDeleteQuiz?: (quiz: Quiz) => void
+    onCreateExam?: () => void
+    onDeleteExam?: (exam: Exam) => void
+    onCreateAssignment?: () => void
+    onDeleteAssignment?: (assignment: Assignment) => void
+}
+
+type ContentItem = {
+    id: number
+    type: 'material' | 'quiz' | 'exam' | 'assignment'
+    title: string
+    status: number
+}
+
+export default function LearningModuleDetail({
+    module,
+    materials,
+    quizzes,
+    exams,
+    assignments = [],
+    canManage,
+    onBack,
+    onCreateMaterial,
+    onDeleteMaterial,
+    onCreateQuiz,
+    onDeleteQuiz,
+    onCreateExam,
+    onDeleteExam,
+    onCreateAssignment,
+    onDeleteAssignment,
+}: LearningModuleDetailProps) {
+    const router = useRouter()
+    const [copiedToken, setCopiedToken] = useState<string | null>(null)
+    const [activeTab, setActiveTab] = useState<string>('all')
+    const moduleClass = module.Class || module.class
+    const moduleSubject = module.Subject || module.subject
+
+    const handleCopyToken = () => {
+        if (module.venrollment_token) {
+            navigator.clipboard.writeText(module.venrollment_token)
+            setCopiedToken(module.venrollment_token)
+            setTimeout(() => setCopiedToken(null), 2000)
+        }
+    }
+
+    const handleAddMaterial = () => {
+        router.push(`/learning-module-management/${module.nid}/materials`)
+    }
+
+    const handleAddAssignment = () => {
+        router.push(`/learning-module-management/${module.nid}/assignments`)
+    }
+
+    const handleAddQuiz = () => {
+        router.push(`/learning-module-management/${module.nid}/quizzes`)
+    }
+
+    const handleAddExam = () => {
+        router.push(`/learning-module-management/${module.nid}/exams`)
+    }
+
+    const allContent: ContentItem[] = [
+        ...materials.map(m => ({ id: m.nid, type: 'material' as const, title: m.vtitle, status: m.nstatus })),
+        ...quizzes.map(q => ({ id: q.nid, type: 'quiz' as const, title: q.vtitle, status: q.nstatus })),
+        ...exams.map(e => ({ id: e.nid, type: 'exam' as const, title: e.vtitle || 'Ujian', status: e.nstatus })),
+        ...assignments.map(a => ({ id: a.id, type: 'assignment' as const, title: a.title, status: 1 }))
+    ]
+
+    const filteredContent = activeTab === 'all'
+        ? allContent
+        : allContent.filter(item => item.type === activeTab)
+
+    const getTypeIcon = (type: string) => {
+        switch (type) {
+            case 'material': return { icon: FileText, bg: 'bg-blue-50', text: 'text-blue-600', label: 'Materi' }
+            case 'quiz': return { icon: ClipboardList, bg: 'bg-purple-50', text: 'text-purple-600', label: 'Quiz' }
+            case 'exam': return { icon: ClipboardCheck, bg: 'bg-red-50', text: 'text-red-600', label: 'Ujian' }
+            case 'assignment': return { icon: PenLine, bg: 'bg-green-50', text: 'text-green-600', label: 'Tugas' }
+            default: return { icon: FileQuestion, bg: 'bg-gray-50', text: 'text-gray-600', label: 'Lainnya' }
+        }
+    }
+
+    const tabs = [
+        { key: 'all', label: 'Semua', count: allContent.length },
+        { key: 'material', label: 'Materi', count: materials.length },
+        { key: 'quiz', label: 'Quiz', count: quizzes.length },
+        { key: 'exam', label: 'Ujian', count: exams.length },
+        { key: 'assignment', label: 'Tugas', count: assignments.length },
+    ]
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
+            <div className="mx-auto max-w-7xl space-y-6 p-6">
+                {/* Header Card */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+                    <div className="p-6">
+                        <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-4">
+                                <button
+                                    onClick={onBack}
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors mt-1"
+                                    title="Kembali"
+                                >
+                                    <ArrowLeft className="h-5 w-5 text-gray-600" />
+                                </button>
+                                <div>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <h1 className="text-2xl font-bold text-gray-900">{module.vname}</h1>
+                                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                                            module.nstatus === 1
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            {module.nstatus === 1 ? 'Aktif' : 'Nonaktif'}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                                        <div className="flex items-center gap-1.5">
+                                            <BookOpen className="h-4 w-4" />
+                                            <span>{moduleSubject?.vsubject_name || `Mapel ${module.nid_subject}`}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <Users className="h-4 w-4" />
+                                            <span>{moduleClass?.vname || `Kelas ${module.nid_class}`}</span>
+                                        </div>
+                                        {module.venrollment_token && (
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-gray-500">Token:</span>
+                                                <code className="bg-gray-100 px-2 py-0.5 rounded text-xs font-mono">
+                                                    {module.venrollment_token}
+                                                </code>
+                                                <button
+                                                    onClick={handleCopyToken}
+                                                    className="p-1 hover:bg-gray-200 rounded transition-colors"
+                                                    title="Copy token"
+                                                >
+                                                    {copiedToken === module.venrollment_token ? (
+                                                        <Check className="h-3.5 w-3.5 text-green-600" />
+                                                    ) : (
+                                                        <Copy className="h-3.5 w-3.5 text-gray-500" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {module.vdesc && (
+                                        <p className="mt-3 text-sm text-gray-500 max-w-2xl">{module.vdesc}</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Stats Grid with Add Buttons */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <StatCard
+                        icon={Users}
+                        color="gray"
+                        label="Total Murid"
+                        value={0}
+                        description="Siswa enrolled"
+                        canAdd={false}
+                    />
+                    <StatCard
+                        icon={FileText}
+                        color="blue"
+                        label="Materi"
+                        value={materials.length}
+                        description="Materi tersedia"
+                        canAdd={canManage}
+                        onAdd={handleAddMaterial}
+                    />
+                    <StatCard
+                        icon={PenLine}
+                        color="green"
+                        label="Tugas"
+                        value={assignments.length}
+                        description="Tugas tersedia"
+                        canAdd={canManage}
+                        onAdd={handleAddAssignment}
+                    />
+                    <StatCard
+                        icon={ClipboardList}
+                        color="purple"
+                        label="Quiz"
+                        value={quizzes.length}
+                        description="Quiz tersedia"
+                        canAdd={canManage}
+                        onAdd={handleAddQuiz}
+                    />
+                    <StatCard
+                        icon={ClipboardCheck}
+                        color="red"
+                        label="Ujian"
+                        value={exams.length}
+                        description="Ujian tersedia"
+                        canAdd={canManage}
+                        onAdd={handleAddExam}
+                    />
+                </div>
+
+                {/* Unified Content List */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    {/* Tabs */}
+                    <div className="border-b border-gray-200 px-6 pt-4">
+                        <div className="flex items-center gap-1">
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => setActiveTab(tab.key)}
+                                    className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
+                                        activeTab === tab.key
+                                            ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
+                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {tab.label}
+                                    <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
+                                        activeTab === tab.key ? 'bg-blue-100' : 'bg-gray-100'
+                                    }`}>
+                                        {tab.count}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Content List */}
+                    <div className="p-6">
+                        {filteredContent.length === 0 ? (
+                            <div className="text-center py-12">
+                                <FileQuestion className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-gray-500 font-medium">Belum ada konten</p>
+                                <p className="text-sm text-gray-400 mt-1">Klik tombol + pada kartu di atas untuk menambahkan</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {filteredContent.map((item) => {
+                                    const typeInfo = getTypeIcon(item.type)
+                                    const Icon = typeInfo.icon
+                                    return (
+                                        <div
+                                            key={`${item.type}-${item.id}`}
+                                            className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50/50 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className={`p-2 rounded-lg ${typeInfo.bg}`}>
+                                                    <Icon className={`h-4 w-4 ${typeInfo.text}`} />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-gray-900">{item.title}</p>
+                                                    <p className="text-xs text-gray-500">{typeInfo.label}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                                                    item.status === 1
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : 'bg-gray-100 text-gray-600'
+                                                }`}>
+                                                    {item.status === 1 ? 'Aktif' : 'Nonaktif'}
+                                                </span>
+                                                {canManage && (
+                                                    <button
+                                                        onClick={() => {
+                                                            if (item.type === 'material') onDeleteMaterial?.(materials.find(m => m.nid === item.id)!)
+                                                            else if (item.type === 'quiz') onDeleteQuiz?.(quizzes.find(q => q.nid === item.id)!)
+                                                            else if (item.type === 'exam') onDeleteExam?.(exams.find(e => e.nid === item.id)!)
+                                                            else if (item.type === 'assignment') onDeleteAssignment?.(assignments.find(a => a.id === item.id)!)
+                                                        }}
+                                                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+interface StatCardProps {
+    icon: React.ComponentType<{ className?: string }>
+    color: 'blue' | 'green' | 'purple' | 'red' | 'gray'
+    label: string
+    value: number | string
+    description: string
+    canAdd?: boolean
+    onAdd?: () => void
+}
+
+function StatCard({ icon: Icon, color, label, value, description, canAdd, onAdd }: StatCardProps) {
+    const colorMap = {
+        blue: { bg: 'bg-blue-50', text: 'text-blue-600', hover: 'hover:bg-blue-100', border: 'border-blue-200' },
+        green: { bg: 'bg-green-50', text: 'text-green-600', hover: 'hover:bg-green-100', border: 'border-green-200' },
+        purple: { bg: 'bg-purple-50', text: 'text-purple-600', hover: 'hover:bg-purple-100', border: 'border-purple-200' },
+        red: { bg: 'bg-red-50', text: 'text-red-600', hover: 'hover:bg-red-100', border: 'border-red-200' },
+        gray: { bg: 'bg-gray-50', text: 'text-gray-600', hover: 'hover:bg-gray-100', border: 'border-gray-200' }
+    }
+    const colors = colorMap[color]
+
+    return (
+        <div className={`bg-white rounded-xl border ${colors.border} shadow-sm p-5 hover:shadow-md transition-all relative ${canAdd ? 'cursor-pointer' : ''}`}
+             onClick={canAdd && onAdd ? onAdd : undefined}>
+            <div className="flex items-center justify-between mb-3">
+                <div className={`p-2.5 rounded-lg ${colors.bg}`}>
+                    <Icon className={`h-5 w-5 ${colors.text}`} />
+                </div>
+                <span className="text-2xl font-bold text-gray-900">{value}</span>
+            </div>
+            <p className="font-medium text-gray-900">{label}</p>
+            <p className="text-sm text-gray-500">{description}</p>
+
+            {/* Add Button */}
+            {canAdd && onAdd && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        onAdd()
+                    }}
+                    className={`absolute bottom-3 right-3 p-1.5 rounded-full ${colors.bg} ${colors.text} ${colors.hover} transition-colors`}
+                    title={`Tambah ${label}`}
+                >
+                    <Plus className="h-4 w-4" />
+                </button>
+            )}
+        </div>
+    )
+}

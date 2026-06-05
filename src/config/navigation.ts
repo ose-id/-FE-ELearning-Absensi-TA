@@ -58,21 +58,15 @@ export const NAV_ITEMS: Record<RoleCode, NavItem[]> = {
     [ROLES.TEACHER]: [
         { icon: Home, label: 'Dashboard', href: '/dashboard' },
         { icon: Building2, label: 'Department', href: '/department-management' },
-        { icon: Building2, label: 'Class', href: '/class-management' },
         { icon: BookOpen, label: 'Learning Module', href: '/learning-module-management' },
         { icon: FolderOpen, label: 'Question Bank', href: '/question-bank' },
-        { icon: ClipboardCheck, label: 'Attendance', href: '/attendance' },
-        { icon: Briefcase, label: 'Assignments', href: '/assignment' },
     ],
 
     // Student Navigation
     [ROLES.STUDENT]: [
         { icon: Home, label: 'Dashboard', href: '/dashboard' },
-        { icon: BookOpen, label: 'Class Catalog', href: '/class-catalog' },
-        { icon: Building2, label: 'My Classes', href: '/my-classes' },
+        { icon: BookOpen, label: 'Learning Module', href: '/learning-module' },
         { icon: BookOpen, label: 'My Modules', href: '/my-modules' },
-        { icon: Briefcase, label: 'My Assignments', href: '/my-assignments' },
-        { icon: ClipboardCheck, label: 'My Attendance', href: '/attendance' },
         { icon: GraduationCap, label: 'My Grades', href: '/my-grades' },
     ],
 }

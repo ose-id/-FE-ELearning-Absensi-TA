@@ -1,4 +1,4 @@
-import { Exam, CreateExamRequest, UpdateExamRequest } from '@/types/exam'
+import { Exam, CreateExamRequest, UpdateExamRequest, ExamQuestion } from '@/types/exam'
 
 const EXAM_API_URL = process.env.NEXT_PUBLIC_EXAM_API_URL || process.env.EXAM_API_URL || 'https://localhost:5007'
 
@@ -74,7 +74,7 @@ class ExamService {
             const response = await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            return response.data[0]
+            return Array.isArray(response.data) ? response.data[0] : response.data
         } catch {
             return null
         }
@@ -100,6 +100,42 @@ class ExamService {
 
     async deleteExam(id: number, token: string): Promise<void> {
         await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+        })
+    }
+
+    // Exam Questions CRUD
+    async getExamQuestions(examId: number, token: string): Promise<{ data: ExamQuestion[], totalRecords: number }> {
+        const response = await this.fetchWithAuth(`${this.baseUrl}/${examId}/questions`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        return {
+            data: response.data || [],
+            totalRecords: response.totalRecords || 0
+        }
+    }
+
+    async createExamQuestion(data: any, token: string): Promise<ExamQuestion> {
+        const response = await this.fetchWithAuth(`${EXAM_API_URL}/api/ExamQuestion`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: JSON.stringify(data),
+        })
+        return response.data[0]
+    }
+
+    async updateExamQuestion(id: number, data: any, token: string): Promise<ExamQuestion> {
+        const response = await this.fetchWithAuth(`${EXAM_API_URL}/api/ExamQuestion/${id}`, {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${token}` },
+            body: JSON.stringify(data),
+        })
+        return response.data[0]
+    }
+
+    async deleteExamQuestion(id: number, token: string): Promise<void> {
+        await this.fetchWithAuth(`${EXAM_API_URL}/api/ExamQuestion/${id}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
         })

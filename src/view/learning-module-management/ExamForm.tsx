@@ -30,13 +30,13 @@ const examSchema = z.object({
     description: z.string().optional(),
     learning_module_id: z.number({ message: 'Learning module wajib dipilih' }),
     duration: z.number().min(1, 'Durasi minimal 1 menit').max(300, 'Durasi maksimal 300 menit'),
-    pass_grade: z.number().min(0).max(100, 'Nilai lulus 0-100').default(60),
+    pass_grade: z.number().min(0).max(100, 'Nilai lulus 0-100'),
     start_date: z.string().optional(),
     end_date: z.string().optional(),
-    show_results: z.number().default(1),
-    fullscreen: z.number().default(1),
-    cutoff: z.number().default(0),
-    status: z.number().default(1),
+    show_results: z.number(),
+    fullscreen: z.number(),
+    cutoff: z.number(),
+    status: z.number(),
 })
 
 export type ExamFormData = z.infer<typeof examSchema>

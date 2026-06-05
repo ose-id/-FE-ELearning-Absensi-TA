@@ -59,7 +59,7 @@ export default function UserGridView<T extends GridItem>({
         if (['ADMIN', 'ADM'].includes(roleUpper)) {
             return 'bg-gradient-to-r from-purple-500 to-purple-600 text-white'
         }
-        if (['TEACHER', 'GURU', 'TCR'].includes(roleUpper)) {
+        if (['TEACHER', 'GURU', 'TCR', 'GR'].includes(roleUpper)) {
             return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
         }
         return 'bg-gradient-to-r from-green-500 to-green-600 text-white'
@@ -70,7 +70,7 @@ export default function UserGridView<T extends GridItem>({
         if (['ADMIN', 'ADM'].includes(roleUpper)) {
             return <Lock className="h-3 w-3" />
         }
-        if (['TEACHER', 'GURU', 'TCR'].includes(roleUpper)) {
+        if (['TEACHER', 'GURU', 'TCR', 'GR'].includes(roleUpper)) {
             return <Shield className="h-3 w-3" />
         }
         if (['STUDENT', 'STD', 'MR'].includes(roleUpper)) {

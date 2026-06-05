@@ -1,10 +1,13 @@
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import MyModulesPage from '@/view/my-modules/MyModulesPage'
 
-export default function MyModules() {
+export default function MyModulesDetailLayout({
+    children,
+}: {
+    children: React.ReactNode
+}) {
     return (
         <DashboardLayout>
-            <MyModulesPage />
+            {children}
         </DashboardLayout>
     )
 }

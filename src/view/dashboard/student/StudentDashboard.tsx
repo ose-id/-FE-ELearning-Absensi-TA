@@ -167,11 +167,11 @@ export default function StudentDashboard() {
 
     const quickActions = [
         {
-            title: 'Browse Classes',
-            description: 'Find and enroll in new classes',
+            title: 'Browse Learning Modules',
+            description: 'Find and enroll in new modules',
             icon: BookOpen,
             color: 'bg-gradient-to-r from-blue-600 to-blue-700',
-            onClick: () => router.push('/class-catalog')
+            onClick: () => router.push('/learning-module')
         },
         {
             title: 'My Classes',

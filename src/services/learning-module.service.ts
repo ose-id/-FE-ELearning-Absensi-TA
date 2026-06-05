@@ -45,7 +45,7 @@ class LearningModuleService {
             const response = await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            return response.data[0]
+            return Array.isArray(response.data) ? response.data[0] : response.data
         } catch {
             return null
         }

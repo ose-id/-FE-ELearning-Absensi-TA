@@ -26,7 +26,7 @@ import { Quiz } from '@/types/quiz'
 import { LearningModule } from '@/types/learning-module'
 
 const quizSchema = z.object({
-    title: z.string().min(1, 'Judul quiz wajib diisi'),
+    title: z.string().min(1, 'Judul kuis wajib diisi'),
     description: z.string().optional(),
     learning_module_id: z.number({ message: 'Learning module wajib dipilih' }),
     duration: z.number().min(1, 'Durasi minimal 1 menit').max(180, 'Durasi maksimal 180 menit'),
@@ -35,6 +35,7 @@ const quizSchema = z.object({
     status: z.number().optional(),
     start_date: z.string().optional(),
     end_date: z.string().optional(),
+    show_results: z.number().optional(),
 })
 
 export type QuizFormData = z.infer<typeof quizSchema>
@@ -72,6 +73,7 @@ export default function QuizForm({
             status: 0,
             start_date: '',
             end_date: '',
+            show_results: 1,
         },
     })
 
@@ -86,8 +88,9 @@ export default function QuizForm({
                     max_score: initialData.nmax_score || 100,
                     passing_score: initialData.npassing_score || 60,
                     status: initialData.nstatus || 0,
-                    start_date: initialData.dstart ? initialData.dstart.split('T')[0] : '',
-                    end_date: initialData.dend ? initialData.dend.split('T')[0] : '',
+                    start_date: initialData.dstart && !initialData.dstart.startsWith('0001-01-01') ? initialData.dstart.split('T')[0] : '',
+                    end_date: initialData.dend && !initialData.dend.startsWith('0001-01-01') ? initialData.dend.split('T')[0] : '',
+                    show_results: initialData.nshow_results !== undefined ? initialData.nshow_results : 1,
                 })
             } else {
                 form.reset({
@@ -100,6 +103,7 @@ export default function QuizForm({
                     status: 0,
                     start_date: '',
                     end_date: '',
+                    show_results: 1,
                 })
             }
         }
@@ -287,6 +291,30 @@ export default function QuizForm({
                                             <Input type="date" {...field} value={field.value || ''} />
                                         </FormControl>
                                         <FormMessage>{form.formState.errors.end_date?.message}</FormMessage>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Controller
+                                control={form.control}
+                                name="show_results"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Tampilkan Nilai ke Siswa</FormLabel>
+                                        <div className="flex h-10 items-center">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                                    checked={field.value === 1}
+                                                    onChange={(e) => field.onChange(e.target.checked ? 1 : 0)}
+                                                />
+                                                <span className="text-sm font-medium text-gray-700">Tampilkan Nilai</span>
+                                            </label>
+                                        </div>
+                                        <FormMessage>{form.formState.errors.show_results?.message}</FormMessage>
                                     </FormItem>
                                 )}
                             />

@@ -38,26 +38,47 @@ class AssignmentService {
         return res.json()
     }
 
+    private mapAssignment(raw: any): Assignment {
+        return {
+            id: raw.nid,
+            title: raw.vtitle || '',
+            description: raw.vdescription || '',
+            class_id: raw.LearningModule?.nid_class || raw.class_id || 0,
+            learning_module_id: raw.nid_learning_module,
+            due_date: raw.dsubmission || '',
+            max_score: 100,
+        }
+    }
+
     async getAssignments(token: string): Promise<AssignmentListResponse> {
-        return this.fetchWithAuth(this.baseUrl, {
+        const response = await this.fetchWithAuth(this.baseUrl, {
             headers: { Authorization: `Bearer ${token}` }
         })
+        if (response && response.data) {
+            response.data = response.data.map((raw: any) => this.mapAssignment(raw))
+        }
+        return response
     }
 
     async getAssignmentsByTeacher(token: string, teacherId?: number): Promise<AssignmentListResponse> {
         const params = new URLSearchParams()
         if (teacherId) params.append('teacherId', teacherId.toString())
         const queryString = params.toString() ? `?${params.toString()}` : ''
-        return this.fetchWithAuth(`${this.baseUrl}${queryString}`, {
+        const response = await this.fetchWithAuth(`${this.baseUrl}${queryString}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
+        if (response && response.data) {
+            response.data = response.data.map((raw: any) => this.mapAssignment(raw))
+        }
+        return response
     }
 
     async getAssignmentById(id: number, token: string): Promise<Assignment> {
         const response = await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
-        return response.data[0]
+        const raw = response.data[0]
+        return this.mapAssignment(raw)
     }
 
     async createAssignment(data: CreateAssignmentRequest, token: string): Promise<void> {
@@ -106,10 +127,26 @@ class AssignmentService {
     }
 
     async getMyAssignments(token: string): Promise<AssignmentListResponse> {
-        return this.fetchWithAuth(`${this.baseUrl}/my-assignments`, {
+        const response = await this.fetchWithAuth(`${this.baseUrl}/my-assignments`, {
             headers: { Authorization: `Bearer ${token}` }
         })
+        if (response && response.data) {
+            response.data = response.data.map((raw: any) => this.mapAssignment(raw))
+        }
+        return response
+    }
+
+    async getMySubmission(assignmentId: number, token: string): Promise<any> {
+        try {
+            const response = await this.fetchWithAuth(`${this.baseUrl}/${assignmentId}/my-submission`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            return response.data || null
+        } catch (error) {
+            return null
+        }
     }
 }
 
 export const assignmentService = new AssignmentService()
+

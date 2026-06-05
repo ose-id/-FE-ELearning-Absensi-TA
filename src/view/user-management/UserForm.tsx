@@ -554,29 +554,31 @@ export default function UserForm({
                                         )}
                                     />
 
-                                    {/* Status */}
-                                    <Controller
-                                        control={form.control}
-                                        name="status"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel required>Status</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value || 'active'}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Status">
-                                                                {field.value === 'active' ? 'Active' : field.value === 'inactive' ? 'Inactive' : field.value}
-                                                            </SelectValue>
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="active">Active</SelectItem>
-                                                        <SelectItem value="inactive">Inactive</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormItem>
-                                        )}
-                                    />
+                                    {/* Status - only show when editing */}
+                                    {initialData && (
+                                        <Controller
+                                            control={form.control}
+                                            name="status"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel required>Status</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value || 'active'}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Status">
+                                                                    {field.value === 'active' ? 'Active' : field.value === 'inactive' ? 'Inactive' : field.value}
+                                                                </SelectValue>
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="active">Active</SelectItem>
+                                                            <SelectItem value="inactive">Inactive</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    )}
 
                                     {/* Birth Date */}
                                     <Controller

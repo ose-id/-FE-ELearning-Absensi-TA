@@ -62,6 +62,7 @@ interface LearningModuleFormProps {
     departments: LOVItem[]
     classes: Class[]
     subjects: Subject[]
+    teacherSubjectIds?: number[]
 }
 
 export default function LearningModuleForm({
@@ -73,6 +74,7 @@ export default function LearningModuleForm({
     departments,
     classes,
     subjects,
+    teacherSubjectIds = [],
 }: LearningModuleFormProps) {
     const { data: session } = useSession()
     const [academicYears, setAcademicYears] = useState<LOVItem[]>([])

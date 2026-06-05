@@ -29,9 +29,10 @@ class QuizService {
                 throw new Error(errorData.message?.message || errorData.title || errorData.message || `API request failed (${res.status})`)
             }
             return res.json()
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(`[QuizService] Network error:`, error)
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            const err = error as Error
+            if (err && err.name === 'TypeError' && err.message.includes('fetch')) {
                 throw new Error('Quiz service tidak tersedia. Pastikan service sedang running.')
             }
             throw error
@@ -39,6 +40,26 @@ class QuizService {
     }
 
     // Quiz CRUD
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private mapQuiz(raw: any): Quiz {
+        return {
+            nid: raw.nid,
+            vtitle: raw.vtitle || '',
+            vdesc: raw.vdescription ?? raw.vdesc ?? raw.vDesc ?? '',
+            nid_learning_module: raw.nid_learning_module ?? raw.nidLearningModule ?? raw.nid_Learning_Module ?? raw.nIdLearningModule ?? raw.learningModuleId ?? 0,
+            nduration: raw.nduration_minutes ?? raw.ndurationMinutes ?? raw.nduration ?? raw.nDurationMinutes ?? raw.nduration_Minutes ?? raw.nDuration_Minutes ?? 0,
+            nmax_score: raw.nmax_score ?? raw.nmaxScore ?? raw.nMaxScore ?? 100,
+            npassing_score: raw.npassing_score ?? raw.npassingScore ?? raw.nPassingScore ?? raw.npassing_Score ?? 60,
+            nstatus: raw.nstatus ?? raw.status ?? raw.nStatus ?? 0,
+            nmax_attempts: raw.nmax_attempts ?? raw.nmaxAttempts ?? raw.nMaxAttempts ?? raw.nmax_Attempts ?? 1,
+            nshow_results: raw.nshow_results ?? raw.nshowResults ?? raw.nShowResults ?? raw.nShow_Results ?? 1,
+            dstart: raw.dstart ?? raw.startDate ?? raw.dStart,
+            dend: raw.dend ?? raw.endDate ?? raw.dEnd,
+            dcrea: raw.dcrea,
+            dmodi: raw.dmodi,
+        }
+    }
+
     async getQuizzes(
         token: string,
         params?: { learning_module_id?: number; class_id?: number },
@@ -55,8 +76,10 @@ class QuizService {
         const response = await this.fetchWithAuth(`${this.baseUrl}?${urlParams}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
+        const rawData = response.data || []
         return {
-            data: response.data || [],
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            data: rawData.map((raw: any) => this.mapQuiz(raw)),
             totalRecords: response.totalRecords || 0
         }
     }
@@ -66,8 +89,10 @@ class QuizService {
             const response = await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            return response.data[0]
-        } catch {
+            const raw = Array.isArray(response.data) ? response.data[0] : response.data
+            return this.mapQuiz(raw)
+        } catch (error) {
+            console.error('[QuizService] getQuizById failed:', error)
             return null
         }
     }
@@ -83,21 +108,81 @@ class QuizService {
     }
 
     async createQuiz(data: CreateQuizRequest, token: string): Promise<Quiz> {
+        const showRes = data.ShowResults !== undefined ? data.ShowResults : (data.nshow_results !== undefined ? data.nshow_results : 1)
+        const payload = {
+            ...data,
+            DurationMinutes: data.Duration,
+            durationMinutes: data.Duration,
+            nduration_minutes: data.Duration,
+            ndurationMinutes: data.Duration,
+            nDurationMinutes: data.Duration,
+            PassingScore: data.PassingScore,
+            passingScore: data.PassingScore,
+            npassing_score: data.PassingScore,
+            npassingScore: data.PassingScore,
+            MaxScore: data.MaxScore,
+            maxScore: data.MaxScore,
+            nmax_score: data.MaxScore,
+            nmaxScore: data.MaxScore,
+            Status: data.Status,
+            status: data.Status,
+            nstatus: data.Status,
+            ShowResults: showRes,
+            showResults: showRes,
+            nshow_results: showRes,
+            nshowResults: showRes,
+            nShowResults: showRes,
+            StartAt: data.StartDate,
+            startAt: data.StartDate,
+            EndAt: data.EndDate,
+            endAt: data.EndDate,
+        }
         const response = await this.fetchWithAuth(this.baseUrl, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
-            body: JSON.stringify(data),
+            body: JSON.stringify(payload),
         })
-        return response.data[0]
+        const raw = Array.isArray(response.data) ? response.data[0] : response.data
+        return this.mapQuiz(raw)
     }
 
     async updateQuiz(id: number, data: UpdateQuizRequest, token: string): Promise<Quiz> {
+        const showRes = data.ShowResults !== undefined ? data.ShowResults : (data.nshow_results !== undefined ? data.nshow_results : 1)
+        const payload = {
+            ...data,
+            DurationMinutes: data.Duration,
+            durationMinutes: data.Duration,
+            nduration_minutes: data.Duration,
+            ndurationMinutes: data.Duration,
+            nDurationMinutes: data.Duration,
+            PassingScore: data.PassingScore,
+            passingScore: data.PassingScore,
+            npassing_score: data.PassingScore,
+            npassingScore: data.PassingScore,
+            MaxScore: data.MaxScore,
+            maxScore: data.MaxScore,
+            nmax_score: data.MaxScore,
+            nmaxScore: data.MaxScore,
+            Status: data.Status,
+            status: data.Status,
+            nstatus: data.Status,
+            ShowResults: showRes,
+            showResults: showRes,
+            nshow_results: showRes,
+            nshowResults: showRes,
+            nShowResults: showRes,
+            StartAt: data.StartDate,
+            startAt: data.StartDate,
+            EndAt: data.EndDate,
+            endAt: data.EndDate,
+        }
         const response = await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` },
-            body: JSON.stringify(data),
+            body: JSON.stringify(payload),
         })
-        return response.data[0]
+        const raw = Array.isArray(response.data) ? response.data[0] : response.data
+        return this.mapQuiz(raw)
     }
 
     async deleteQuiz(id: number, token: string): Promise<void> {
@@ -108,36 +193,84 @@ class QuizService {
     }
 
     // Questions CRUD
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private mapQuestion(raw: any): QuizQuestion {
+        return {
+            nid: raw.nid,
+            nid_quiz: raw.nid_quiz,
+            norder: raw.norder || 0,
+            vquestion: raw.vquestion || '',
+            vtype: raw.vtype || 'multiple_choice',
+            npoints: raw.npoints || 1,
+            vanswer_key: raw.vanswer || raw.vanswer_key || '',
+            voptions: (() => {
+                const opt = raw.options ?? raw.joptions ?? raw.voptions ?? raw.jOptions ?? raw.vOptions;
+                if (!opt) return undefined;
+                return typeof opt === 'string' ? opt : JSON.stringify(opt);
+            })(),
+            dcrea: raw.dcrea,
+            dmodi: raw.dmodi,
+        }
+    }
+
     async getQuestions(quizId: number, token: string): Promise<{ data: QuizQuestion[], totalRecords: number }> {
         const response = await this.fetchWithAuth(`${this.baseUrl}/${quizId}/questions`, {
             headers: { Authorization: `Bearer ${token}` }
         })
+        const rawData = response.data || []
         return {
-            data: response.data || [],
-            totalRecords: response.totalRecords || 0
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            data: rawData.map((raw: any) => this.mapQuestion(raw)),
+            totalRecords: response.totalRecords || rawData.length
         }
     }
 
     async createQuestion(data: CreateQuestionRequest, token: string): Promise<QuizQuestion> {
-        const response = await this.fetchWithAuth(`${QUIZ_API_URL}/api/QuizQuestion`, {
+        const quizId = data.QuizId;
+        const opts = data.Options ? (typeof data.Options === 'string' ? JSON.parse(data.Options) : data.Options) : undefined;
+        const backendData = {
+            Question: data.Question,
+            Type: data.Type,
+            Points: data.Points || 1,
+            Order: data.Order || 1,
+            Answer: data.AnswerKey,
+            AnswerKey: data.AnswerKey,
+            Options: opts,
+            Joptions: opts,
+            joptions: opts
+        }
+
+        const response = await this.fetchWithAuth(`${this.baseUrl}/${quizId}/questions`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
-            body: JSON.stringify(data),
+            body: JSON.stringify(backendData),
         })
         return response.data[0]
     }
 
     async updateQuestion(id: number, data: UpdateQuestionRequest, token: string): Promise<QuizQuestion> {
-        const response = await this.fetchWithAuth(`${QUIZ_API_URL}/api/QuizQuestion/${id}`, {
+        const opts = data.Options ? (typeof data.Options === 'string' ? JSON.parse(data.Options) : data.Options) : undefined;
+        const backendData = {
+            Order: data.Order,
+            Question: data.Question,
+            Type: data.Type,
+            Points: data.Points,
+            AnswerKey: data.AnswerKey,
+            Answer: data.AnswerKey,
+            Options: opts,
+            Joptions: opts,
+            joptions: opts
+        }
+        const response = await this.fetchWithAuth(`${this.baseUrl}/questions/${id}`, {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` },
-            body: JSON.stringify(data),
+            body: JSON.stringify(backendData),
         })
         return response.data[0]
     }
 
     async deleteQuestion(id: number, token: string): Promise<void> {
-        await this.fetchWithAuth(`${QUIZ_API_URL}/api/QuizQuestion/${id}`, {
+        await this.fetchWithAuth(`${this.baseUrl}/questions/${id}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
         })
@@ -164,21 +297,19 @@ class QuizService {
         }
     }
 
-    async submitQuiz(quizId: number, answers: any[], token: string): Promise<any> {
-        const response = await this.fetchWithAuth(`${QUIZ_API_URL}/api/QuizAttempt/submit`, {
+    async submitQuizAttempt(quizId: number, data: {
+        AnswerCount: number
+        StartAt: string
+        FinishAt: string
+        Score: number
+        Percentage: number
+    }, token: string): Promise<unknown> {
+        const response = await this.fetchWithAuth(`${this.baseUrl}/${quizId}/attempt`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ QuizId: quizId, Answers: answers }),
+            body: JSON.stringify(data),
         })
-        return response.data
-    }
-
-    async startQuizAttempt(quizId: number, token: string): Promise<any> {
-        const response = await this.fetchWithAuth(`${this.baseUrl}/${quizId}/start`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` }
-        })
-        return response.data
+        return response
     }
 }
 
