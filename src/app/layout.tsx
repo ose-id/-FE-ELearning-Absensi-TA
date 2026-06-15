@@ -12,8 +12,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "S.T.O.V.I.A - Learning Management System",
-  description: "S.T.O.V.I.A Learning Management System",
+  title: "STOVIA - Learning Management System",
+  description: "STOVIA Learning Management System",
   generator: "v0.app",
   icons: {
     icon: [

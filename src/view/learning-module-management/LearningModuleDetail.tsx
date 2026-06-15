@@ -113,7 +113,7 @@ export default function LearningModuleDetail({
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
-            <div className="mx-auto max-w-7xl space-y-6 p-6">
+            <div className="mx-auto w-full space-y-6 p-6">
                 {/* Header Card */}
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                     <div className="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>

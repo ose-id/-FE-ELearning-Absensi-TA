@@ -267,7 +267,7 @@ export default function StudentModuleDetailPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 pb-8">
-            <div className="mx-auto max-w-5xl space-y-5 p-4.5">
+            <div className="mx-auto w-full space-y-5 px-6">
                 {/* Header Card */}
                 <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-950 p-5 text-white shadow-md">
                     <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/5 blur-xl" />

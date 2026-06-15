@@ -89,7 +89,7 @@ const Login = () => {
           <div className="flex-shrink-0">
             <Image
               src="/LOGO SMKN 1.png"
-              alt="S.T.O.V.I.A Logo"
+              alt="Logo SMKN 1 Jakarta"
               width={180}
               height={180}
               className="rounded-full"
@@ -98,7 +98,7 @@ const Login = () => {
 
           {/* Welcome Text */}
           <div className="max-w-md">
-            <h1 className="mb-4 text-3xl font-bold text-white">Welcome to S.T.O.V.I.A</h1>
+            <h1 className="mb-4 text-3xl font-bold text-white">Welcome to STOVIA</h1>
             <p className="text-sm leading-relaxed text-gray-300 text-justify">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
               dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
