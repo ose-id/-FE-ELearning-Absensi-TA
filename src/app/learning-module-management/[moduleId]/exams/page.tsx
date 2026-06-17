@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Plus, ArrowLeft, Search, Loader2, ClipboardCheck, Edit, Trash2, X, ListOrdered } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -16,6 +16,14 @@ import { Exam } from '@/types/exam'
 function getErrorMessage(error: unknown, fallback: string): string {
     if (error instanceof Error) return error.message || fallback
     return fallback
+}
+
+function getTodayString() {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
 }
 
 export default function ModuleExamsPage() {
@@ -44,14 +52,7 @@ export default function ModuleExamsPage() {
     const [fullscreen, setFullscreen] = useState(0)
     const [cutoff, setCutoff] = useState(0)
 
-    useEffect(() => {
-        if (session?.accessToken) {
-            fetchModule()
-            fetchExams()
-        }
-    }, [session?.accessToken, moduleId])
-
-    const fetchModule = async () => {
+    const fetchModule = useCallback(async () => {
         if (!session?.accessToken) return
         try {
             const teacherId = parseInt(session.user?.id || '0')
@@ -67,9 +68,9 @@ export default function ModuleExamsPage() {
         } catch (error) {
             console.error('Failed to fetch module:', error)
         }
-    }
+    }, [session?.accessToken, moduleId])
 
-    const fetchExams = async () => {
+    const fetchExams = useCallback(async () => {
         if (!session?.accessToken) return
         try {
             setLoading(true)
@@ -80,7 +81,14 @@ export default function ModuleExamsPage() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [session?.accessToken, moduleId])
+
+    useEffect(() => {
+        if (session?.accessToken) {
+            fetchModule()
+            fetchExams()
+        }
+    }, [session?.accessToken, moduleId, fetchModule, fetchExams])
 
     const handleCreate = () => {
         setEditingExam(null)
@@ -393,6 +401,7 @@ export default function ModuleExamsPage() {
                                             type="date"
                                             value={startDate}
                                             onChange={(e) => setStartDate(e.target.value)}
+                                            min={getTodayString()}
                                         />
                                     </div>
                                     <div>
@@ -403,6 +412,7 @@ export default function ModuleExamsPage() {
                                             type="date"
                                             value={endDate}
                                             onChange={(e) => setEndDate(e.target.value)}
+                                            min={startDate || getTodayString()}
                                         />
                                     </div>
                                 </div>

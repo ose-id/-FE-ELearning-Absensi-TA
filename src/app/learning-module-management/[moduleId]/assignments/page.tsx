@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Plus, ArrowLeft, Search, Loader2, PenLine, Edit, Trash2, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -16,6 +16,14 @@ import { Assignment } from '@/types/assignment'
 function getErrorMessage(error: unknown, fallback: string): string {
     if (error instanceof Error) return error.message || fallback
     return fallback
+}
+
+function getTodayString() {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
 }
 
 export default function ModuleAssignmentsPage() {
@@ -37,16 +45,8 @@ export default function ModuleAssignmentsPage() {
     const [description, setDescription] = useState('')
     const [dueDate, setDueDate] = useState('')
     const [maxScore, setMaxScore] = useState(100)
-    const [classId, setClassId] = useState<number>(0)
 
-    useEffect(() => {
-        if (session?.accessToken) {
-            fetchModule()
-            fetchAssignments()
-        }
-    }, [session?.accessToken, moduleId])
-
-    const fetchModule = async () => {
+    const fetchModule = useCallback(async () => {
         if (!session?.accessToken) return
         try {
             const teacherId = parseInt(session.user?.id || '0')
@@ -62,9 +62,9 @@ export default function ModuleAssignmentsPage() {
         } catch (error) {
             console.error('Failed to fetch module:', error)
         }
-    }
+    }, [session?.accessToken, moduleId])
 
-    const fetchAssignments = async () => {
+    const fetchAssignments = useCallback(async () => {
         if (!session?.accessToken) return
         try {
             setLoading(true)
@@ -76,7 +76,14 @@ export default function ModuleAssignmentsPage() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [session?.accessToken, moduleId])
+
+    useEffect(() => {
+        if (session?.accessToken) {
+            fetchModule()
+            fetchAssignments()
+        }
+    }, [session?.accessToken, moduleId, fetchModule, fetchAssignments])
 
     const handleCreate = () => {
         setEditingAssignment(null)
@@ -84,7 +91,6 @@ export default function ModuleAssignmentsPage() {
         setDescription('')
         setDueDate('')
         setMaxScore(100)
-        setClassId(module?.nid_class || 0)
         setIsFormOpen(true)
     }
 
@@ -94,7 +100,6 @@ export default function ModuleAssignmentsPage() {
         setDescription(assignment.description)
         setDueDate(assignment.due_date && !assignment.due_date.startsWith('0001-01-01') ? assignment.due_date.split('T')[0] : '')
         setMaxScore(assignment.max_score)
-        setClassId(assignment.class_id)
         setIsFormOpen(true)
     }
 
@@ -117,13 +122,14 @@ export default function ModuleAssignmentsPage() {
 
         try {
             setIsSubmitting(true)
+            const formattedDueDate = dueDate ? `${dueDate}T23:59:59` : ''
             if (editingAssignment) {
                 await assignmentService.updateAssignment(
                     editingAssignment.id,
                     {
                         title,
                         description,
-                        dueDate,
+                        dueDate: formattedDueDate,
                         allowLateSubmission: true,
                         enableCutoff: false,
                         status: 1,
@@ -137,7 +143,7 @@ export default function ModuleAssignmentsPage() {
                         title,
                         description,
                         learningModuleId: moduleId,
-                        dueDate,
+                        dueDate: formattedDueDate,
                         allowLateSubmission: true,
                         enableCutoff: false,
                     },
@@ -301,6 +307,7 @@ export default function ModuleAssignmentsPage() {
                                             type="date"
                                             value={dueDate}
                                             onChange={(e) => setDueDate(e.target.value)}
+                                            min={getTodayString()}
                                             required
                                         />
                                     </div>

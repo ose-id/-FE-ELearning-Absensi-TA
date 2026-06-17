@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Plus, ArrowLeft, Search, Loader2, FileText, Edit, Trash2, X, ListOrdered } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -16,6 +16,14 @@ import { Quiz } from '@/types/quiz'
 function getErrorMessage(error: unknown, fallback: string): string {
     if (error instanceof Error) return error.message || fallback
     return fallback
+}
+
+function getTodayString() {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
 }
 
 export default function ModuleQuizzesPage() {
@@ -43,14 +51,7 @@ export default function ModuleQuizzesPage() {
     const [endDate, setEndDate] = useState('')
     const [showResults, setShowResults] = useState(1)
 
-    useEffect(() => {
-        if (session?.accessToken) {
-            fetchModule()
-            fetchQuizzes()
-        }
-    }, [session?.accessToken, moduleId])
-
-    const fetchModule = async () => {
+    const fetchModule = useCallback(async () => {
         if (!session?.accessToken) return
         try {
             const teacherId = parseInt(session.user?.id || '0')
@@ -66,9 +67,9 @@ export default function ModuleQuizzesPage() {
         } catch (error) {
             console.error('Failed to fetch module:', error)
         }
-    }
+    }, [session?.accessToken, moduleId])
 
-    const fetchQuizzes = async () => {
+    const fetchQuizzes = useCallback(async () => {
         if (!session?.accessToken) return
         try {
             setLoading(true)
@@ -79,7 +80,14 @@ export default function ModuleQuizzesPage() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [session?.accessToken, moduleId])
+
+    useEffect(() => {
+        if (session?.accessToken) {
+            fetchModule()
+            fetchQuizzes()
+        }
+    }, [session?.accessToken, moduleId, fetchModule, fetchQuizzes])
 
     const handleCreate = () => {
         setEditingQuiz(null)
@@ -392,6 +400,7 @@ export default function ModuleQuizzesPage() {
                                             type="date"
                                             value={startDate}
                                             onChange={(e) => setStartDate(e.target.value)}
+                                            min={getTodayString()}
                                         />
                                     </div>
                                     <div>
@@ -402,6 +411,7 @@ export default function ModuleQuizzesPage() {
                                             type="date"
                                             value={endDate}
                                             onChange={(e) => setEndDate(e.target.value)}
+                                            min={startDate || getTodayString()}
                                         />
                                     </div>
                                 </div>

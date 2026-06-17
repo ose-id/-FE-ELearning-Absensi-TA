@@ -51,6 +51,16 @@ const assignmentSchema = z.object({
 
 export type AssignmentFormData = z.infer<typeof assignmentSchema>
 
+const getMinDateTimeString = () => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
 const FormItem = ({ children }: { children: React.ReactNode }) => (
     <div className="space-y-2">{children}</div>
 )
@@ -116,8 +126,6 @@ export default function AssignmentForm({
     const handleSubmit = async (data: AssignmentFormData) => {
         await onSubmit(data)
     }
-
-
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -219,7 +227,7 @@ export default function AssignmentForm({
                                             <SelectContent>
                                                 {classes.map((cls) => (
                                                     <SelectItem key={cls.nid} value={cls.nid.toString()}>
-                                                        {(cls as any).label || cls.vname}
+                                                        {(cls as { label?: string }).label || cls.vname}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -257,7 +265,7 @@ export default function AssignmentForm({
                                     <FormItem>
                                         <FormLabel>Due Date</FormLabel>
                                         <FormControl>
-                                            <Input type="datetime-local" {...field} />
+                                            <Input type="datetime-local" min={getMinDateTimeString()} {...field} />
                                         </FormControl>
                                         <FormMessage>{form.formState.errors.due_date?.message}</FormMessage>
                                     </FormItem>
