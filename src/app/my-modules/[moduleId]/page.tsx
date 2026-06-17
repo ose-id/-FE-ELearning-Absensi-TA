@@ -772,11 +772,11 @@ function WeeklyContentItem({
         if (isAssignmentCompleted) {
             metaInfo = 'Tugas Sudah Dikumpulkan'
             actionLabel = 'Selesai ✓'
-            onAction = () => router.push('/my-assignments')
+            onAction = () => router.push(`/my-modules/${moduleId}/assignment/${a.id}`)
         } else {
             metaInfo = dueText
             actionLabel = 'Kirim Tugas'
-            onAction = () => router.push('/my-assignments')
+            onAction = () => router.push(`/my-modules/${moduleId}/assignment/${a.id}`)
         }
     } else if (item.type === 'quiz') {
         const q = item.data as Quiz

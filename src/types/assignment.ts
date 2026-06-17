@@ -47,7 +47,9 @@ export interface UpdateAssignmentRequest {
 
 export interface SubmitAssignmentRequest {
     assignment_id: number
-    file_url?: string
+    content?: string
+    filePath?: string
+    fileName?: string
 }
 
 export interface GradeSubmissionRequest {
@@ -55,5 +57,38 @@ export interface GradeSubmissionRequest {
     feedback?: string
 }
 
-export interface AssignmentListResponse extends ApiResponse<Assignment> { }
-export interface SubmissionListResponse extends ApiResponse<Submission> { }
+export type AssignmentListResponse = ApiResponse<Assignment>
+export type SubmissionListResponse = ApiResponse<Submission>
+
+export interface RawAssignment {
+    nid: number
+    vtitle?: string
+    vdescription?: string
+    class_id?: number
+    nid_learning_module: number
+    dsubmission?: string
+    LearningModule?: {
+        nid_class?: number
+    }
+}
+
+export interface RawSubmission {
+    nid: number
+    nid_assignment: number
+    nid_student: number
+    vcontent?: string
+    vfile_path?: string
+    vfile_name?: string
+    nscore: number
+    vfeedback?: string
+    dsubmitted_at: string
+    nis_late: number
+    vcrea?: string
+    vmodi?: string
+    Student?: {
+        vname?: string
+        vfull_name?: string
+    }
+}
+
+export type AssignmentSubmission = RawSubmission

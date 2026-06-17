@@ -32,38 +32,45 @@ interface QuizResult {
 }
 
 // ─── Timer Hook ───
-function useCountdown(totalSeconds: number, isRunning: boolean, onExpire: () => void) {
-    const [secondsLeft, setSecondsLeft] = useState(totalSeconds)
+function useCountdown(endTime: Date | null, isRunning: boolean, onExpire: () => void) {
+    const [now, setNow] = useState(new Date())
     const onExpireRef = useRef(onExpire)
 
     useEffect(() => {
         onExpireRef.current = onExpire
     })
 
+    // Update 'now' every second when running
     useEffect(() => {
-        setSecondsLeft(totalSeconds)
-    }, [totalSeconds])
+        if (!isRunning || !endTime) return
+        
+        // Initial sync of 'now' when timer starts/resumes via setTimeout to avoid synchronous cascading renders
+        const timeoutId = setTimeout(() => {
+            setNow(new Date())
+        }, 0)
+        
+        const id = setInterval(() => {
+            setNow(new Date())
+        }, 1000)
+        
+        return () => {
+            clearTimeout(timeoutId)
+            clearInterval(id)
+        }
+    }, [isRunning, endTime])
 
-    // Safely trigger expiration callback outside state update cycle
+    const secondsLeft = useMemo(() => {
+        if (!endTime) return 0
+        const diff = Math.floor((endTime.getTime() - now.getTime()) / 1000)
+        return Math.max(0, diff)
+    }, [endTime, now])
+
+    // Safely trigger expiration callback
     useEffect(() => {
-        if (isRunning && secondsLeft <= 0) {
+        if (isRunning && endTime && secondsLeft <= 0) {
             onExpireRef.current()
         }
-    }, [secondsLeft, isRunning])
-
-    useEffect(() => {
-        if (!isRunning || secondsLeft <= 0) return
-        const id = setInterval(() => {
-            setSecondsLeft(prev => {
-                if (prev <= 1) {
-                    clearInterval(id)
-                    return 0
-                }
-                return prev - 1
-            })
-        }, 1000)
-        return () => clearInterval(id)
-    }, [isRunning, secondsLeft])
+    }, [secondsLeft, isRunning, endTime])
 
     const minutes = Math.floor(secondsLeft / 60)
     const seconds = secondsLeft % 60
@@ -91,7 +98,6 @@ export default function StudentQuizPage() {
     const [result, setResult] = useState<QuizResult | null>(null)
     const [startTime, setStartTime] = useState<Date | null>(null)
     const [showConfirmSubmit, setShowConfirmSubmit] = useState(false)
-    const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null)
 
     // Fetch quiz and questions
     useEffect(() => {
@@ -165,7 +171,6 @@ export default function StudentQuizPage() {
                         if (remaining > 0) {
                             setStartTime(originalStart)
                             setPhase('taking')
-                            setSecondsRemaining(remaining)
                         } else {
                             // Expired while away, clear state
                             localStorage.removeItem(`elearn_quiz_phase_${quizId}`)
@@ -268,7 +273,7 @@ export default function StudentQuizPage() {
         } finally {
             setIsSubmitting(false)
         }
-    }, [session?.accessToken, quiz, quizId, answers, startTime, calculateResult, isSubmitting])
+    }, [session?.accessToken, session?.user?.id, quiz, quizId, answers, startTime, calculateResult, isSubmitting])
 
     // Timer expiry auto-submit
     const handleTimerExpire = useCallback(() => {
@@ -276,9 +281,13 @@ export default function StudentQuizPage() {
         handleSubmit()
     }, [handleSubmit])
 
-    const timerDuration = secondsRemaining !== null ? secondsRemaining : (quiz ? quiz.nduration * 60 : 0)
+    const endTime = useMemo(() => {
+        if (!startTime || !quiz) return null
+        return new Date(startTime.getTime() + quiz.nduration * 60 * 1000)
+    }, [startTime, quiz])
+
     const { formatted: timerFormatted, urgency: timerUrgency } = useCountdown(
-        timerDuration,
+        endTime,
         phase === 'taking',
         handleTimerExpire
     )

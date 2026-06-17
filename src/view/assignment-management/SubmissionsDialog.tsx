@@ -76,7 +76,12 @@ export default function SubmissionsDialog({ open, onOpenChange, assignment }: Su
                 score: Number(gradeValue),
                 feedback: feedback
             }
-            await assignmentService.gradeSubmission(gradingSubmission.id, data, session.accessToken)
+            await assignmentService.gradeSubmission(
+                gradingSubmission.assignment_id,
+                gradingSubmission.student_id,
+                data,
+                session.accessToken
+            )
             toast.success('Grade submitted successfully!')
             setGradingSubmission(null)
             fetchSubmissions()

@@ -10,9 +10,15 @@ import { usePathname, useRouter } from 'next/navigation'
 
 interface DashboardLayoutProps {
   children: ReactNode
+  hideHeader?: boolean
+  hideSidebar?: boolean
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+  hideHeader = false,
+  hideSidebar = false
+}: DashboardLayoutProps) {
   const { data: session, status } = useSession()
   const pathname = usePathname()
   const router = useRouter()
@@ -53,19 +59,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <TooltipProvider>
         <div className="flex h-screen bg-gray-50">
           {/* Sidebar */}
-          <DashboardSidebar
-            expanded={sidebarExpanded}
-            onToggle={() => setSidebarExpanded(!sidebarExpanded)}
-            onClickOutside={handleClickOutside}
-          />
+          {!hideSidebar && (
+            <DashboardSidebar
+              expanded={sidebarExpanded}
+              onToggle={() => setSidebarExpanded(!sidebarExpanded)}
+              onClickOutside={handleClickOutside}
+            />
+          )}
 
           {/* Main Content */}
           <div className="flex flex-1 flex-col overflow-hidden">
             {/* Header */}
-            <DashboardHeader
-              onMenuClick={() => setSidebarExpanded(!sidebarExpanded)}
-              sidebarExpanded={sidebarExpanded}
-            />
+            {!hideHeader && (
+              <DashboardHeader
+                onMenuClick={() => setSidebarExpanded(!sidebarExpanded)}
+                sidebarExpanded={sidebarExpanded}
+              />
+            )}
 
             {/* Page Content */}
             <main

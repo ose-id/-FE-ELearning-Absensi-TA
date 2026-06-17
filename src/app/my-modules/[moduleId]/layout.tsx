@@ -1,3 +1,6 @@
+'use client'
+
+import { usePathname } from 'next/navigation'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 
 export default function MyModulesDetailLayout({
@@ -5,8 +8,11 @@ export default function MyModulesDetailLayout({
 }: {
     children: React.ReactNode
 }) {
+    const pathname = usePathname()
+    const isQuizTaking = pathname.includes('/quiz/')
+
     return (
-        <DashboardLayout>
+        <DashboardLayout hideHeader={isQuizTaking}>
             {children}
         </DashboardLayout>
     )
