@@ -199,8 +199,8 @@ export default function UserForm({
                 roleName = found.vrole_name || found.role_name || ''
             } else {
                 if (initialData.role_nid === 1) roleName = 'Admin'
-                else if (initialData.role_nid === 2) roleName = 'Guru'
-                else if (initialData.role_nid === 3) roleName = 'Murid'
+                else if (initialData.role_nid === 2) roleName = 'Teacher'
+                else if (initialData.role_nid === 3) roleName = 'Student'
             }
             form.reset({
                 username:     initialData.username     || '',
@@ -219,13 +219,13 @@ export default function UserForm({
                 class_id:     initialData.class_id?.toString() || '',
                 parent_name:  initialData.parent_name  || '',
                 parent_phone: initialData.parent_phone || '',
-                role:         fixedRoleNid ? (fixedRoleNid === 1 ? 'Admin' : fixedRoleNid === 2 ? 'Guru' : 'Murid') : roleName,
+                role:         fixedRoleNid ? (fixedRoleNid === 1 ? 'Admin' : fixedRoleNid === 2 ? 'Teacher' : 'Student') : roleName,
                 status:       initialData.status       || 'active',
             })
         } else {
             // If fixedRoleNid is provided, pre-set the role
             if (fixedRoleNid) {
-                const defaultRole = fixedRoleNid === 1 ? 'Admin' : fixedRoleNid === 2 ? 'Guru' : 'Murid'
+                const defaultRole = fixedRoleNid === 1 ? 'Admin' : fixedRoleNid === 2 ? 'Teacher' : 'Student'
                 form.reset({
                     ...emptyDefaults,
                     role: defaultRole,

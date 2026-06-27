@@ -154,12 +154,12 @@ export default function LearningModuleForm({
             <DialogContent className="sm:max-w-[600px] bg-white text-gray-900 max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
-                        {initialData ? 'Edit Materi' : 'Tambah Materi Baru'}
+                        {initialData ? 'Edit Module' : 'Create New Module'}
                     </DialogTitle>
                     <DialogDescription>
                         {initialData
-                            ? 'Perbarui detail materi pembelajaran.'
-                            : 'Tambahkan materi pembelajaran baru.'}
+                            ? 'Update learning module details.'
+                            : 'Add new learning module.'}
                     </DialogDescription>
                 </DialogHeader>
 

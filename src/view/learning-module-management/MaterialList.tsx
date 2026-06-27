@@ -46,7 +46,7 @@ export default function MaterialList({
         return (
             <div className="text-center py-12">
                 <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Belum ada materi untuk modul ini</p>
+                <p className="text-gray-500">No materials available for this module</p>
             </div>
         )
     }
@@ -55,10 +55,10 @@ export default function MaterialList({
         <Table>
             <TableHeader>
                 <TableRow className="border-b border-gray-200">
-                    <TableHead className="text-gray-600 font-semibold">Judul</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Deskripsi</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Title</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Description</TableHead>
                     <TableHead className="text-gray-600 font-semibold">File</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Tanggal</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Date</TableHead>
                     {isEditable && <TableHead className="text-right text-gray-600 font-semibold">Actions</TableHead>}
                 </TableRow>
             </TableHeader>
@@ -72,7 +72,7 @@ export default function MaterialList({
                             </div>
                         </TableCell>
                         <TableCell className="text-gray-600 max-w-xs truncate">
-                            {material.vdesc || '-'}
+                            {material.vdescription || '-'}
                         </TableCell>
                         <TableCell className="text-gray-600">
                             {material.vfile_name ? (
@@ -94,7 +94,7 @@ export default function MaterialList({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                            title="Lihat/Unduh"
+                                            title="View/Download"
                                         >
                                             <Download className="h-4 w-4" />
                                         </a>

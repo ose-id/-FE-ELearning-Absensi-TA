@@ -44,8 +44,8 @@ export default function UserList({ users, onEdit, onDelete }: UserListProps) {
         if (user.vrole_name) return user.vrole_name
         if (user.role_name) return user.role_name
         if (user.role_nid === 1) return 'Admin'
-        if (user.role_nid === 2) return 'Guru'
-        if (user.role_nid === 3) return 'Murid'
+        if (user.role_nid === 2) return 'Teacher'
+        if (user.role_nid === 3) return 'Student'
         return 'Unknown'
     }
 

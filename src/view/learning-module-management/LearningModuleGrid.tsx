@@ -54,7 +54,7 @@ export default function LearningModuleGrid({
                 </div>
                 {canManage && (
                     <Button onClick={onCreateModule}>
-                        <Plus className="mr-2 h-4 w-4" /> Tambah Modul
+                        <Plus className="mr-2 h-4 w-4" /> Add Module
                     </Button>
                 )}
             </div>
@@ -62,31 +62,31 @@ export default function LearningModuleGrid({
             {/* Statistics Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <StatCard
-                    label="Total Modul"
+                    label="Total Modules"
                     value={modules.length}
                     icon={BookOpen}
                     color="blue"
                 />
                 <StatCard
-                    label="Materi"
+                    label="Materials"
                     value={0}
                     icon={BookOpen}
                     color="blue"
                 />
                 <StatCard
-                    label="Tugas"
+                    label="Assignments"
                     value={0}
                     icon={BookOpen}
                     color="green"
                 />
                 <StatCard
-                    label="Quiz"
+                    label="Quizzes"
                     value={0}
                     icon={BookOpen}
                     color="purple"
                 />
                 <StatCard
-                    label="Ujian"
+                    label="Exams"
                     value={0}
                     icon={BookOpen}
                     color="red"
@@ -97,11 +97,11 @@ export default function LearningModuleGrid({
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
                 <div className="border-b border-gray-200 p-6">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 flex-1">
+                         <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 flex-1">
                             <Search className="h-5 w-5 text-gray-500" />
                             <Input
                                 className="border-none bg-transparent text-gray-900 placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
-                                placeholder="Cari modul..."
+                                placeholder="Search module..."
                                 value={searchTerm}
                                 onChange={(e) => onSearchChange(e.target.value)}
                             />
@@ -112,7 +112,7 @@ export default function LearningModuleGrid({
                             )}
                         </div>
                         <p className="text-sm text-gray-600">
-                            Menampilkan <span className="font-semibold text-gray-900">{filteredModules.length}</span> modul
+                            Showing <span className="font-semibold text-gray-900">{filteredModules.length}</span> modules
                         </p>
                     </div>
                 </div>
@@ -126,8 +126,8 @@ export default function LearningModuleGrid({
                     ) : filteredModules.length === 0 ? (
                         <div className="text-center py-12">
                             <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-600 font-medium">Belum ada modul</p>
-                            <p className="text-sm text-gray-500 mt-1">Klik "Tambah Modul" untuk membuat modul pertama</p>
+                            <p className="text-gray-600 font-medium">No modules available</p>
+                            <p className="text-sm text-gray-500 mt-1">Click "Add Module" to create the first module</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -143,9 +143,9 @@ export default function LearningModuleGrid({
                                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
                                                 <BookOpen className="h-5 w-5 text-blue-600" />
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                             <div className="flex items-center gap-2">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${module.nstatus === 1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                                                    {module.nstatus === 1 ? 'Aktif' : 'Nonaktif'}
+                                                    {module.nstatus === 1 ? 'Active' : 'Inactive'}
                                                 </span>
                                                 {canManage && (
                                                     <>
@@ -155,7 +155,7 @@ export default function LearningModuleGrid({
                                                                 onEditModule(module)
                                                             }}
                                                             className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                            title="Edit Modul"
+                                                            title="Edit Module"
                                                         >
                                                             <Edit className="h-4 w-4" />
                                                         </button>
@@ -165,7 +165,7 @@ export default function LearningModuleGrid({
                                                                 onDeleteModule(module)
                                                             }}
                                                             className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                            title="Hapus Modul"
+                                                            title="Delete Module"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
                                                         </button>
@@ -173,8 +173,8 @@ export default function LearningModuleGrid({
                                                 )}
                                             </div>
                                         </div>
-                                        <h3 className="text-base font-semibold text-gray-900 mb-1 line-clamp-1">{module.vname}</h3>
-                                        <p className="text-sm text-gray-600 mb-2">Kelas: {cls?.vname || `Kelas ${module.nid_class}`}</p>
+                                         <h3 className="text-base font-semibold text-gray-900 mb-1 line-clamp-1">{module.vname}</h3>
+                                        <p className="text-sm text-gray-600 mb-2">Class: {cls?.vname || `Class #${module.nid_class}`}</p>
                                         {module.venrollment_token && (
                                             <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
                                                 <span>Token:</span>
@@ -195,7 +195,7 @@ export default function LearningModuleGrid({
                                                 </button>
                                             </div>
                                         )}
-                                        <p className="text-xs text-blue-600 font-medium">Klik untuk detail →</p>
+                                        <p className="text-xs text-blue-600 font-medium">Click for details →</p>
                                     </div>
                                 )
                             })}

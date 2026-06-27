@@ -13,7 +13,7 @@ import UserGridView from '@/components/ui/grid'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
 import { roleService } from '@/services/role.service'
 import { userService } from '@/services/user.service'
-import { User } from '@/types/user'
+import { User, CreateUserRequest } from '@/types/user'
 import { Role } from '@/types/role'
 import UserList from './UserList'
 import UserForm, { UserFormData } from './UserForm'
@@ -84,8 +84,8 @@ export default function BaseUserManagementPage({
             // Tag users with role_nid for edit/delete operations
             const taggedUsers = (usersData as User[]).map((u) => ({
                 ...u,
-                role_nid: u.role_nid ?? u.role_id ?? roleNid,
-                _uid: `${roleNid}:${u.nid ?? u.id}`
+                role_nid: u.role_nid ?? (u as any).role_id ?? roleNid,
+                _uid: `${roleNid}:${(u as any).nid ?? u.id}`
             }))
 
             setUsers(taggedUsers)
@@ -147,7 +147,7 @@ export default function BaseUserManagementPage({
                 throw new Error('Failed to delete user')
             }
 
-            toast.success(`${category === 'admin' ? 'Admin' : category === 'teacher' ? 'Guru' : 'Murid'} deleted successfully`)
+            toast.success(`${category === 'admin' ? 'Admin' : category === 'teacher' ? 'Teacher' : 'Student'} deleted successfully`)
             fetchUsers()
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to delete user')
@@ -305,36 +305,35 @@ export default function BaseUserManagementPage({
                     if (category === 'student') {
                         // Student payload
                         importData = {
-                            username: row['username'] || row['Username'] || '',
-                            email: row['email'] || row['Email'] || '',
-                            password: row['password'] || row['Password'] || 'ChangeMe@123',
-                            fullname: row['fullname'] || row['fullname'] || '',
-                            birthdate: row['birthdate'] || row['Birthdate'] || '',
-                            address: row['address'] || row['Address'] || '',
-                            phone: row['phone'] || row['Phone'] || '',
-                            whatsapp: row['whatsapp'] || row['WhatsApp'] || '',
-                            nis: row['nis'] || row['NIS'] || '',
-                            class_id: row['class_id'] || row['Class ID'] || '',
-                            parent_name: row['parent_name'] || row['Parent Name'] || '',
-                            parent_phone: row['parent_phone'] || row['Parent Phone'] || '',
-                            status: row['status'] || row['Status'] || 'active',
+                            username: String(row['username'] || row['Username'] || ''),
+                            email: String(row['email'] || row['Email'] || ''),
+                            password: String(row['password'] || row['Password'] || 'ChangeMe@123'),
+                            fullname: String(row['fullname'] || row['Full Name'] || ''),
+                            birthdate: row['birthdate'] || row['Birthdate'] ? String(row['birthdate'] || row['Birthdate']) : undefined,
+                            address: row['address'] || row['Address'] ? String(row['address'] || row['Address']) : undefined,
+                            phone: row['phone'] || row['Phone'] ? String(row['phone'] || row['Phone']) : undefined,
+                            whatsapp: row['whatsapp'] || row['WhatsApp'] ? String(row['whatsapp'] || row['WhatsApp']) : undefined,
+                            nis: row['nis'] || row['NIS'] ? String(row['nis'] || row['NIS']) : undefined,
+                            class_id: row['class_id'] || row['Class ID'] ? Number(row['class_id'] || row['Class ID']) : undefined,
+                            parent_name: row['parent_name'] || row['Parent Name'] ? String(row['parent_name'] || row['Parent Name']) : undefined,
+                            parent_phone: row['parent_phone'] || row['Parent Phone'] ? String(row['parent_phone'] || row['Parent Phone']) : undefined,
+                            status: row['status'] || row['Status'] ? String(row['status'] || row['Status']) : 'active',
                             role_nid: 3,
                         }
                     } else {
                         // Teacher/Admin payload
                         importData = {
-                            username: row['username'] || row['Username'] || '',
-                            email: row['email'] || row['Email'] || '',
-                            password: row['password'] || row['Password'] || 'ChangeMe@123',
-                            fullname: row['fullname'] || row['Full Name'] || '',
-                            fullName: row['fullname'] || row['Full Name'] || '',
-                            nip: row['nip'] || row['NIP'] || row['nik'] || row['NIK'] || '',
-                            degree: row['degree'] || row['Degree'] || '',
-                            birthdate: row['birthdate'] || row['Birthdate'] || '',
-                            address: row['address'] || row['Address'] || '',
-                            phone: row['phone'] || row['Phone'] || '',
-                            whatsapp: row['whatsapp'] || row['WhatsApp'] || '',
-                            status: row['status'] || row['Status'] || 'active',
+                            username: String(row['username'] || row['Username'] || ''),
+                            email: String(row['email'] || row['Email'] || ''),
+                            password: String(row['password'] || row['Password'] || 'ChangeMe@123'),
+                            fullname: String(row['fullname'] || row['Full Name'] || ''),
+                            nip: row['nip'] || row['NIP'] || row['nik'] || row['NIK'] ? String(row['nip'] || row['NIP'] || row['nik'] || row['NIK']) : undefined,
+                            degree: row['degree'] || row['Degree'] ? String(row['degree'] || row['Degree']) : undefined,
+                            birthdate: row['birthdate'] || row['Birthdate'] ? String(row['birthdate'] || row['Birthdate']) : undefined,
+                            address: row['address'] || row['Address'] ? String(row['address'] || row['Address']) : undefined,
+                            phone: row['phone'] || row['Phone'] ? String(row['phone'] || row['Phone']) : undefined,
+                            whatsapp: row['whatsapp'] || row['WhatsApp'] ? String(row['whatsapp'] || row['WhatsApp']) : undefined,
+                            status: row['status'] || row['Status'] ? String(row['status'] || row['Status']) : 'active',
                             role_nid: roleNid,
                         }
                     }
@@ -356,7 +355,7 @@ export default function BaseUserManagementPage({
             }
 
             if (successCount > 0) {
-                toast.success(`Successfully imported ${successCount} ${category === 'admin' ? 'admin(s)' : category === 'teacher' ? 'guru(s)' : 'student(s)'}`)
+                toast.success(`Successfully imported ${successCount} ${category === 'admin' ? 'admin(s)' : category === 'teacher' ? 'teacher(s)' : 'student(s)'}`)
                 fetchUsers()
             }
             if (errorCount > 0) {
@@ -437,7 +436,7 @@ export default function BaseUserManagementPage({
                     throw new Error('Failed to update user')
                 }
 
-                toast.success(`${category === 'admin' ? 'Admin' : category === 'teacher' ? 'Guru' : 'Murid'} updated successfully`)
+                toast.success(`${category === 'admin' ? 'Admin' : category === 'teacher' ? 'Teacher' : 'Student'} updated successfully`)
             } else {
                 // CREATE - Use correct endpoint based on role
                 // - Guru (roleNid 2): /api/Teacher (creates User + Teacher profile)
@@ -461,7 +460,7 @@ export default function BaseUserManagementPage({
                     throw new Error('Failed to create user')
                 }
 
-                toast.success(`${category === 'admin' ? 'Admin' : category === 'teacher' ? 'Guru' : 'Murid'} created successfully`)
+                toast.success(`${category === 'admin' ? 'Admin' : category === 'teacher' ? 'Teacher' : 'Student'} created successfully`)
             }
 
             setIsFormOpen(false)
@@ -497,8 +496,8 @@ export default function BaseUserManagementPage({
         setCurrentPage(1)
     }, [searchTerm])
 
-    const categoryLabel = category === 'admin' ? 'Administrator' : category === 'teacher' ? 'Guru' : 'Murid'
-    const categoryLabelLower = category === 'admin' ? 'administrator' : category === 'teacher' ? 'guru' : 'murid'
+    const categoryLabel = category === 'admin' ? 'Administrator' : category === 'teacher' ? 'Teacher' : 'Student'
+    const categoryLabelLower = category === 'admin' ? 'administrator' : category === 'teacher' ? 'teacher' : 'student'
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">

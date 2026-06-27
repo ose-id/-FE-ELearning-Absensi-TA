@@ -74,21 +74,21 @@ export default function LearningModuleList({
         const subj = module.Subject || module.subject
         if (subj?.vsubject_name) return subj.vsubject_name
         const found = subjects.find(s => s.nid === module.nid_subject)
-        return found?.vsubject_name || `Mapel ${module.nid_subject}`
+        return found?.vsubject_name || `Subject #${module.nid_subject}`
     }
 
     const getClassName = (module: LearningModule) => {
         const cls = module.Class || module.class
         if (cls?.vname) return cls.vname
         const found = classes.find(c => c.nid === module.nid_class)
-        return found?.vname || `Kelas ${module.nid_class}`
+        return found?.vname || `Class #${module.nid_class}`
     }
 
     if (modules.length === 0) {
         return (
             <div className="text-center py-12">
                 <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Materi tidak ditemukan</p>
+                <p className="text-gray-500">Module not found</p>
             </div>
         )
     }
@@ -97,10 +97,10 @@ export default function LearningModuleList({
         <Table>
             <TableHeader>
                 <TableRow className="border-b border-gray-200">
-                    <TableHead className="text-gray-600 font-semibold">Nama Materi</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Kelas</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Mata Pelajaran</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Tahun Ajaran</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Module Name</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Class</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Subject</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Academic Year</TableHead>
                     <TableHead className="text-gray-600 font-semibold">Status</TableHead>
                     {isEditable && <TableHead className="text-right text-gray-600 font-semibold">Actions</TableHead>}
                 </TableRow>
@@ -131,7 +131,7 @@ export default function LearningModuleList({
                         </TableCell>
                         <TableCell>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${module.nstatus === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                {module.nstatus === 1 ? 'Aktif' : 'Nonaktif'}
+                                {module.nstatus === 1 ? 'Active' : 'Inactive'}
                             </span>
                         </TableCell>
                         {isEditable && (

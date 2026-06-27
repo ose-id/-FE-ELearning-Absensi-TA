@@ -62,9 +62,9 @@ export default function EnrollModuleDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[450px] bg-white text-gray-900">
                 <DialogHeader>
-                    <DialogTitle>Enroll ke Materi</DialogTitle>
+                    <DialogTitle>Enroll to Module</DialogTitle>
                     <DialogDescription>
-                        Masukkan token enrollment yang diberikan guru untuk bergabung dengan materi pembelajaran.
+                        Enter the enrollment token provided by your teacher to join the learning module.
                     </DialogDescription>
                 </DialogHeader>
 

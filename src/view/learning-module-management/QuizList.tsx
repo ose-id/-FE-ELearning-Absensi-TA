@@ -29,7 +29,7 @@ export default function QuizList({
             return (
                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     <CheckCircle className="h-3 w-3" />
-                    Aktif
+                    Active
                 </span>
             )
         }
@@ -54,7 +54,7 @@ export default function QuizList({
         return (
             <div className="text-center py-12">
                 <FileQuestion className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Belum ada quiz untuk modul ini</p>
+                <p className="text-gray-500">No quizzes available for this module</p>
             </div>
         )
     }
@@ -63,12 +63,12 @@ export default function QuizList({
         <Table>
             <TableHeader>
                 <TableRow className="border-b border-gray-200">
-                    <TableHead className="text-gray-600 font-semibold">Judul Quiz</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Deskripsi</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Durasi</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Skor Maks</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Quiz Title</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Description</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Duration</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Max Score</TableHead>
                     <TableHead className="text-gray-600 font-semibold">Status</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Tanggal</TableHead>
+                    <TableHead className="text-gray-600 font-semibold">Date</TableHead>
                     {isEditable && <TableHead className="text-right text-gray-600 font-semibold">Actions</TableHead>}
                 </TableRow>
             </TableHeader>
@@ -87,7 +87,7 @@ export default function QuizList({
                         <TableCell className="text-gray-600">
                             <div className="flex items-center gap-1">
                                 <Clock className="h-4 w-4 text-gray-400" />
-                                {quiz.nduration} menit
+                                {quiz.nduration} minutes
                             </div>
                         </TableCell>
                         <TableCell className="text-gray-600">
@@ -106,7 +106,7 @@ export default function QuizList({
                                         <button
                                             onClick={() => onViewQuestions(quiz)}
                                             className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                            title="Kelola Pertanyaan"
+                                            title="Manage Questions"
                                         >
                                             <FileQuestion className="h-4 w-4" />
                                         </button>

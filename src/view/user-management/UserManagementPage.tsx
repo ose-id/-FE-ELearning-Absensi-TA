@@ -380,7 +380,7 @@ export default function UserManagementPage() {
                 degree:       data.degree       || '',
                 // Student-specific
                 nis:          data.nis          || '',
-                class_id:     data.class_id     || '',
+                class_id:     data.class_id ? parseInt(data.class_id, 10) : undefined,
                 class_name:   data.class_name   || '',
                 parent_name:  data.parent_name  || '',
                 parent_phone: data.parent_phone || '',

@@ -301,14 +301,14 @@ export default function LearningModuleManagementPage() {
     }
 
     const handleDeleteMaterial = async (material: Material) => {
-        if (!confirm(`Apakah Anda yakin ingin menghapus materi "${material.vtitle}"?`)) return
+        if (!confirm(`Are you sure you want to delete material "${material.vtitle}"?`)) return
         if (!session?.accessToken) return
         try {
             await materialService.deleteMaterial(material.nid, session.accessToken)
-            toast.success('Materi berhasil dihapus')
+            toast.success('Material deleted successfully')
             if (selectedModule) fetchMaterials(selectedModule.nid)
         } catch (error: unknown) {
-            toast.error(getErrorMessage(error, 'Gagal menghapus materi'))
+            toast.error(getErrorMessage(error, 'Failed to delete material'))
         }
     }
 
@@ -318,18 +318,18 @@ export default function LearningModuleManagementPage() {
             setIsSubmitting(true)
             if (selectedMaterial) {
                 await materialService.updateMaterial(selectedMaterial.nid, { Title: data.title, Description: data.description }, session.accessToken)
-                toast.success('Materi berhasil diperbarui')
+                toast.success('Material updated successfully')
                 if (selectedModule) fetchMaterials(selectedModule.nid)
             } else {
                 await materialService.createMaterial({ Title: data.title, Description: data.description, LearningModuleId: data.learning_module_id }, session.accessToken)
-                toast.success('Materi berhasil dibuat')
+                toast.success('Material created successfully')
                 if (selectedModule) fetchMaterials(selectedModule.nid)
             }
             setIsMaterialFormOpen(false)
             setSelectedMaterial(null)
         } catch (error: unknown) {
             console.error(error)
-            toast.error(getErrorMessage(error, 'Gagal menyimpan materi'))
+            toast.error(getErrorMessage(error, 'Failed to save material'))
             throw error
         } finally {
             setIsSubmitting(false)
@@ -337,26 +337,26 @@ export default function LearningModuleManagementPage() {
     }
 
     const handleDeleteQuiz = async (quiz: Quiz) => {
-        if (!confirm(`Apakah Anda yakin ingin menghapus quiz "${quiz.vtitle}"?`)) return
+        if (!confirm(`Are you sure you want to delete quiz "${quiz.vtitle}"?`)) return
         if (!session?.accessToken) return
         try {
             await quizService.deleteQuiz(quiz.nid, session.accessToken)
-            toast.success('Quiz berhasil dihapus')
+            toast.success('Quiz deleted successfully')
             if (selectedModule) fetchQuizzes(selectedModule.nid)
         } catch (error: unknown) {
-            toast.error(getErrorMessage(error, 'Gagal menghapus quiz'))
+            toast.error(getErrorMessage(error, 'Failed to delete quiz'))
         }
     }
 
     const handleDeleteExam = async (exam: Exam) => {
-        if (!confirm(`Apakah Anda yakin ingin menghapus ujian "${exam.vtitle}"?`)) return
+        if (!confirm(`Are you sure you want to delete exam "${exam.vtitle}"?`)) return
         if (!session?.accessToken) return
         try {
             await examService.deleteExam(exam.nid, session.accessToken)
-            toast.success('Ujian berhasil dihapus')
+            toast.success('Exam deleted successfully')
             if (selectedModule) fetchExams(selectedModule.nid)
         } catch (error: unknown) {
-            toast.error(getErrorMessage(error, 'Gagal menghapus ujian'))
+            toast.error(getErrorMessage(error, 'Failed to delete exam'))
         }
     }
 
@@ -370,21 +370,21 @@ export default function LearningModuleManagementPage() {
                     MaxScore: data.max_score, PassingScore: data.passing_score, Status: data.status,
                     StartDate: data.start_date, EndDate: data.end_date,
                 }, session.accessToken)
-                toast.success('Quiz berhasil diperbarui')
+                toast.success('Quiz updated successfully')
             } else {
                 await quizService.createQuiz({
                     Title: data.title, Description: data.description, LearningModuleId: selectedModule.nid,
                     Duration: data.duration, MaxScore: data.max_score, PassingScore: data.passing_score,
                     Status: data.status, StartDate: data.start_date, EndDate: data.end_date,
                 }, session.accessToken)
-                toast.success('Quiz berhasil dibuat')
+                toast.success('Quiz created successfully')
             }
             setIsQuizFormOpen(false)
             setSelectedQuiz(null)
             if (selectedModule) fetchQuizzes(selectedModule.nid)
         } catch (error: unknown) {
             console.error(error)
-            toast.error(getErrorMessage(error, 'Gagal menyimpan quiz'))
+            toast.error(getErrorMessage(error, 'Failed to save quiz'))
             throw error
         } finally {
             setIsSubmitting(false)
@@ -397,27 +397,41 @@ export default function LearningModuleManagementPage() {
             setIsSubmitting(true)
             if (selectedExam) {
                 await examService.updateExam(selectedExam.nid, {
-                    Title: data.title, Description: data.description, Duration: data.duration,
-                    PassGrade: data.pass_grade, StartDate: data.start_date, EndDate: data.end_date,
-                    ShowResults: data.show_results, Fullscreen: data.fullscreen, Cutoff: data.cutoff, Status: data.status,
+                    nid_learning_module: selectedModule.nid,
+                    vtitle: data.title,
+                    vdescription: data.description,
+                    nduration: data.duration,
+                    npass_grade: data.pass_grade,
+                    dstart: data.start_date || '',
+                    dend: data.end_date || '',
+                    nshow_results: data.show_results,
+                    nfullscreen: data.fullscreen,
+                    ncutoff: data.cutoff,
+                    nstatus: data.status,
                 }, session.accessToken)
-                toast.success('Ujian berhasil diperbarui')
+                toast.success('Exam updated successfully')
             } else {
                 await examService.createExam({
-                    LearningModuleId: selectedModule.nid, Title: data.title, Description: data.description,
-                    Duration: data.duration, PassGrade: data.pass_grade,
-                    StartDate: data.start_date || new Date().toISOString(),
-                    EndDate: data.end_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                    ShowResults: data.show_results, Fullscreen: data.fullscreen, Cutoff: data.cutoff, Status: data.status,
+                    nid_learning_module: selectedModule.nid,
+                    vtitle: data.title,
+                    vdescription: data.description,
+                    nduration: data.duration,
+                    npass_grade: data.pass_grade,
+                    dstart: data.start_date || new Date().toISOString(),
+                    dend: data.end_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                    nshow_results: data.show_results,
+                    nfullscreen: data.fullscreen,
+                    ncutoff: data.cutoff,
+                    nstatus: data.status,
                 }, session.accessToken)
-                toast.success('Ujian berhasil dibuat')
+                toast.success('Exam created successfully')
             }
             setIsExamFormOpen(false)
             setSelectedExam(null)
             if (selectedModule) fetchExams(selectedModule.nid)
         } catch (error: unknown) {
             console.error(error)
-            toast.error(getErrorMessage(error, 'Gagal menyimpan ujian'))
+            toast.error(getErrorMessage(error, 'Failed to save exam'))
             throw error
         } finally {
             setIsSubmitting(false)
@@ -434,19 +448,19 @@ export default function LearningModuleManagementPage() {
                     Order: data.points, Question: data.question, Type: data.type,
                     Points: data.points, AnswerKey: data.answer_key, Options: optionsStr,
                 }, session.accessToken)
-                toast.success('Pertanyaan berhasil diperbarui')
+                toast.success('Question updated successfully')
             } else {
                 await quizService.createQuestion({
                     QuizId: selectedQuiz.nid, Order: currentQuestionNumber, Question: data.question,
                     Type: data.type, Points: data.points, AnswerKey: data.answer_key, Options: optionsStr,
                 }, session.accessToken)
-                toast.success('Pertanyaan berhasil ditambahkan')
+                toast.success('Question added successfully')
             }
             setShowQuestionForm(false)
             setSelectedQuestion(null)
         } catch (error: unknown) {
             console.error(error)
-            toast.error(getErrorMessage(error, 'Gagal menyimpan pertanyaan'))
+            toast.error(getErrorMessage(error, 'Failed to save question'))
             throw error
         } finally {
             setIsSubmitting(false)
@@ -457,7 +471,7 @@ export default function LearningModuleManagementPage() {
         if (!session?.accessToken) return
         const classId = selectedClass?.nid || data.class_id
         if (!classId) {
-            toast.error('Silakan pilih kelas terlebih dahulu')
+            toast.error('Please select a class first')
             return
         }
         try {
@@ -563,19 +577,19 @@ export default function LearningModuleManagementPage() {
                 <div className="mx-auto max-w-7xl space-y-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <button onClick={handleBackFromClass} className="p-2 hover:bg-white rounded-lg" title="Kembali">
+                            <button onClick={handleBackFromClass} className="p-2 hover:bg-white rounded-lg" title="Back">
                                 <ArrowLeft className="h-5 w-5 text-gray-600" />
                             </button>
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">{selectedClass.vname}</h2>
                                 <p className="text-sm text-gray-500">
-                                    {selectedClass.Department?.vdepartment_name || selectedClass.vdesc || `Dept ${selectedClass.nid_department}`} • {classModules.length} Modul
+                                    {selectedClass.Department?.vdepartment_name || selectedClass.vdesc || `Dept ${selectedClass.nid_department}`} • {classModules.length} Modules
                                 </p>
                             </div>
                         </div>
                         {canManage && (
                             <Button onClick={handleCreateModule} size="sm">
-                                <Plus className="mr-1 h-4 w-4" /> Tambah Modul
+                                <Plus className="mr-1 h-4 w-4" /> Add Module
                             </Button>
                         )}
                     </div>
@@ -583,13 +597,13 @@ export default function LearningModuleManagementPage() {
                     <div className="flex gap-4" style={{ height: 'calc(100vh - 140px)' }}>
                         <div className="w-80 flex-shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
                             <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                                <h3 className="text-sm font-semibold text-gray-700">Daftar Modul</h3>
+                                <h3 className="text-sm font-semibold text-gray-700">Module List</h3>
                             </div>
                             <div className="flex-1 overflow-y-auto">
                                 {classModules.length === 0 ? (
                                     <div className="text-center py-8 px-4">
                                         <BookOpen className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                                        <p className="text-sm text-gray-500">Belum ada modul</p>
+                                        <p className="text-sm text-gray-500">No modules available</p>
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-gray-100">
@@ -603,18 +617,18 @@ export default function LearningModuleManagementPage() {
                                                         <div className="min-w-0 flex-1">
                                                             <p className={`text-sm font-medium truncate ${isActive ? 'text-blue-900' : 'text-gray-900'}`}>{module.vname}</p>
                                                             <div className="flex flex-col mt-0.5">
-                                                                <p className="text-xs text-gray-500">{subj?.vsubject_name || `Mapel ${module.nid_subject}`}</p>
+                                                                <p className="text-xs text-gray-500">{subj?.vsubject_name || `Subject #${module.nid_subject}`}</p>
                                                                 <p className="text-[10px] text-gray-400">{getAcademicYearLabel(module)} • {getSchoolTermLabel(module)}</p>
                                                             </div>
                                                         </div>
-                                                        <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${module.nstatus === 1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                                                            {module.nstatus === 1 ? 'Aktif' : 'Off'}
+                                                        <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700">
+                                                            {module.nstatus === 1 ? 'Active' : 'Off'}
                                                         </span>
                                                     </div>
                                                     {canManage && (
                                                         <div className="flex gap-1 mt-2">
                                                             <button onClick={(e) => { e.stopPropagation(); handleEditModuleClick(module) }} className="p-1 text-blue-500 hover:bg-blue-100 rounded" title="Edit"><Edit className="h-3 w-3" /></button>
-                                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteModule(module) }} className="p-1 text-red-500 hover:bg-red-100 rounded" title="Hapus"><Trash2 className="h-3 w-3" /></button>
+                                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteModule(module) }} className="p-1 text-red-500 hover:bg-red-100 rounded" title="Delete"><Trash2 className="h-3 w-3" /></button>
                                                         </div>
                                                     )}
                                                 </div>
@@ -632,14 +646,14 @@ export default function LearningModuleManagementPage() {
                                         <div>
                                             <h3 className="text-lg font-bold text-gray-900">{selectedModule.vname}</h3>
                                             <p className="text-xs text-gray-500 mt-0.5">
-                                                {(selectedModule.Subject || selectedModule.subject)?.vsubject_name || `Mapel ${selectedModule.nid_subject}`} • {(selectedModule.Class || selectedModule.class)?.vname || `Kelas ${selectedModule.nid_class}`}
+                                                {(selectedModule.Subject || selectedModule.subject)?.vsubject_name || `Subject #${selectedModule.nid_subject}`} • {(selectedModule.Class || selectedModule.class)?.vname || `Class #${selectedModule.nid_class}`}
                                             </p>
                                         </div>
                                         {canManage && (
                                             <div className="flex gap-2">
-                                                <Button onClick={handleCreateMaterial} size="sm" variant="outline" className="text-xs h-8"><FileText className="mr-1 h-3 w-3" /> + Materi</Button>
+                                                <Button onClick={handleCreateMaterial} size="sm" variant="outline" className="text-xs h-8"><FileText className="mr-1 h-3 w-3" /> + Material</Button>
                                                 <Button onClick={handleCreateQuiz} size="sm" variant="outline" className="text-xs h-8 bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"><ClipboardList className="mr-1 h-3 w-3" /> + Quiz</Button>
-                                                <Button onClick={() => { setSelectedExam(null); setIsExamFormOpen(true) }} size="sm" variant="outline" className="text-xs h-8 bg-red-50 border-red-200 text-red-700 hover:bg-red-100"><ClipboardCheck className="mr-1 h-3 w-3" /> + Ujian</Button>
+                                                <Button onClick={() => { setSelectedExam(null); setIsExamFormOpen(true) }} size="sm" variant="outline" className="text-xs h-8 bg-red-50 border-red-200 text-red-700 hover:bg-red-100"><ClipboardCheck className="mr-1 h-3 w-3" /> + Exam</Button>
                                             </div>
                                         )}
                                     </div>
@@ -647,12 +661,12 @@ export default function LearningModuleManagementPage() {
                                 <div className="flex-1 grid grid-cols-1 md:grid-cols-3 divide-x divide-gray-100 overflow-hidden">
                                     <div className="flex flex-col overflow-hidden">
                                         <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
-                                            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><FileText className="h-4 w-4 text-blue-500" /> Materi</h4>
+                                            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><FileText className="h-4 w-4 text-blue-500" /> Material</h4>
                                             <span className="text-xs text-gray-400">{materials.length}</span>
                                         </div>
                                         <div className="flex-1 overflow-y-auto p-3">
                                             {materials.length === 0 ? (
-                                                <div className="text-center py-8"><FileText className="h-8 w-8 text-gray-200 mx-auto mb-2" /><p className="text-xs text-gray-400">Belum ada materi</p></div>
+                                                <div className="text-center py-8"><FileText className="h-8 w-8 text-gray-200 mx-auto mb-2" /><p className="text-xs text-gray-400">No materials</p></div>
                                             ) : (<MaterialList materials={materials} onEdit={handleEditMaterial} onDelete={handleDeleteMaterial} isEditable={canManage} />)}
                                         </div>
                                     </div>
@@ -663,18 +677,18 @@ export default function LearningModuleManagementPage() {
                                         </div>
                                         <div className="flex-1 overflow-y-auto p-3">
                                             {quizzes.length === 0 ? (
-                                                <div className="text-center py-8"><ClipboardList className="h-8 w-8 text-gray-200 mx-auto mb-2" /><p className="text-xs text-gray-400">Belum ada quiz</p></div>
+                                                <div className="text-center py-8"><ClipboardList className="h-8 w-8 text-gray-200 mx-auto mb-2" /><p className="text-xs text-gray-400">No quizzes</p></div>
                                             ) : (<QuizList quizzes={quizzes} onEdit={handleEditQuiz} onDelete={handleDeleteQuiz} onViewQuestions={handleViewQuestions} isEditable={canManage} />)}
                                         </div>
                                     </div>
                                     <div className="flex flex-col overflow-hidden">
                                         <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
-                                            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><ClipboardCheck className="h-4 w-4 text-red-500" /> Ujian</h4>
+                                            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><ClipboardCheck className="h-4 w-4 text-red-500" /> Exam</h4>
                                             <span className="text-xs text-gray-400">{exams.length}</span>
                                         </div>
                                         <div className="flex-1 overflow-y-auto p-3">
                                             {exams.length === 0 ? (
-                                                <div className="text-center py-8"><ClipboardCheck className="h-8 w-8 text-gray-200 mx-auto mb-2" /><p className="text-xs text-gray-400">Belum ada ujian</p></div>
+                                                <div className="text-center py-8"><ClipboardCheck className="h-8 w-8 text-gray-200 mx-auto mb-2" /><p className="text-xs text-gray-400">No exams</p></div>
                                             ) : (
                                                 <div className="space-y-2">
                                                     {exams.map(exam => (
@@ -682,16 +696,16 @@ export default function LearningModuleManagementPage() {
                                                             <div className="flex justify-between items-start">
                                                                 <div>
                                                                     <p className="font-medium text-sm text-gray-900">{exam.vtitle}</p>
-                                                                    <p className="text-xs text-gray-500 mt-1">{exam.nduration} menit</p>
+                                                                    <p className="text-xs text-gray-500 mt-1">{exam.nduration} minutes</p>
                                                                 </div>
-                                                                <span className={`px-2 py-0.5 rounded text-xs ${exam.nstatus === 1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                                                                    {exam.nstatus === 1 ? 'Aktif' : 'Nonaktif'}
+                                                                <span className={`px-2 py-0.5 rounded text-xs bg-green-100 text-green-700`}>
+                                                                    {exam.nstatus === 1 ? 'Active' : 'Draft'}
                                                                 </span>
                                                             </div>
                                                             {canManage && (
                                                                 <div className="flex gap-2 mt-2">
                                                                     <button onClick={() => setSelectedExam(exam)} className="text-xs text-blue-600 hover:underline">Edit</button>
-                                                                    <button onClick={() => handleDeleteExam(exam)} className="text-xs text-red-600 hover:underline">Hapus</button>
+                                                                    <button onClick={() => handleDeleteExam(exam)} className="text-xs text-red-600 hover:underline">Delete</button>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -705,8 +719,8 @@ export default function LearningModuleManagementPage() {
                                 <div className="flex-1 flex items-center justify-center">
                                     <div className="text-center">
                                         <BookOpen className="h-16 w-16 text-gray-200 mx-auto mb-4" />
-                                        <p className="text-gray-400 text-lg font-medium">Pilih modul</p>
-                                        <p className="text-gray-300 text-sm mt-1">Klik modul di sebelah kiri untuk melihat detail</p>
+                                        <p className="text-gray-400 text-lg font-medium">Select module</p>
+                                        <p className="text-gray-300 text-sm mt-1">Click a module on the left to view details</p>
                                     </div>
                                 </div>
                             )}
@@ -786,10 +800,10 @@ export default function LearningModuleManagementPage() {
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
             <div className="mx-auto max-w-7xl space-y-6">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <StatCard label="Materi" value={modules.length} icon={BookOpen} color="blue" />
-                    <StatCard label="Tugas" value={0} icon={ClipboardList} color="green" />
-                    <StatCard label="Quiz" value={0} icon={FileText} color="purple" />
-                    <StatCard label="Ujian" value={0} icon={ClipboardCheck} color="red" />
+                    <StatCard label="Materials" value={modules.length} icon={BookOpen} color="blue" />
+                    <StatCard label="Assignments" value={0} icon={ClipboardList} color="green" />
+                    <StatCard label="Quizzes" value={0} icon={FileText} color="purple" />
+                    <StatCard label="Exams" value={0} icon={ClipboardCheck} color="red" />
                 </div>
 
                 <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -797,10 +811,10 @@ export default function LearningModuleManagementPage() {
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 flex-1">
                                 <Search className="h-5 w-5 text-gray-500" />
-                                <Input className="border-none bg-transparent text-gray-900 placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0" placeholder="Cari kelas..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1) }} />
+                                <Input className="border-none bg-transparent text-gray-900 placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0" placeholder="Search class..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1) }} />
                                 {searchTerm && (<button onClick={() => setSearchTerm('')} className="rounded-full p-1 hover:bg-gray-200"><X className="h-4 w-4 text-gray-500" /></button>)}
                             </div>
-                            <p className="text-sm text-gray-600">Menampilkan <span className="font-semibold text-gray-900">{filteredClasses.length}</span> kelas</p>
+                            <p className="text-sm text-gray-600">Showing <span className="font-semibold text-gray-900">{filteredClasses.length}</span> classes</p>
                         </div>
                     </div>
 

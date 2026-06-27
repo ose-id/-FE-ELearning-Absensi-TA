@@ -25,9 +25,9 @@ import FormMessage from '@/components/ui/form/form-message'
 import { QuizQuestion, QuizOption } from '@/types/quiz'
 
 const questionSchema = z.object({
-    question: z.string().min(1, 'Pertanyaan wajib diisi'),
+    question: z.string().min(1, 'Question is required'),
     type: z.enum(['multiple_choice', 'true_false', 'essay']),
-    points: z.number().min(1, 'Poin minimal 1'),
+    points: z.number().min(1, 'Points must be at least 1'),
     answer_key: z.string().optional(),
     options: z.array(z.object({
         id: z.string(),
@@ -155,12 +155,12 @@ export default function QuestionForm({
             <DialogContent className="sm:max-w-[700px] bg-white text-gray-900 max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
-                        {initialData ? 'Edit Pertanyaan' : `Pertanyaan #${questionNumber}`}
+                        {initialData ? 'Edit Question' : `Question #${questionNumber}`}
                     </DialogTitle>
                     <DialogDescription>
                         {initialData
-                            ? 'Perbarui pertanyaan quiz.'
-                            : 'Tambahkan pertanyaan untuk quiz ini.'}
+                            ? 'Update quiz question.'
+                            : 'Add question for this quiz.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -171,7 +171,7 @@ export default function QuestionForm({
                             name="type"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel required>Tipe Pertanyaan</FormLabel>
+                                    <FormLabel required>Question Type</FormLabel>
                                     <div className="flex gap-2">
                                         <button
                                             type="button"
@@ -182,7 +182,7 @@ export default function QuestionForm({
                                                     : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                                             }`}
                                         >
-                                            Pilihan Ganda
+                                            Multiple Choice
                                         </button>
                                         <button
                                             type="button"
@@ -193,7 +193,7 @@ export default function QuestionForm({
                                                     : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                                             }`}
                                         >
-                                            Benar/Salah
+                                            True/False
                                         </button>
                                         <button
                                             type="button"
@@ -216,10 +216,10 @@ export default function QuestionForm({
                             name="question"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel required>Pertanyaan</FormLabel>
+                                    <FormLabel required>Question</FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="Tulis pertanyaan..."
+                                            placeholder="Write question..."
                                             {...field}
                                             value={field.value || ''}
                                             rows={3}
@@ -235,7 +235,7 @@ export default function QuestionForm({
                             name="points"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel required>Poin</FormLabel>
+                                    <FormLabel required>Points</FormLabel>
                                     <FormControl>
                                         <Input
                                             type="number"
@@ -253,7 +253,7 @@ export default function QuestionForm({
                         {/* Options for Multiple Choice / True-False */}
                         {(questionType === 'multiple_choice' || questionType === 'true_false') && (
                             <FormItem>
-                                <FormLabel required>Opsi Jawaban</FormLabel>
+                                <FormLabel required>Answer Options</FormLabel>
                                 <div className="space-y-3">
                                     {options.map((option, index) => (
                                         <div key={option.id} className="flex items-center gap-3">
@@ -265,12 +265,12 @@ export default function QuestionForm({
                                                         ? 'bg-green-500 border-green-500 text-white'
                                                         : 'border-gray-300 text-gray-400 hover:border-green-400'
                                                 }`}
-                                                title="Jawaban Benar"
+                                                title="Correct Answer"
                                             >
                                                 {option.isCorrect ? <CheckCircle className="h-5 w-5" /> : <span className="text-sm">{String.fromCharCode(65 + index)}</span>}
                                             </button>
                                             <Input
-                                                placeholder={`Opsi ${String.fromCharCode(65 + index)}`}
+                                                placeholder={`Option ${String.fromCharCode(65 + index)}`}
                                                 value={option.text}
                                                 onChange={(e) => handleOptionChange(option.id, e.target.value)}
                                                 className="flex-1"
@@ -294,7 +294,7 @@ export default function QuestionForm({
                                             className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700"
                                         >
                                             <Plus className="h-4 w-4" />
-                                            Tambah Opsi
+                                            Add Option
                                         </button>
                                     )}
                                 </div>
@@ -303,11 +303,11 @@ export default function QuestionForm({
 
                         <DialogFooter className="gap-2 sm:gap-0">
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="text-gray-700 border-gray-300 hover:bg-gray-100">
-                                Batal
+                                Cancel
                             </Button>
                             <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700">
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {initialData ? 'Simpan Perubahan' : 'Tambah Pertanyaan'}
+                                {initialData ? 'Save Changes' : 'Add Question'}
                             </Button>
                         </DialogFooter>
                     </form>

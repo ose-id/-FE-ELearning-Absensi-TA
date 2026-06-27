@@ -104,11 +104,11 @@ export default function LearningModuleDetail({
     }
 
     const tabs = [
-        { key: 'all', label: 'Semua', count: allContent.length },
-        { key: 'material', label: 'Materi', count: materials.length },
+        { key: 'all', label: 'All', count: allContent.length },
+        { key: 'material', label: 'Material', count: materials.length },
         { key: 'quiz', label: 'Quiz', count: quizzes.length },
-        { key: 'exam', label: 'Ujian', count: exams.length },
-        { key: 'assignment', label: 'Tugas', count: assignments.length },
+        { key: 'exam', label: 'Exam', count: exams.length },
+        { key: 'assignment', label: 'Assignment', count: assignments.length },
     ]
 
     return (
@@ -123,7 +123,7 @@ export default function LearningModuleDetail({
                                 <button
                                     onClick={onBack}
                                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors mt-1"
-                                    title="Kembali"
+                                    title="Back"
                                 >
                                     <ArrowLeft className="h-5 w-5 text-gray-600" />
                                 </button>
@@ -135,18 +135,18 @@ export default function LearningModuleDetail({
                                                 ? 'bg-green-100 text-green-700'
                                                 : 'bg-gray-100 text-gray-600'
                                         }`}>
-                                            {module.nstatus === 1 ? 'Aktif' : 'Nonaktif'}
+                                            {module.nstatus === 1 ? 'Active' : 'Inactive'}
                                         </span>
                                     </div>
 
                                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                                         <div className="flex items-center gap-1.5">
                                             <BookOpen className="h-4 w-4" />
-                                            <span>{moduleSubject?.vsubject_name || `Mapel ${module.nid_subject}`}</span>
+                                            <span>{moduleSubject?.vsubject_name || `Subject #${module.nid_subject}`}</span>
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                             <Users className="h-4 w-4" />
-                                            <span>{moduleClass?.vname || `Kelas ${module.nid_class}`}</span>
+                                            <span>{moduleClass?.vname || `Class #${module.nid_class}`}</span>
                                         </div>
                                         {module.venrollment_token && (
                                             <div className="flex items-center gap-1.5">
@@ -259,7 +259,7 @@ export default function LearningModuleDetail({
                                                         ? 'bg-green-100 text-green-700'
                                                         : 'bg-gray-100 text-gray-600'
                                                 }`}>
-                                                    {item.status === 1 ? 'Aktif' : 'Nonaktif'}
+                                                    {item.status === 1 ? 'Active' : 'Inactive'}
                                                 </span>
 
                                             </div>
@@ -315,7 +315,7 @@ function StatCard({ icon: Icon, color, label, value, description, canAdd, onAdd 
                         onAdd()
                     }}
                     className={`absolute bottom-3 right-3 p-1.5 rounded-full ${colors.bg} ${colors.text} ${colors.hover} transition-colors`}
-                    title={`Tambah ${label}`}
+                    title={`Add ${label}`}
                 >
                     <Plus className="h-4 w-4" />
                 </button>

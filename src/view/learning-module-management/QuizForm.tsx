@@ -26,11 +26,11 @@ import { Quiz } from '@/types/quiz'
 import { LearningModule } from '@/types/learning-module'
 
 const quizSchema = z.object({
-    title: z.string().min(1, 'Judul kuis wajib diisi'),
+    title: z.string().min(1, 'Quiz title is required'),
     description: z.string().optional(),
-    learning_module_id: z.number({ message: 'Learning module wajib dipilih' }),
-    duration: z.number().min(1, 'Durasi minimal 1 menit').max(180, 'Durasi maksimal 180 menit'),
-    max_score: z.number().min(1, 'Skor maksimal minimal 1'),
+    learning_module_id: z.number({ message: 'Learning module is required' }),
+    duration: z.number().min(1, 'Duration must be at least 1 minute').max(180, 'Duration must be at most 180 minutes'),
+    max_score: z.number().min(1, 'Max score must be at least 1'),
     passing_score: z.number().optional(),
     status: z.number().optional(),
     start_date: z.string().optional(),
@@ -118,12 +118,12 @@ export default function QuizForm({
             <DialogContent className="sm:max-w-[600px] bg-white text-gray-900 max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
-                        {initialData ? 'Edit Quiz' : 'Buat Quiz Baru'}
+                        {initialData ? 'Edit Quiz' : 'Create New Quiz'}
                     </DialogTitle>
                     <DialogDescription>
                         {initialData
-                            ? 'Perbarui detail quiz.'
-                            : 'Buat quiz baru untuk menguji pemahaman siswa.'}
+                            ? 'Update quiz details.'
+                            : 'Create a new quiz to test students\' understanding.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -134,9 +134,9 @@ export default function QuizForm({
                             name="title"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel required>Judul Quiz</FormLabel>
+                                    <FormLabel required>Quiz Title</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g., Quiz Bab 1 - Aljabar" {...field} />
+                                        <Input placeholder="e.g., Quiz Chapter 1 - Algebra" {...field} />
                                     </FormControl>
                                     <FormMessage>{form.formState.errors.title?.message}</FormMessage>
                                 </FormItem>
@@ -148,13 +148,13 @@ export default function QuizForm({
                             name="learning_module_id"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel required>Modul Pembelajaran</FormLabel>
+                                    <FormLabel required>Learning Module</FormLabel>
                                     <select
                                         className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         value={field.value || ''}
                                         onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
                                     >
-                                        <option value="">Pilih Modul</option>
+                                        <option value="">Select Module</option>
                                         {learningModules.map((mod) => (
                                             <option key={mod.nid} value={mod.nid}>
                                                 {mod.vname}
@@ -171,10 +171,10 @@ export default function QuizForm({
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Deskripsi</FormLabel>
+                                    <FormLabel>Description</FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="Deskripsi quiz..."
+                                            placeholder="Quiz description..."
                                             {...field}
                                             value={field.value || ''}
                                         />
@@ -190,7 +190,7 @@ export default function QuizForm({
                                 name="duration"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel required>Durasi (menit)</FormLabel>
+                                        <FormLabel required>Duration (minutes)</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
@@ -210,7 +210,7 @@ export default function QuizForm({
                                 name="max_score"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel required>Skor Maksimal</FormLabel>
+                                        <FormLabel required>Max Score</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
@@ -231,7 +231,7 @@ export default function QuizForm({
                                 name="passing_score"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Skor Lulus</FormLabel>
+                                        <FormLabel>Passing Score</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
@@ -258,7 +258,7 @@ export default function QuizForm({
                                             onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
                                         >
                                             <option value={0}>Draft</option>
-                                            <option value={1}>Aktif</option>
+                                            <option value={1}>Active</option>
                                         </select>
                                         <FormMessage>{form.formState.errors.status?.message}</FormMessage>
                                     </FormItem>
@@ -272,7 +272,7 @@ export default function QuizForm({
                                 name="start_date"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Tanggal Mulai</FormLabel>
+                                        <FormLabel>Start Date</FormLabel>
                                         <FormControl>
                                             <Input type="date" {...field} value={field.value || ''} />
                                         </FormControl>
@@ -286,7 +286,7 @@ export default function QuizForm({
                                 name="end_date"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Tanggal Selesai</FormLabel>
+                                        <FormLabel>End Date</FormLabel>
                                         <FormControl>
                                             <Input type="date" {...field} value={field.value || ''} />
                                         </FormControl>
@@ -302,7 +302,7 @@ export default function QuizForm({
                                 name="show_results"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Tampilkan Nilai ke Siswa</FormLabel>
+                                        <FormLabel>Show Score to Student</FormLabel>
                                         <div className="flex h-10 items-center">
                                             <label className="flex items-center gap-2 cursor-pointer">
                                                 <input
@@ -311,7 +311,7 @@ export default function QuizForm({
                                                     checked={field.value === 1}
                                                     onChange={(e) => field.onChange(e.target.checked ? 1 : 0)}
                                                 />
-                                                <span className="text-sm font-medium text-gray-700">Tampilkan Nilai</span>
+                                                <span className="text-sm font-medium text-gray-700">Show Score</span>
                                             </label>
                                         </div>
                                         <FormMessage>{form.formState.errors.show_results?.message}</FormMessage>
@@ -322,11 +322,11 @@ export default function QuizForm({
 
                         <DialogFooter className="gap-2 sm:gap-0">
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="text-gray-700 border-gray-300 hover:bg-gray-100">
-                                Batal
+                                Cancel
                             </Button>
                             <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700">
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {initialData ? 'Simpan Perubahan' : 'Buat Quiz'}
+                                {initialData ? 'Save Changes' : 'Create Quiz'}
                             </Button>
                         </DialogFooter>
                     </form>

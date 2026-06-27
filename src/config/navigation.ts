@@ -40,8 +40,8 @@ export const NAV_ITEMS: Record<RoleCode, NavItem[]> = {
             href: '#',
             children: [
                 { icon: Shield, label: 'Admin Management', href: '/admin-management' },
-                { icon: UserCheck, label: 'Guru Management', href: '/guru-management' },
-                { icon: GraduationCap, label: 'Murid Management', href: '/student-management' },
+                { icon: UserCheck, label: 'Teacher Management', href: '/guru-management' },
+                { icon: GraduationCap, label: 'Student Management', href: '/student-management' },
             ]
         },
         // { icon: ShieldCheck, label: 'Role Management', href: '/role-management' },

@@ -26,11 +26,11 @@ import { Exam } from '@/types/exam'
 import { LearningModule } from '@/types/learning-module'
 
 const examSchema = z.object({
-    title: z.string().min(1, 'Judul ujian wajib diisi'),
+    title: z.string().min(1, 'Exam title is required'),
     description: z.string().optional(),
-    learning_module_id: z.number({ message: 'Learning module wajib dipilih' }),
-    duration: z.number().min(1, 'Durasi minimal 1 menit').max(300, 'Durasi maksimal 300 menit'),
-    pass_grade: z.number().min(0).max(100, 'Nilai lulus 0-100'),
+    learning_module_id: z.number({ message: 'Learning module is required' }),
+    duration: z.number().min(1, 'Duration must be at least 1 minute').max(300, 'Duration must be at most 300 minutes'),
+    pass_grade: z.number().min(0).max(100, 'Passing score must be between 0 and 100'),
     start_date: z.string().optional(),
     end_date: z.string().optional(),
     show_results: z.number(),
@@ -124,33 +124,33 @@ export default function ExamForm({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md bg-white text-gray-900">
                 <DialogHeader>
-                    <DialogTitle>{initialData ? 'Edit Ujian' : 'Tambah Ujian Baru'}</DialogTitle>
+                    <DialogTitle>{initialData ? 'Edit Exam' : 'Add New Exam'}</DialogTitle>
                     <DialogDescription>
-                        {initialData ? 'Edit detail ujian di bawah.' : 'Buat ujian baru untuk modul pembelajaran.'}
+                        {initialData ? 'Edit exam details below.' : 'Create a new exam for the learning module.'}
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                     <Form {...form}>
                         <FormItem>
-                            <FormLabel>Judul Ujian</FormLabel>
+                            <FormLabel>Exam Title</FormLabel>
                             <FormControl>
                                 <Input
                                     {...form.register('title')}
-                                    placeholder="Contoh: Ujian Tengah Semester"
+                                    placeholder="e.g. Midterm Exam"
                                 />
                             </FormControl>
                             <FormMessage>{form.formState.errors.title?.message}</FormMessage>
                         </FormItem>
 
                         <FormItem>
-                            <FormLabel>Modul Pembelajaran</FormLabel>
+                            <FormLabel>Learning Module</FormLabel>
                             <FormControl>
                                 <select
                                     {...form.register('learning_module_id', { valueAsNumber: true })}
                                     className="w-full px-3 py-2 border rounded-md"
                                 >
-                                    <option value={0}>Pilih Modul</option>
+                                    <option value={0}>Select Module</option>
                                     {learningModules.map(m => (
                                         <option key={m.nid} value={m.nid}>{m.vname}</option>
                                     ))}
@@ -161,7 +161,7 @@ export default function ExamForm({
 
                         <div className="grid grid-cols-2 gap-4">
                             <FormItem>
-                                <FormLabel>Durasi (menit)</FormLabel>
+                                <FormLabel>Duration (minutes)</FormLabel>
                                 <FormControl>
                                     <Input
                                         type="number"
@@ -172,7 +172,7 @@ export default function ExamForm({
                             </FormItem>
 
                             <FormItem>
-                                <FormLabel>Nilai Lulus</FormLabel>
+                                <FormLabel>Passing Score</FormLabel>
                                 <FormControl>
                                     <Input
                                         type="number"
@@ -185,7 +185,7 @@ export default function ExamForm({
 
                         <div className="grid grid-cols-2 gap-4">
                             <FormItem>
-                                <FormLabel>Mulai</FormLabel>
+                                <FormLabel>Start</FormLabel>
                                 <FormControl>
                                     <Input
                                         type="datetime-local"
@@ -195,7 +195,7 @@ export default function ExamForm({
                             </FormItem>
 
                             <FormItem>
-                                <FormLabel>Selesai</FormLabel>
+                                <FormLabel>End</FormLabel>
                                 <FormControl>
                                     <Input
                                         type="datetime-local"
@@ -206,11 +206,11 @@ export default function ExamForm({
                         </div>
 
                         <FormItem>
-                            <FormLabel>Deskripsi</FormLabel>
+                            <FormLabel>Description</FormLabel>
                             <FormControl>
                                 <Textarea
                                     {...form.register('description')}
-                                    placeholder="Deskripsi ujian..."
+                                    placeholder="Exam description..."
                                     rows={3}
                                 />
                             </FormControl>
@@ -224,17 +224,17 @@ export default function ExamForm({
                                     checked={form.watch('status') === 1}
                                     onChange={(e) => form.setValue('status', e.target.checked ? 1 : 0)}
                                 />
-                                <span className="text-sm">Aktif</span>
+                                <span className="text-sm">Active</span>
                             </label>
                         </FormItem>
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                                Batal
+                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="text-gray-700 border-gray-300 hover:bg-gray-100">
+                                Cancel
                             </Button>
-                            <Button type="submit" disabled={isSubmitting}>
+                            <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {initialData ? 'Simpan' : 'Buat'}
+                                {initialData ? 'Save' : 'Create'}
                             </Button>
                         </DialogFooter>
                     </Form>

@@ -27,9 +27,9 @@ import { Material } from '@/types/material'
 import { LearningModule } from '@/types/learning-module'
 
 const materialSchema = z.object({
-    title: z.string().min(1, 'Judul materi wajib diisi'),
+    title: z.string().min(1, 'Material title is required'),
     description: z.string().optional(),
-    learning_module_id: z.number({ message: 'Learning module wajib dipilih' }),
+    learning_module_id: z.number({ message: 'Learning module is required' }),
 })
 
 export type MaterialFormData = z.infer<typeof materialSchema>
@@ -73,7 +73,7 @@ export default function MaterialForm({
             if (initialData) {
                 form.reset({
                     title: initialData.vtitle || '',
-                    description: initialData.vdesc || '',
+                    description: initialData.vdescription || '',
                     learning_module_id: initialData.nid_learning_module,
                 })
                 if (initialData.vfile_name) {
@@ -123,12 +123,12 @@ export default function MaterialForm({
             <DialogContent className="sm:max-w-[600px] bg-white text-gray-900 max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
-                        {initialData ? 'Edit Materi' : 'Tambah Materi Baru'}
+                        {initialData ? 'Edit Material' : 'Add New Material'}
                     </DialogTitle>
                     <DialogDescription>
                         {initialData
-                            ? 'Perbarui detail materi pembelajaran.'
-                            : 'Tambahkan materi pembelajaran baru untuk siswa.'}
+                            ? 'Update learning material details.'
+                            : 'Add new learning material for students.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -139,9 +139,9 @@ export default function MaterialForm({
                             name="title"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel required>Judul Materi</FormLabel>
+                                    <FormLabel required>Material Title</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g., Chapter 1 - Pendahuluan" {...field} />
+                                        <Input placeholder="e.g., Chapter 1 - Introduction" {...field} />
                                     </FormControl>
                                     <FormMessage>{form.formState.errors.title?.message}</FormMessage>
                                 </FormItem>
@@ -153,13 +153,13 @@ export default function MaterialForm({
                             name="learning_module_id"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel required>Modul Pembelajaran</FormLabel>
+                                    <FormLabel required>Learning Module</FormLabel>
                                     <select
                                         className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         value={field.value || ''}
                                         onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
                                     >
-                                        <option value="">Pilih Modul</option>
+                                        <option value="">Select Module</option>
                                         {learningModules.map((mod) => (
                                             <option key={mod.nid} value={mod.nid}>
                                                 {mod.vname}
@@ -176,10 +176,10 @@ export default function MaterialForm({
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Deskripsi</FormLabel>
+                                    <FormLabel>Description</FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="Deskripsi materi..."
+                                            placeholder="Material description..."
                                             {...field}
                                             value={field.value || ''}
                                         />
@@ -191,7 +191,7 @@ export default function MaterialForm({
 
                         {/* File Upload */}
                         <FormItem>
-                            <FormLabel>File Materi (Opsional)</FormLabel>
+                            <FormLabel>Material File (Optional)</FormLabel>
                             <div className="mt-2">
                                 {filePreview ? (
                                     <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
@@ -219,7 +219,7 @@ export default function MaterialForm({
                                     >
                                         <Upload className="h-10 w-10 text-gray-400 mx-auto mb-3" />
                                         <p className="text-sm text-gray-600">
-                                            <span className="font-medium text-blue-600">Klik untuk upload</span> atau drag & drop
+                                            <span className="font-medium text-blue-600">Click to upload</span> or drag & drop
                                         </p>
                                         <p className="text-xs text-gray-400 mt-1">PDF, DOC, DOCX, PPT, PPTX, JPG, PNG (max. 10MB)</p>
                                     </div>
@@ -236,11 +236,11 @@ export default function MaterialForm({
 
                         <DialogFooter className="gap-2 sm:gap-0">
                             <Button type="button" variant="outline" onClick={() => { onOpenChange(false); handleRemoveFile() }} className="text-gray-700 border-gray-300 hover:bg-gray-100">
-                                Batal
+                                Cancel
                             </Button>
                             <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {initialData ? 'Simpan Perubahan' : 'Buat Materi'}
+                                {initialData ? 'Save Changes' : 'Create Material'}
                             </Button>
                         </DialogFooter>
                     </form>

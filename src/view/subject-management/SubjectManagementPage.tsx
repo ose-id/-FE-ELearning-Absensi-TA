@@ -56,7 +56,7 @@ export default function SubjectManagementPage() {
         if (!session?.accessToken) return
         try {
             const response = await lovService.getDepartments(session.accessToken)
-            setDepartments(response as Department[])
+            setDepartments(response as unknown as Department[])
         } catch (error) {
             console.error('Failed to fetch departments:', error)
         }
