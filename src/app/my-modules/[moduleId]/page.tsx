@@ -14,7 +14,7 @@ import { assignmentService } from '@/services/assignment.service'
 import { LearningModule } from '@/types/learning-module'
 import { Material } from '@/types/material'
 import { Quiz, StudentQuizAttempt } from '@/types/quiz'
-import { Exam } from '@/types/exam'
+import { Exam, StudentExamAttempt } from '@/types/exam'
 import { Assignment } from '@/types/assignment'
 
 // --- Types for weekly grouping ---
@@ -67,6 +67,7 @@ export default function StudentModuleDetailPage() {
     const [quizAttempts, setQuizAttempts] = useState<StudentQuizAttempt[]>([])
     const [readMaterials, setReadMaterials] = useState<Set<number>>(new Set())
     const [submittedAssignments, setSubmittedAssignments] = useState<Record<number, boolean>>({})
+    const [examAttempts, setExamAttempts] = useState<Record<number, StudentExamAttempt>>({})
     const [loading, setLoading] = useState(true)
     const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(() => new Set())
     const [activeMaterial, setActiveMaterial] = useState<Material | null>(null)
@@ -91,9 +92,21 @@ export default function StudentModuleDetailPage() {
                 setMaterials(materialsRes.data || [])
                 const quizList = quizzesRes.data || []
                 setQuizzes(quizList)
-                setExams(examsRes.data || [])
+                const examList = examsRes.data || []
+                setExams(examList)
                 const filtered = assignmentsRes.data?.filter((a: Assignment) => a.learning_module_id === moduleId) || []
                 setAssignments(filtered)
+
+                if (session?.accessToken && examList.length > 0) {
+                    const attemptsMap: Record<number, StudentExamAttempt> = {}
+                    await Promise.all(examList.map(async (e: Exam) => {
+                        const attempt = await examService.getMyExamAttempt(e.nid, token).catch(() => null)
+                        if (attempt) {
+                            attemptsMap[e.nid] = attempt
+                        }
+                    }))
+                    setExamAttempts(attemptsMap)
+                }
 
                 // Fetch attempts for each quiz from localStorage
                 const localAttempts: StudentQuizAttempt[] = []
@@ -469,12 +482,16 @@ export default function StudentModuleDetailPage() {
                                         <div className="border-t border-gray-100 px-4 py-3 space-y-2">
                                             {week.items.map((item, itemIndex) => {
                                                 let completedAttempt = undefined
+                                                let completedExamAttempt = undefined
                                                 let isMaterialRead = false
                                                 let isAssignmentSubmitted = false
 
                                                 if (item.type === 'quiz') {
                                                     const q = item.data as Quiz
                                                     completedAttempt = quizAttempts.find(a => a.nid_quiz === q.nid && a.nstatus === 2)
+                                                } else if (item.type === 'exam') {
+                                                    const e = item.data as Exam
+                                                    completedExamAttempt = examAttempts[e.nid]
                                                 } else if (item.type === 'material') {
                                                     const m = item.data as Material
                                                     isMaterialRead = readMaterials.has(m.nid)
@@ -491,6 +508,7 @@ export default function StudentModuleDetailPage() {
                                                         moduleId={moduleId}
                                                         onViewMaterial={setActiveMaterial}
                                                         completedAttempt={completedAttempt}
+                                                        completedExamAttempt={completedExamAttempt}
                                                         isMaterialRead={isMaterialRead}
                                                         isAssignmentSubmitted={isAssignmentSubmitted}
                                                     />
@@ -658,6 +676,7 @@ function WeeklyContentItem({
     moduleId, 
     onViewMaterial,
     completedAttempt,
+    completedExamAttempt,
     isMaterialRead,
     isAssignmentSubmitted
 }: { 
@@ -666,14 +685,16 @@ function WeeklyContentItem({
     moduleId: number; 
     onViewMaterial: (m: Material) => void;
     completedAttempt?: StudentQuizAttempt;
+    completedExamAttempt?: StudentExamAttempt;
     isMaterialRead?: boolean;
     isAssignmentSubmitted?: boolean;
 }) {
     const isQuizCompleted = item.type === 'quiz' && !!completedAttempt
     const isMaterialCompleted = item.type === 'material' && !!isMaterialRead
     const isAssignmentCompleted = item.type === 'assignment' && !!isAssignmentSubmitted
+    const isExamCompleted = item.type === 'exam' && !!completedExamAttempt
     
-    const isCompleted = isQuizCompleted || isMaterialCompleted || isAssignmentCompleted
+    const isCompleted = isQuizCompleted || isMaterialCompleted || isAssignmentCompleted || isExamCompleted
 
     const typeConfig = {
         material: {
@@ -709,12 +730,12 @@ function WeeklyContentItem({
         exam: {
             icon: ClipboardCheck,
             label: 'Ujian',
-            bgColor: 'bg-rose-50',
-            textColor: 'text-rose-600',
-            borderColor: 'border-l-rose-500',
-            badgeBg: 'bg-rose-50',
-            badgeText: 'text-rose-700',
-            btnBg: 'bg-rose-600 hover:bg-rose-700',
+            bgColor: isExamCompleted ? 'bg-emerald-50' : 'bg-rose-50',
+            textColor: isExamCompleted ? 'text-emerald-600' : 'text-rose-600',
+            borderColor: isExamCompleted ? 'border-l-emerald-500' : 'border-l-rose-500',
+            badgeBg: isExamCompleted ? 'bg-emerald-50' : 'bg-rose-50',
+            badgeText: isExamCompleted ? 'text-emerald-700' : 'text-rose-700',
+            btnBg: isExamCompleted ? 'bg-emerald-600 hover:bg-emerald-700 animate-pulse' : 'bg-rose-600 hover:bg-rose-700',
         },
     }
 
@@ -798,9 +819,35 @@ function WeeklyContentItem({
         const e = item.data as Exam
         title = e.vtitle || 'Ujian'
         description = e.vdescription || ''
-        metaInfo = `${e.nduration} Menit • ${new Date(e.dstart).toLocaleDateString('id-ID')}`
-        actionLabel = 'Mulai Ujian'
-        onAction = () => toast.info('Layanan Ujian Siswa akan segera hadir!')
+        const canShowScore = e.nshow_results !== 0
+        if (completedExamAttempt) {
+            metaInfo = `${e.nduration} Menit • ` + (canShowScore && completedExamAttempt.nscore !== undefined
+                ? `Nilai: ${completedExamAttempt.nscore}/${e.npass_grade || 70}`
+                : `Selesai`)
+            actionLabel = canShowScore ? 'Lihat Nilai ✓' : 'Selesai ✓'
+            onAction = () => {
+                if (canShowScore) {
+                    router.push(`/my-modules/${moduleId}/exam/${e.nid}`)
+                } else {
+                    toast.info('Hasil ujian disembunyikan oleh guru.')
+                }
+            }
+        } else {
+            metaInfo = `${e.nduration} Menit • KKM: ${e.npass_grade || 70}`
+            actionLabel = 'Mulai Ujian'
+            onAction = () => {
+                const now = new Date()
+                const start = new Date(e.dstart)
+                const end = new Date(e.dend)
+                if (now < start) {
+                    toast.error(`Ujian baru dimulai pada ${start.toLocaleString('id-ID')}`)
+                } else if (now > end) {
+                    toast.error(`Ujian sudah berakhir pada ${end.toLocaleString('id-ID')}`)
+                } else {
+                    router.push(`/my-modules/${moduleId}/exam/${e.nid}`)
+                }
+            }
+        }
     }
 
     const formattedDate = item.date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
@@ -809,6 +856,7 @@ function WeeklyContentItem({
     if (isMaterialCompleted) badgeLabel = 'Materi Selesai ✓'
     if (isAssignmentCompleted) badgeLabel = 'Tugas Selesai ✓'
     if (isQuizCompleted) badgeLabel = 'Kuis Selesai ✓'
+    if (isExamCompleted) badgeLabel = 'Ujian Selesai ✓'
 
     return (
         <div className={`group flex items-start gap-3 rounded-lg border p-3 transition-all duration-200 hover:shadow-sm ${

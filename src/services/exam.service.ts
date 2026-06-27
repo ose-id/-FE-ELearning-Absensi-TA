@@ -1,4 +1,4 @@
-import { Exam, CreateExamRequest, UpdateExamRequest, ExamQuestion } from '@/types/exam'
+import { Exam, CreateExamRequest, UpdateExamRequest, ExamQuestion, StudentExamAttempt, SubmitExamAttemptRequest } from '@/types/exam'
 
 const EXAM_API_URL = process.env.NEXT_PUBLIC_EXAM_API_URL || process.env.EXAM_API_URL || 'https://localhost:5007'
 
@@ -9,7 +9,7 @@ class ExamService {
         this.baseUrl = `${EXAM_API_URL}/api/Exam`
     }
 
-    private async fetchWithAuth(url: string, options: RequestInit = {}) {
+    private async fetchWithAuth<T>(url: string, options: RequestInit = {}): Promise<T> {
         console.log(`[ExamService] Fetching: ${url}`)
 
         try {
@@ -28,10 +28,11 @@ class ExamService {
                 console.error(`[ExamService] Error response:`, errorData)
                 throw new Error(errorData.message?.message || errorData.title || errorData.message || `API request failed (${res.status})`)
             }
-            return res.json()
-        } catch (error: any) {
+            return res.json() as Promise<T>
+        } catch (error: unknown) {
             console.error(`[ExamService] Network error:`, error)
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            const err = error as Error
+            if (err && err.name === 'TypeError' && err.message?.includes('fetch')) {
                 throw new Error('Exam service tidak tersedia. Pastikan service sedang running.')
             }
             throw error
@@ -50,7 +51,7 @@ class ExamService {
         })
         if (params?.learning_module_id) urlParams.append('learning_module_id', params.learning_module_id.toString())
 
-        const response = await this.fetchWithAuth(`${this.baseUrl}?${urlParams}`, {
+        const response = await this.fetchWithAuth<{ data?: Exam[], totalRecords?: number }>(`${this.baseUrl}?${urlParams}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
         return {
@@ -60,7 +61,7 @@ class ExamService {
     }
 
     async getExamsByModule(learningModuleId: number, token: string): Promise<{ data: Exam[], totalRecords: number }> {
-        const response = await this.fetchWithAuth(`${this.baseUrl}/learning-module/${learningModuleId}`, {
+        const response = await this.fetchWithAuth<{ data?: Exam[], totalRecords?: number }>(`${this.baseUrl}/learning-module/${learningModuleId}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
         return {
@@ -71,17 +72,18 @@ class ExamService {
 
     async getExamById(id: number, token: string): Promise<Exam | null> {
         try {
-            const response = await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
+            const response = await this.fetchWithAuth<{ data?: Exam | Exam[] }>(`${this.baseUrl}/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            return Array.isArray(response.data) ? response.data[0] : response.data
+            const data = Array.isArray(response.data) ? response.data[0] : response.data
+            return data ?? null
         } catch {
             return null
         }
     }
 
     async createExam(data: CreateExamRequest, token: string): Promise<Exam> {
-        const response = await this.fetchWithAuth(this.baseUrl, {
+        const response = await this.fetchWithAuth<{ data: Exam[] }>(this.baseUrl, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
             body: JSON.stringify(data),
@@ -90,7 +92,7 @@ class ExamService {
     }
 
     async updateExam(id: number, data: UpdateExamRequest, token: string): Promise<Exam> {
-        const response = await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
+        const response = await this.fetchWithAuth<{ data: Exam[] }>(`${this.baseUrl}/${id}`, {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` },
             body: JSON.stringify(data),
@@ -99,7 +101,7 @@ class ExamService {
     }
 
     async deleteExam(id: number, token: string): Promise<void> {
-        await this.fetchWithAuth(`${this.baseUrl}/${id}`, {
+        await this.fetchWithAuth<unknown>(`${this.baseUrl}/${id}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
         })
@@ -107,7 +109,7 @@ class ExamService {
 
     // Exam Questions CRUD
     async getExamQuestions(examId: number, token: string): Promise<{ data: ExamQuestion[], totalRecords: number }> {
-        const response = await this.fetchWithAuth(`${this.baseUrl}/${examId}/questions`, {
+        const response = await this.fetchWithAuth<{ data?: ExamQuestion[], totalRecords?: number }>(`${this.baseUrl}/${examId}/questions`, {
             headers: { Authorization: `Bearer ${token}` }
         })
         return {
@@ -116,8 +118,8 @@ class ExamService {
         }
     }
 
-    async createExamQuestion(data: any, token: string): Promise<ExamQuestion> {
-        const response = await this.fetchWithAuth(`${EXAM_API_URL}/api/ExamQuestion`, {
+    async createExamQuestion(data: unknown, token: string): Promise<ExamQuestion> {
+        const response = await this.fetchWithAuth<{ data: ExamQuestion[] }>(`${EXAM_API_URL}/api/ExamQuestion`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
             body: JSON.stringify(data),
@@ -125,8 +127,8 @@ class ExamService {
         return response.data[0]
     }
 
-    async updateExamQuestion(id: number, data: any, token: string): Promise<ExamQuestion> {
-        const response = await this.fetchWithAuth(`${EXAM_API_URL}/api/ExamQuestion/${id}`, {
+    async updateExamQuestion(id: number, data: unknown, token: string): Promise<ExamQuestion> {
+        const response = await this.fetchWithAuth<{ data: ExamQuestion[] }>(`${EXAM_API_URL}/api/ExamQuestion/${id}`, {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` },
             body: JSON.stringify(data),
@@ -135,10 +137,32 @@ class ExamService {
     }
 
     async deleteExamQuestion(id: number, token: string): Promise<void> {
-        await this.fetchWithAuth(`${EXAM_API_URL}/api/ExamQuestion/${id}`, {
+        await this.fetchWithAuth<unknown>(`${EXAM_API_URL}/api/ExamQuestion/${id}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
         })
+    }
+
+    async submitExamAttempt(examId: number, data: SubmitExamAttemptRequest, token: string): Promise<unknown> {
+        return await this.fetchWithAuth(`${this.baseUrl}/${examId}/attempt`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: JSON.stringify(data),
+        })
+    }
+
+    async getMyExamAttempt(examId: number, token: string): Promise<StudentExamAttempt | null> {
+        const response = await this.fetchWithAuth<{ data: StudentExamAttempt | null }>(`${this.baseUrl}/${examId}/my-attempt`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        return response.data
+    }
+
+    async getExamAttempts(examId: number, token: string): Promise<StudentExamAttempt[]> {
+        const response = await this.fetchWithAuth<{ data: StudentExamAttempt[] }>(`${this.baseUrl}/${examId}/attempts`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        return response.data || []
     }
 }
 

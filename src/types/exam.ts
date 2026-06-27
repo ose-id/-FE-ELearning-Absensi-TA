@@ -64,4 +64,24 @@ export interface UpdateExamRequest {
     nstatus: number
 }
 
-export interface ExamListResponse extends ApiResponse<Exam> { }
+export type ExamListResponse = ApiResponse<Exam>
+
+export interface StudentExamAttempt {
+    nid: number
+    nid_exam: number
+    nid_student: number
+    nscore?: number
+    npercentage?: number
+    vanswers?: string
+    nviolations?: number
+}
+
+export interface SubmitExamAttemptRequest {
+    StartAt: string
+    FinishAt: string
+    Score: number
+    Percentage: number
+    Answers: string
+    Violations: number
+}
+
