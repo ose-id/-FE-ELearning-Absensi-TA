@@ -23,8 +23,8 @@ const Login = () => {
   const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'admin@example.com',
-      password: 'Admin@12345'
+      email: '',
+      password: ''
     }
   })
 
@@ -126,7 +126,7 @@ const Login = () => {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Input
               type="email"
-              placeholder="Email"
+              placeholder="Enter your email"
               {...form.register('email')}
               className="h-12 border-gray-300 bg-white text-gray-900 placeholder:text-gray-400"
             />
@@ -135,7 +135,7 @@ const Login = () => {
             )}
             <Input
               type="password"
-              placeholder="Password"
+              placeholder="Enter your password"
               {...form.register('password')}
               className="h-12 border-gray-300 bg-white text-gray-900 placeholder:text-gray-400"
             />
