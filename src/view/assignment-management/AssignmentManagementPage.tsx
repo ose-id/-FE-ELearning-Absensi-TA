@@ -13,10 +13,9 @@ import CardDescription from '@/components/ui/card/card-description'
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import { assignmentService } from '@/services/assignment.service'
-import { classService } from '@/services/class.service'
 import { learningModuleService } from '@/services/learning-module.service'
 import { lovService } from '@/services/lov.service'
-import { Assignment } from '@/types/assignment'
+import { Assignment, CreateAssignmentRequest, UpdateAssignmentRequest } from '@/types/assignment'
 import { Class } from '@/types/class'
 import { LearningModule } from '@/types/learning-module'
 import AssignmentList from './AssignmentList'
@@ -70,16 +69,16 @@ export default function AssignmentManagementPage() {
             }
 
             if (classesData) {
-                setClasses(classesData as any)
+                setClasses(classesData as Class[])
             }
 
             if (modulesRes && modulesRes.data) {
                 setLearningModules(modulesRes.data)
             }
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to fetch data:', error)
-            toast.error(error.message || 'Failed to load data')
+            toast.error(error instanceof Error ? error.message : 'Failed to load data')
         } finally {
             setLoading(false)
         }
@@ -87,6 +86,7 @@ export default function AssignmentManagementPage() {
 
     useEffect(() => {
         fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session])
 
     const handleCreate = () => {
@@ -108,8 +108,8 @@ export default function AssignmentManagementPage() {
             await assignmentService.deleteAssignment(assignment.id, session.accessToken)
             toast.success('Assignment deleted successfully')
             fetchData()
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to delete assignment')
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : 'Failed to delete assignment')
         }
     }
 
@@ -125,18 +125,27 @@ export default function AssignmentManagementPage() {
             setIsSubmitting(true)
 
             if (selectedAssignment) {
+                const updatePayload: UpdateAssignmentRequest = {
+                    title: data.title,
+                    description: data.description,
+                    dueDate: data.due_date,
+                    status: 1,
+                }
                 await assignmentService.updateAssignment(
                     selectedAssignment.id,
-                    {
-                        id: selectedAssignment.id,
-                        ...data,
-                    },
+                    updatePayload,
                     session.accessToken
                 )
                 toast.success('Assignment updated successfully')
             } else {
+                const createPayload: CreateAssignmentRequest = {
+                    title: data.title,
+                    description: data.description,
+                    learningModuleId: data.learning_module_id,
+                    dueDate: data.due_date,
+                }
                 await assignmentService.createAssignment(
-                    data,
+                    createPayload,
                     session.accessToken
                 )
                 toast.success('Assignment created successfully')
@@ -144,9 +153,9 @@ export default function AssignmentManagementPage() {
 
             setIsFormOpen(false)
             fetchData()
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error)
-            toast.error(error.message || 'Failed to save assignment')
+            toast.error(error instanceof Error ? error.message : 'Failed to save assignment')
         } finally {
             setIsSubmitting(false)
         }

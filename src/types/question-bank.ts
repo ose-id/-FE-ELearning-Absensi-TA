@@ -9,6 +9,15 @@ export interface QuestionBank {
     vcorrect_answer?: string
     npoints: number
     nstatus: number
+    joptions?: {
+        A?: string
+        B?: string
+        C?: string
+        D?: string
+        guide?: string
+        true_text?: string
+        false_text?: string
+    }
     dcrea?: string
     vcrea?: string
     dmodi?: string
@@ -49,4 +58,4 @@ export interface UpdateQuestionBankRequest {
     nstatus?: number
 }
 
-export interface QuestionBankListResponse extends ApiResponse<QuestionBank> { }
+export type QuestionBankListResponse = ApiResponse<QuestionBank>

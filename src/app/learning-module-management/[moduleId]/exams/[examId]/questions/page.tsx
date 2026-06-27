@@ -18,6 +18,67 @@ function getErrorMessage(error: unknown, fallback: string): string {
     return fallback
 }
 
+interface CreateQuestionRequest {
+    ExamId: number
+    Order: number
+    Question: string
+    Type: 'multiple_choice' | 'true_false' | 'essay'
+    Points: number
+    AnswerKey?: string
+    Options?: string
+}
+
+const parseOptionsToObject = (voptionsStr?: string | unknown): { A: string; B: string; C: string; D: string } => {
+    const result = { A: '', B: '', C: '', D: '' }
+    if (!voptionsStr) return result
+    try {
+        let parsed = typeof voptionsStr === 'string' ? JSON.parse(voptionsStr) : voptionsStr
+        if (typeof parsed === 'string') {
+            parsed = JSON.parse(parsed)
+        }
+
+        if (parsed && typeof parsed === 'object') {
+            if (Array.isArray(parsed)) {
+                const keys = ['A', 'B', 'C', 'D'] as const
+                parsed.forEach((item: unknown, idx: number) => {
+                    if (idx < 4) {
+                        const key = keys[idx]
+                        if (typeof item === 'string') {
+                            result[key] = item
+                        } else if (item && typeof item === 'object') {
+                            const itemObj = item as Record<string, unknown>
+                            const val = itemObj.text ?? itemObj.value ?? itemObj.label ?? itemObj.voption_text ?? itemObj.text_options ?? Object.values(itemObj)[0]
+                            if (val !== undefined) {
+                                result[key] = String(val)
+                            }
+                        }
+                    }
+                })
+            } else {
+                const obj = parsed as Record<string, unknown>
+                result.A = typeof obj.A === 'string' ? obj.A : (typeof obj.a === 'string' ? obj.a : '')
+                result.B = typeof obj.B === 'string' ? obj.B : (typeof obj.b === 'string' ? obj.b : '')
+                result.C = typeof obj.C === 'string' ? obj.C : (typeof obj.c === 'string' ? obj.c : '')
+                result.D = typeof obj.D === 'string' ? obj.D : (typeof obj.d === 'string' ? obj.d : '')
+
+                // Try numeric keys
+                if (!result.A && (obj['1'] !== undefined || obj['0'] !== undefined)) {
+                    const numKeys = Object.keys(obj).filter(k => /^\d+$/.test(k)).sort()
+                    const letterKeys = ['A', 'B', 'C', 'D'] as const
+                    numKeys.forEach((nk, idx) => {
+                        if (idx < 4) result[letterKeys[idx]] = String(obj[nk])
+                    })
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Failed to parse options:', e)
+    }
+    return result
+}
+
+
+
 export default function ExamQuestionsPage() {
     const params = useParams()
     const router = useRouter()
@@ -51,6 +112,7 @@ export default function ExamQuestionsPage() {
             fetchExam()
             fetchQuestions()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session?.accessToken, moduleId, examId])
 
     const fetchExam = async () => {
@@ -113,21 +175,8 @@ export default function ExamQuestionsPage() {
         setPoints(question.npoints)
         setAnswerKey(question.vanswer_key || '')
 
-        if (question.voptions) {
-            try {
-                const parsed = JSON.parse(question.voptions)
-                setOptions({
-                    A: parsed.A || '',
-                    B: parsed.B || '',
-                    C: parsed.C || '',
-                    D: parsed.D || ''
-                })
-            } catch {
-                setOptions({ A: '', B: '', C: '', D: '' })
-            }
-        } else {
-            setOptions({ A: '', B: '', C: '', D: '' })
-        }
+        // Parse options if exists
+        setOptions(parseOptionsToObject(question.voptions))
         setIsFormOpen(true)
     }
 
@@ -151,7 +200,7 @@ export default function ExamQuestionsPage() {
         try {
             setIsSubmitting(true)
 
-            const questionData: any = {
+            const questionData: CreateQuestionRequest = {
                 ExamId: examId,
                 Order: editingQuestion ? editingQuestion.norder : questions.length + 1,
                 Question: questionText,
@@ -211,7 +260,7 @@ export default function ExamQuestionsPage() {
                 const bank = questionBanks.find(q => q.nid === bankId)
                 if (!bank) continue
 
-                const questionData: any = {
+                const questionData: CreateQuestionRequest = {
                     ExamId: examId,
                     Order: questions.length + 1,
                     Question: bank.vquestion,
@@ -221,18 +270,9 @@ export default function ExamQuestionsPage() {
 
                 if (bank.vtype !== 'essay') {
                     questionData.AnswerKey = bank.vcorrect_answer
-                    if (bank.voptions) {
-                        try {
-                            const parsed = JSON.parse(bank.voptions)
-                            questionData.Options = JSON.stringify({
-                                A: parsed.A || '',
-                                B: parsed.B || '',
-                                C: parsed.C || '',
-                                D: parsed.D || ''
-                            })
-                        } catch {
-                            questionData.Options = bank.voptions
-                        }
+                    const rawOpts = bank.voptions || bank.joptions
+                    if (rawOpts) {
+                        questionData.Options = JSON.stringify(parseOptionsToObject(rawOpts))
                     }
                 }
 
@@ -425,7 +465,7 @@ export default function ExamQuestionsPage() {
                                         </label>
                                         <select
                                             value={questionType}
-                                            onChange={(e) => setQuestionType(e.target.value as any)}
+                                            onChange={(e) => setQuestionType(e.target.value as 'multiple_choice' | 'true_false' | 'essay')}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                                         >
                                             <option value="multiple_choice">Pilihan Ganda</option>

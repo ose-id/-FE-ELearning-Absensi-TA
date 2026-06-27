@@ -321,8 +321,14 @@ export default function StudentQuizPage() {
         if (!q.voptions) return {}
         try {
             let parsed: unknown = q.voptions
-            if (typeof q.voptions === 'string') {
-                parsed = JSON.parse(q.voptions)
+
+            // Handle double-stringified JSON (common backend issue)
+            if (typeof parsed === 'string') {
+                parsed = JSON.parse(parsed)
+                // If still a string after first parse, parse again
+                if (typeof parsed === 'string') {
+                    parsed = JSON.parse(parsed)
+                }
             }
 
             // Case 1: Already a standard key-value object { A: '...', B: '...' }
@@ -335,6 +341,14 @@ export default function StudentQuizPage() {
                 if (obj.D || obj.d) result.D = String(obj.D || obj.d)
                 if (obj.true_text) result.true_text = String(obj.true_text)
                 if (obj.false_text) result.false_text = String(obj.false_text)
+                // Also try numeric keys "1", "2", "3", "4"
+                if (!result.A && (obj['1'] || obj['0'])) {
+                    const numKeys = Object.keys(obj).filter(k => /^\d+$/.test(k)).sort()
+                    const letterKeys = ['A', 'B', 'C', 'D'] as const
+                    numKeys.forEach((nk, idx) => {
+                        if (idx < 4) result[letterKeys[idx]] = String(obj[nk])
+                    })
+                }
                 return result
             }
 
@@ -342,7 +356,7 @@ export default function StudentQuizPage() {
             if (Array.isArray(parsed)) {
                 const result: QuizOptionData = {}
                 const keys = ['A', 'B', 'C', 'D'] as const
-                (parsed as unknown[]).forEach((item: unknown, idx: number) => {
+                ;(parsed as unknown[]).forEach((item: unknown, idx: number) => {
                     if (idx < 4) {
                         const key = keys[idx]
                         if (typeof item === 'string') {
@@ -399,7 +413,7 @@ export default function StudentQuizPage() {
     if (phase === 'intro') {
         return (
             <div className="w-full py-4">
-                <div className="w-full max-w-5xl mx-auto">
+                <div className="w-full">
                     {/* Back button */}
                     <button
                         onClick={() => router.push(`/my-modules/${moduleId}`)}
@@ -486,7 +500,7 @@ export default function StudentQuizPage() {
 
         return (
             <div className="w-full py-4">
-                <div className="w-full max-w-xl mx-auto">
+                <div className="w-full">
                     <div className="rounded-2xl border border-gray-200 bg-white shadow-xl overflow-hidden">
                         {/* Result Header */}
                         <div className={`p-6 text-white ${
@@ -589,14 +603,14 @@ export default function StudentQuizPage() {
     const currentAnswer = answers[currentQuestion.nid] || ''
 
     return (
-        <div className="w-full pb-8">
-            {/* Beautiful Floating Header Card */}
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm mb-4">
-                <div className="mx-auto max-w-5xl flex items-center justify-between px-5 py-3.5">
+        <div className="w-full min-h-[calc(100vh-4rem)] pb-8">
+            {/* Beautiful Floating Header Card - Full Width */}
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm mb-5">
+                <div className="flex items-center justify-between px-6 py-3.5">
                     <div className="flex items-center gap-3">
                         <h2 className="text-sm font-bold text-gray-900 line-clamp-1">{quiz.vtitle}</h2>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                         {/* Progress */}
                         <span className="text-[11px] font-semibold text-gray-500">
                             {answeredCount}/{questions.length} dijawab
@@ -623,11 +637,11 @@ export default function StudentQuizPage() {
                 </div>
             </div>
 
-            <div className="mx-auto max-w-5xl flex flex-col md:flex-row gap-5">
+            <div className="flex flex-col md:flex-row gap-5">
                 {/* Main Question Area */}
                 <div className="flex-1 min-w-0 space-y-4">
-                    {/* Question Card */}
-                    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    {/* Question Card - Full Height */}
+                    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden min-h-[400px] flex flex-col">
                         {/* Question Header */}
                         <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-5 py-3 border-b border-gray-100">
                             <div className="flex items-center justify-between">
@@ -651,7 +665,7 @@ export default function StudentQuizPage() {
                         </div>
 
                         {/* Question Body */}
-                        <div className="p-5 space-y-5">
+                        <div className="p-6 space-y-5 flex-1">
                             <p className="text-[15px] font-semibold text-gray-900 leading-relaxed">
                                 {currentQuestion.vquestion}
                             </p>
@@ -766,8 +780,8 @@ export default function StudentQuizPage() {
                 </div>
 
                 {/* Question Navigation Sidebar */}
-                <div className="hidden md:block w-52 shrink-0">
-                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
+                <div className="hidden md:block w-60 shrink-0">
+                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4 sticky top-4">
                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Navigasi Soal</p>
                         <div className="grid grid-cols-4 gap-2">
                             {questions.map((q, idx) => {

@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
-import { Plus, Search, Loader2, FolderOpen, Edit, Trash2, X, ArrowLeft, HelpCircle, ClipboardList, FileText, CheckCircle2 } from 'lucide-react'
-import Link from 'next/link'
+import { Plus, Search, Loader2, FolderOpen, Edit, Trash2, X, HelpCircle, ClipboardList, FileText, CheckCircle2 } from 'lucide-react'
 
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/button'
@@ -58,6 +57,7 @@ function QuestionBankContent() {
         if (session) {
             fetchQuestions()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session, searchTerm])
 
     const handleOpenForm = (question?: QuestionBank) => {
@@ -66,9 +66,10 @@ function QuestionBankContent() {
             // Parse joptions format (A, B, C, D)
             let options = ''
             try {
-                if (question.voptions) {
-                    const opts = JSON.parse(question.voptions)
-                    if (opts.A || opts.B || opts.C || opts.D) {
+                const rawOpts = question.voptions || question.joptions
+                if (rawOpts) {
+                    const opts = typeof rawOpts === 'string' ? JSON.parse(rawOpts) : rawOpts
+                    if (opts && (opts.A || opts.B || opts.C || opts.D)) {
                         options = [opts.A, opts.B, opts.C, opts.D].filter(Boolean).join('\n')
                     }
                 }
@@ -138,6 +139,7 @@ function QuestionBankContent() {
 
             if (selectedQuestion) {
                 await questionBankService.updateQuestionBank(selectedQuestion.nid, {
+                    vsubject: 'General',
                     vquestion: formData.question,
                     vtype: formData.type,
                     joptions: joptions,
