@@ -116,9 +116,91 @@ export default function TeacherDashboard() {
                 </div>
             </div>
 
-            {/* Recent Activity & Upcoming Events (Placeholder for layout structure if needed in future) */}
+            {/* Teaching Tips & Quick Actions */}
             <div className="grid gap-6 md:grid-cols-2">
-                {/* We can add the RecentActivity and UpcomingEvents components here later, styled similarly */}
+                {/* Teaching Tips */}
+                <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div className="border-b border-gray-100 px-6 py-4">
+                        <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                            <BookOpen className="h-4.5 w-4.5 text-blue-600" />
+                            Teaching Tips
+                        </h3>
+                    </div>
+                    <div className="p-6 space-y-4">
+                        <article className="group flex gap-4 p-3 rounded-xl hover:bg-blue-50/50 transition-colors cursor-default">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
+                                <CheckCircle className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-900">Create Engaging Materials</h4>
+                                <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                                    Upload diverse content types — documents, presentations, and videos — to keep students engaged with varied learning materials.
+                                </p>
+                            </div>
+                        </article>
+                        <article className="group flex gap-4 p-3 rounded-xl hover:bg-purple-50/50 transition-colors cursor-default">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 group-hover:bg-purple-100 transition-colors">
+                                <FileText className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-900">Set Up Quizzes Early</h4>
+                                <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                                    Prepare quizzes and exams in advance with clear passing scores and time limits so students know what to expect.
+                                </p>
+                            </div>
+                        </article>
+                        <article className="group flex gap-4 p-3 rounded-xl hover:bg-emerald-50/50 transition-colors cursor-default">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
+                                <Calendar className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-900">Track Assignment Deadlines</h4>
+                                <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                                    Set clear due dates for assignments and monitor submission progress to ensure timely student participation.
+                                </p>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div className="border-b border-gray-100 px-6 py-4">
+                        <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                            <AlertCircle className="h-4.5 w-4.5 text-amber-600" />
+                            Recent Updates
+                        </h3>
+                    </div>
+                    <div className="p-6 space-y-4">
+                        <article className="flex items-start gap-3 p-3 rounded-xl bg-amber-50/50 border border-amber-100">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 mt-0.5">
+                                <Clock className="h-4 w-4 text-amber-600" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-900">Grading Reminder</h4>
+                                <p className="text-xs text-gray-500 mt-0.5">You have pending assignments that need to be reviewed and graded.</p>
+                            </div>
+                        </article>
+                        <article className="flex items-start gap-3 p-3 rounded-xl bg-blue-50/50 border border-blue-100">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 mt-0.5">
+                                <TrendingUp className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-900">Student Performance</h4>
+                                <p className="text-xs text-gray-500 mt-0.5">Overall student performance has improved this semester. Keep up the great work!</p>
+                            </div>
+                        </article>
+                        <article className="flex items-start gap-3 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 mt-0.5">
+                                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-900">Module Setup Complete</h4>
+                                <p className="text-xs text-gray-500 mt-0.5">All your learning modules are set up and ready for the current semester.</p>
+                            </div>
+                        </article>
+                    </div>
+                </div>
             </div>
         </div>
     )

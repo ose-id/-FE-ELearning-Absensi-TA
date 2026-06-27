@@ -1,4 +1,3 @@
-import { authService } from './auth.service'
 import { Role, CreateRoleRequest, UpdateRoleRequest, RoleListResponse } from '@/types/role'
 import { User, CreateUserRequest, UpdateUserRequest, UserListResponse } from '@/types/user'
 
@@ -47,12 +46,16 @@ class UserService {
             console.error('[UserService] Error response:', errorData)
 
             // Helper to convert potential .NET validation errors into readable strings
-            const parseErrorMessage = (data: any): string => {
+            const parseErrorMessage = (data: unknown): string => {
                 if (typeof data === 'string') return data;
+                if (!data || typeof data !== 'object') return `API request failed (${res.status})`;
+
+                const obj = data as Record<string, unknown>;
 
                 // Case 1: FluentValidation style { errors: { FieldName: ["Error Msg"] } }
-                if (data.errors && typeof data.errors === 'object') {
-                    return Object.entries(data.errors)
+                if (obj.errors && typeof obj.errors === 'object') {
+                    const errorsObj = obj.errors as Record<string, unknown>;
+                    return Object.entries(errorsObj)
                         .map(([field, messages]) => {
                             const msg = Array.isArray(messages) ? messages[0] : messages;
                             return `${field}: ${msg}`;
@@ -61,10 +64,11 @@ class UserService {
                 }
 
                 // Case 2: Standard { message: "..." } or { title: "..." }
-                return data.message?.message ||
-                       data.message?.Message ||
-                       data.message ||
-                       data.title ||
+                const messageObj = obj.message as Record<string, unknown> | undefined;
+                return (messageObj?.message as string) ||
+                       (messageObj?.Message as string) ||
+                       (obj.message as string) ||
+                       (obj.title as string) ||
                        `API request failed (${res.status})`;
             };
 
@@ -74,9 +78,14 @@ class UserService {
     }
 
     // Helper to extract data from both {data: []} and direct [] responses
-    private getData(res: any): any[] {
-        if (Array.isArray(res)) return res
-        if (res && Array.isArray(res.data)) return res.data
+    private getData(res: unknown): Record<string, unknown>[] {
+        if (Array.isArray(res)) return res as Record<string, unknown>[]
+        if (res && typeof res === 'object') {
+            const obj = res as Record<string, unknown>
+            if (Array.isArray(obj.data)) {
+                return obj.data as Record<string, unknown>[]
+            }
+        }
         return []
     }
 
@@ -91,19 +100,19 @@ class UserService {
 
             // Tag each user with their role_nid so edit/delete know which endpoint to call
             // Also create a unique composite key to avoid duplicate key warnings in React
-            const tagUsers = (users: any[], roleNid: number) =>
+            const tagUsers = (users: Record<string, unknown>[], roleNid: number) =>
                 users.map(u => ({
                     ...u,
-                    role_nid: u.role_nid ?? u.role_id ?? roleNid,
+                    role_nid: (u.role_nid as number | undefined) ?? (u.role_id as number | undefined) ?? roleNid,
                     // Stable unique key: "role_nid:id"
-                    _uid: `${roleNid}:${u.nid ?? u.id}`,
+                    _uid: `${roleNid}:${(u.nid as number | undefined) ?? (u.id as number | undefined)}`,
                 }))
 
             const allUsers = [
                 ...tagUsers(this.getData(staffRes),   1),
                 ...tagUsers(this.getData(teacherRes), 2),
                 ...tagUsers(this.getData(studentRes), 3),
-            ]
+            ] as unknown as User[]
 
             return {
                 status: '1',
@@ -122,20 +131,13 @@ class UserService {
         const response = await this.fetchWithAuth(`${endpoint}/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
-        const users = this.getData(response)
+        const users = this.getData(response) as unknown as User[]
         return users[0]
     }
 
-    // STEP 1: Register in Auth table
-    async registerUser(data: any): Promise<any> {
-        console.log('[UserService] Flow Step 1: Registering user via Auth API...')
-        const response = await authService.register(data)
-        return response
-    }
-
     // Creates profile in Auth API (LMS_Auth database)
-    async createProfile(data: any, token: string): Promise<void> {
-        const roleNid = data.role_nid || data.role_id
+    async createProfile(data: CreateUserRequest & { nip?: string }, token: string): Promise<void> {
+        const roleNid = data.role_nid || 3
 
         // Override endpoint based on role - for Guru (role 2), use /api/Teacher
         // Not /api/User/staff because we need Teacher profile for Learning Module
@@ -149,7 +151,7 @@ class UserService {
 
         console.log(`[UserService] Creating user via ${endpoint}...`)
 
-        let profileData: any
+        let profileData: Record<string, unknown>
 
         if (roleNid === 3) {
             // ── Student payload (/api/Student) ──────────────────────────────
@@ -196,73 +198,19 @@ class UserService {
         })
     }
 
-    // Creates profile in Class API (LMS_ClassDB database) - for Student and Teacher
-    async createProfileInClassDb(data: any, token: string): Promise<void> {
-        const roleNid = data.role_nid || data.role_id
-
-        // Student (3) and Teacher (2) need profile in ClassDB
-        if (roleNid !== 2 && roleNid !== 3) {
-            console.log('[UserService] Role does not need ClassDB profile, skipping...')
-            return
-        }
-
-        const endpoint = roleNid === 2 ? `${this.classBaseUrl}/Teacher` : `${this.classBaseUrl}/Student`
-
-        console.log(`[UserService] Creating profile in ClassDB via ${endpoint}...`)
-
-        let profileData: any
-        if (roleNid === 2) {
-            // Teacher payload for ClassDB
-            profileData = {
-                username:  data.username,
-                email:     data.email,
-                fullname:  data.fullname || '',
-                birthdate: data.birthdate || '',
-                address:   data.address || '',
-                phone:     data.phone || '',
-                whatsapp:  data.whatsapp || '',
-                nip:       data.nik || data.nip || '',
-                degree:    data.degree || '',
-                status:    data.status || 'active',
-            }
-        } else {
-            // Student payload for ClassDB
-            profileData = {
-                username:    data.username,
-                email:       data.email,
-                fullname:    data.fullname || '',
-                birthdate:   data.birthdate || '',
-                address:     data.address || '',
-                phone:       data.phone || '',
-                whatsapp:    data.whatsapp || '',
-                nis:         data.nis || '',
-                class_id:    data.class_id ? Number(data.class_id) : 0,
-                parent_name: data.parent_name || '',
-                parent_phone: data.parent_phone || '',
-                status:      data.status || 'active',
-            }
-        }
-
-        await this.fetchWithAuth(endpoint, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-            body: JSON.stringify(profileData),
-        })
-    }
-
     // Creates user in Auth API (LMS_Auth)
     // Note: ClassDB profile is automatically created by backend when creating user in Auth API
-    async createUser(data: any, token: string): Promise<void> {
+    async createUser(data: CreateUserRequest & { nip?: string }, token: string): Promise<void> {
         // Step 1: Create profile in Auth API (LMS_Auth)
         // Backend will automatically create ClassDB profile
         await this.createProfile(data, token)
         console.log('[UserService] User created successfully (ClassDB profile auto-created by backend)')
     }
 
-    async updateUser(id: number, roleNid: number, data: any, token: string): Promise<void> {
+    async updateUser(id: number, roleNid: number, data: UpdateUserRequest & { password?: string; nik?: string; nip?: string }, token: string): Promise<void> {
         const endpoint = this.getEndpointByRole(roleNid)
 
-        let updatedData: any
+        let updatedData: Record<string, unknown>
         if (roleNid === 3) {
             updatedData = {
                 ...data,

@@ -14,6 +14,8 @@ import { classService } from '@/services/class.service'
 import { lovService } from '@/services/lov.service'
 import { Class } from '@/types/class'
 import { Department } from '@/types/department'
+import { AcademicYear } from '@/services/academic-year.service'
+import { SchoolTerm } from '@/services/school-term.service'
 import ClassList from './ClassList'
 import ClassForm, { ClassFormData } from './ClassForm'
 
@@ -22,9 +24,9 @@ type ViewMode = 'list' | 'grid'
 export default function ClassManagementPage() {
     const { data: session } = useSession()
     const [classes, setClasses] = useState<Class[]>([])
-    const [departments, setDepartments] = useState<any[]>([])
-    const [academicYears, setAcademicYears] = useState<any[]>([])
-    const [schoolTerms, setSchoolTerms] = useState<any[]>([])
+    const [departments, setDepartments] = useState<Department[]>([])
+    const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
+    const [schoolTerms, setSchoolTerms] = useState<SchoolTerm[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [departmentFilter, setDepartmentFilter] = useState<string>('All')
@@ -62,16 +64,16 @@ export default function ClassManagementPage() {
 
             setClasses(classesRes.data)
             setTotalRecords(classesRes.totalRecords)
-            setDepartments(deptsRes as any)
-            setAcademicYears(yearsRes as any)
-            setSchoolTerms(termsRes as any);
+            setDepartments(deptsRes as Department[])
+            setAcademicYears(yearsRes as AcademicYear[])
+            setSchoolTerms(termsRes as SchoolTerm[]);
             console.log('Loaded Academic Years:', yearsRes);
             console.log('Loaded School Terms:', termsRes);
             console.log('Classes:', classesRes.data);
 
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to fetch data:', error)
-            toast.error(error.message || 'Failed to load data')
+            toast.error(error instanceof Error ? error.message : 'Failed to load data')
         } finally {
             setLoading(false)
         }
@@ -102,8 +104,8 @@ export default function ClassManagementPage() {
             // Note: delete endpoint may not exist in backend ClassController
             // Using a simple alert for now
             toast.error('Delete functionality not implemented in backend')
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to delete class')
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to delete class')
         }
     }
 
@@ -143,9 +145,9 @@ export default function ClassManagementPage() {
 
             setIsFormOpen(false)
             fetchData()
-        } catch (error: any) {
+        } catch (error) {
             console.error(error)
-            toast.error(error.message || 'Failed to save class')
+            toast.error(error instanceof Error ? error.message : 'Failed to save class')
             throw error
         } finally {
             setIsSubmitting(false)
@@ -193,21 +195,7 @@ export default function ClassManagementPage() {
                     )}
                 </div>
 
-                {/* Statistics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-gray-300 hover:-translate-y-1">
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600" />
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">Total Classes</p>
-                                <p className="text-3xl font-bold text-gray-900">{totalClasses}</p>
-                            </div>
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 transition-transform duration-300 group-hover:scale-110">
-                                <BookOpen className="h-7 w-7 text-blue-600" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
 
                 {/* Search and Filters */}
                 <div className="rounded-xl border border-gray-200 bg-white shadow-sm">

@@ -205,7 +205,7 @@ export default function ModuleDetailPage() {
     const allContent: ContentItem[] = [
         ...materials.map(m => ({ id: m.nid, type: 'material' as const, title: m.vtitle, status: m.nstatus })),
         ...quizzes.map(q => ({ id: q.nid, type: 'quiz' as const, title: q.vtitle, status: q.nstatus })),
-        ...exams.map(e => ({ id: e.nid, type: 'exam' as const, title: e.vtitle || 'Ujian', status: e.nstatus })),
+        ...exams.map(e => ({ id: e.nid, type: 'exam' as const, title: e.vtitle || 'Exam', status: e.nstatus })),
         ...assignments.map(a => ({ id: a.id, type: 'assignment' as const, title: a.title, status: 1 }))
     ]
 
@@ -215,11 +215,11 @@ export default function ModuleDetailPage() {
 
     const getTypeIcon = (type: string) => {
         switch (type) {
-            case 'material': return { icon: FileText, bg: 'bg-blue-50', text: 'text-blue-600', label: 'Materi' }
+            case 'material': return { icon: FileText, bg: 'bg-blue-50', text: 'text-blue-600', label: 'Material' }
             case 'quiz': return { icon: ClipboardList, bg: 'bg-purple-50', text: 'text-purple-600', label: 'Quiz' }
-            case 'exam': return { icon: ClipboardCheck, bg: 'bg-red-50', text: 'text-red-600', label: 'Ujian' }
-            case 'assignment': return { icon: PenLine, bg: 'bg-green-50', text: 'text-green-600', label: 'Tugas' }
-            default: return { icon: FileQuestion, bg: 'bg-gray-50', text: 'text-gray-600', label: 'Lainnya' }
+            case 'exam': return { icon: ClipboardCheck, bg: 'bg-red-50', text: 'text-red-600', label: 'Exam' }
+            case 'assignment': return { icon: PenLine, bg: 'bg-green-50', text: 'text-green-600', label: 'Assignment' }
+            default: return { icon: FileQuestion, bg: 'bg-gray-50', text: 'text-gray-600', label: 'Other' }
         }
     }
 
@@ -331,26 +331,26 @@ export default function ModuleDetailPage() {
                     <StatCard
                         icon={Users}
                         color="gray"
-                        label="Total Murid"
+                        label="Total Students"
                         value={0}
-                        description="Siswa enrolled"
+                        description="Student Enrolled"
                         canAdd={false}
                     />
                     <StatCard
                         icon={FileText}
                         color="blue"
-                        label="Materi"
+                        label="Material"
                         value={materials.length}
-                        description="Materi tersedia"
+                        description="Available Materials"
                         canAdd={canManage}
                         onAdd={handleAddMaterial}
                     />
                     <StatCard
                         icon={PenLine}
                         color="green"
-                        label="Tugas"
+                        label="Assignment"
                         value={assignments.length}
-                        description="Tugas tersedia"
+                        description="Available Assignments"
                         canAdd={canManage}
                         onAdd={handleAddAssignment}
                     />
@@ -359,16 +359,16 @@ export default function ModuleDetailPage() {
                         color="purple"
                         label="Quiz"
                         value={quizzes.length}
-                        description="Quiz tersedia"
+                        description="Available Quiz"
                         canAdd={canManage}
                         onAdd={handleAddQuiz}
                     />
                     <StatCard
                         icon={ClipboardCheck}
                         color="red"
-                        label="Ujian"
+                        label="Exam"
                         value={exams.length}
-                        description="Ujian tersedia"
+                        description="Available Exams"
                         canAdd={canManage}
                         onAdd={handleAddExam}
                     />
@@ -376,37 +376,14 @@ export default function ModuleDetailPage() {
 
                 {/* Unified Content List */}
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    {/* Tabs */}
-                    <div className="border-b border-gray-200 px-6 pt-4">
-                        <div className="flex items-center gap-1">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.key}
-                                    onClick={() => setActiveTab(tab.key)}
-                                    className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
-                                        activeTab === tab.key
-                                            ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
-                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                                    }`}
-                                >
-                                    {tab.label}
-                                    <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
-                                        activeTab === tab.key ? 'bg-blue-100' : 'bg-gray-100'
-                                    }`}>
-                                        {tab.count}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+
 
                     {/* Content List */}
                     <div className="p-6">
                         {filteredContent.length === 0 ? (
                             <div className="text-center py-12">
                                 <FileQuestion className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                                <p className="text-gray-500 font-medium">Belum ada konten</p>
-                                <p className="text-sm text-gray-400 mt-1">Klik tombol + pada kartu di atas untuk menambahkan</p>
+                                <p className="text-gray-500 font-medium">No content yet</p>
                             </div>
                         ) : (
                             <div className="space-y-2">
@@ -424,7 +401,6 @@ export default function ModuleDetailPage() {
                                                 </div>
                                                 <div>
                                                     <p className="font-medium text-gray-900">{item.title}</p>
-                                                    <p className="text-xs text-gray-500">{typeInfo.label}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
@@ -435,19 +411,7 @@ export default function ModuleDetailPage() {
                                                 }`}>
                                                     {item.status === 1 ? 'Aktif' : 'Nonaktif'}
                                                 </span>
-                                                {canManage && (
-                                                    <button
-                                                        onClick={() => {
-                                                            if (item.type === 'material') handleDeleteMaterial(materials.find(m => m.nid === item.id)!)
-                                                            else if (item.type === 'quiz') handleDeleteQuiz(quizzes.find(q => q.nid === item.id)!)
-                                                            else if (item.type === 'exam') handleDeleteExam(exams.find(e => e.nid === item.id)!)
-                                                            else if (item.type === 'assignment') handleDeleteAssignment(assignments.find(a => a.id === item.id)!)
-                                                        }}
-                                                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
-                                                )}
+
                                             </div>
                                         </div>
                                     )

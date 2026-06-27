@@ -98,13 +98,9 @@ const Login = () => {
 
           {/* Welcome Text */}
           <div className="max-w-md">
-            <h1 className="mb-4 text-3xl font-bold text-white">Welcome to STOVIA</h1>
+            <h1 className="mb-4 text-3xl font-bold text-white">Welcome to SMKN 1 Jakarta</h1>
             <p className="text-sm leading-relaxed text-gray-300 text-justify">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
-              dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
-              ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-              fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-              mollit anim id est laborum.
+              Welcome to the digital learning environment of SMK Negeri 1 Jakarta. Let&apos;s build an excellent and high-achieving generation together. Please sign in to continue your activities.
             </p>
           </div>
         </div>

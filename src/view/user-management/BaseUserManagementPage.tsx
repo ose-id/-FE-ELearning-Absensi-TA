@@ -28,8 +28,8 @@ interface BaseUserManagementPageProps {
     title: string
     description: string
     roleNid: number
-    icon: any
-    statsIcon: any
+    icon: React.ComponentType<{ className?: string }>
+    statsIcon: React.ComponentType<{ className?: string }>
     statsColor: {
         iconColor: string
         bgColor: string
@@ -82,16 +82,16 @@ export default function BaseUserManagementPage({
             const usersData = result.data || result || []
 
             // Tag users with role_nid for edit/delete operations
-            const taggedUsers = usersData.map((u: any) => ({
+            const taggedUsers = (usersData as User[]).map((u) => ({
                 ...u,
                 role_nid: u.role_nid ?? u.role_id ?? roleNid,
                 _uid: `${roleNid}:${u.nid ?? u.id}`
             }))
 
             setUsers(taggedUsers)
-        } catch (error: any) {
+        } catch (error) {
             console.error(`Failed to fetch ${category}:`, error)
-            toast.error(error.message || `Failed to list ${category}`)
+            toast.error(error instanceof Error ? error.message : `Failed to list ${category}`)
         } finally {
             setLoading(false)
         }
@@ -104,7 +104,7 @@ export default function BaseUserManagementPage({
             if (response && response.data) {
                 setRoles(response.data)
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to fetch roles:', error)
         }
     }
@@ -149,8 +149,8 @@ export default function BaseUserManagementPage({
 
             toast.success(`${category === 'admin' ? 'Admin' : category === 'teacher' ? 'Guru' : 'Murid'} deleted successfully`)
             fetchUsers()
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to delete user')
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to delete user')
         }
     }
 
@@ -161,7 +161,7 @@ export default function BaseUserManagementPage({
             return
         }
 
-        let exportData: any[]
+        let exportData: Record<string, string | number>[]
 
         if (category === 'student') {
             exportData = users.map(user => ({
@@ -285,7 +285,8 @@ export default function BaseUserManagementPage({
             const data = await file.arrayBuffer()
             const workbook = XLSX.read(data)
             const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-            const jsonData = XLSX.utils.sheet_to_json(worksheet) as Record<string, any>[]
+            type ExcelRow = Record<string, string | number | boolean | null | undefined>
+            const jsonData = XLSX.utils.sheet_to_json(worksheet) as ExcelRow[]
 
             if (jsonData.length === 0) {
                 toast.warning('No data found in the file')
@@ -299,7 +300,7 @@ export default function BaseUserManagementPage({
             for (const row of jsonData) {
                 try {
                     // Build payload matching userService.createUser format
-                    let importData: any
+                    let importData: CreateUserRequest & { nip?: string }
 
                     if (category === 'student') {
                         // Student payload
@@ -348,7 +349,7 @@ export default function BaseUserManagementPage({
                     // Use userService.createUser (same as "Add User" button)
                     await userService.createUser(importData, session.accessToken)
                     successCount++
-                } catch (e: any) {
+                } catch (e) {
                     errorCount++
                     console.error('Failed to import row:', row, e)
                 }
@@ -361,9 +362,9 @@ export default function BaseUserManagementPage({
             if (errorCount > 0) {
                 toast.warning(`Failed to import ${errorCount} rows`)
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Import error:', error)
-            const errorDetail = error?.message || String(error)
+            const errorDetail = error instanceof Error ? error.message : String(error)
             toast.error(errorDetail)
         } finally {
             setImporting(false)
@@ -378,7 +379,7 @@ export default function BaseUserManagementPage({
             setIsSubmitting(true)
 
             // Build payload based on category (matching user.service.ts format)
-            let payload: any
+            let payload: Record<string, unknown>
 
             if (category === 'student') {
                 // Student payload (/api/Student)
@@ -465,9 +466,9 @@ export default function BaseUserManagementPage({
 
             setIsFormOpen(false)
             fetchUsers()
-        } catch (error: any) {
+        } catch (error) {
             console.error('[BaseUserManagement] Flow error:', error)
-            toast.error(error.message || 'Action failed')
+            toast.error(error instanceof Error ? error.message : 'Action failed')
             throw error
         } finally {
             setIsSubmitting(false)
@@ -559,29 +560,7 @@ export default function BaseUserManagementPage({
                     </div>
                 </div>
 
-                {/* Statistics Section */}
-                {!loading && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div
-                            className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-gray-300 hover:-translate-y-1"
-                        >
-                            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${statsColor.color}`} />
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600 mb-1">
-                                        Total {categoryLabel}
-                                    </p>
-                                    <p className="text-3xl font-bold text-gray-900">
-                                        {filteredUsers.length}
-                                    </p>
-                                </div>
-                                <div className={`flex h-14 w-14 items-center justify-center rounded-full ${statsColor.bgColor} transition-transform duration-300 group-hover:scale-110`}>
-                                    <StatsIcon className={`h-7 w-7 ${statsColor.iconColor}`} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+
 
                 {/* Search and Filter Section */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

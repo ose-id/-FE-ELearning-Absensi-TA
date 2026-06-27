@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/libs/auth'
 import StudentAssignmentsPage from '@/view/student-assignments/StudentAssignmentsPage'
 import DashboardLayout from '@/components/layout/DashboardLayout'
+import { ROLES } from '@/config/roles'
 
 export default async function Page() {
     const session = await getServerSession(authOptions)
@@ -11,14 +12,8 @@ export default async function Page() {
         redirect('/')
     }
 
-    // Only allow Student role
-    const allowedRoles = ['STD', 'Student', 'Murid', 'MR']
-    if (!allowedRoles.includes(session.user.vrole_code) && !allowedRoles.includes(session.user.vrole_name)) {
-        redirect('/dashboard')
-    }
-
     return (
-        <DashboardLayout>
+        <DashboardLayout allowedRoles={[ROLES.STUDENT]}>
             <StudentAssignmentsPage />
         </DashboardLayout>
     )

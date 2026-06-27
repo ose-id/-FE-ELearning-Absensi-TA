@@ -8,6 +8,7 @@ import Link from 'next/link'
 
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/button'
+import { ROLES } from '@/config/roles'
 import Input from '@/components/ui/input'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
 import Dialog from '@/components/ui/dialog'
@@ -484,7 +485,7 @@ function QuestionBankContent() {
 
 export default function QuestionBankPage() {
     return (
-        <DashboardLayout>
+        <DashboardLayout allowedRoles={[ROLES.TEACHER]}>
             <QuestionBankContent />
         </DashboardLayout>
     )

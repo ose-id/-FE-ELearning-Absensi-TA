@@ -38,9 +38,9 @@ export default function AcademicYearManagementPage() {
             )
             setAcademicYears(response.data)
             setTotalRecords(response.totalRecords)
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to fetch academic years:', error)
-            toast.error(error.message || 'Failed to load academic years')
+            toast.error(error instanceof Error ? error.message : 'Failed to load academic years')
         } finally {
             setLoading(false)
         }
@@ -71,8 +71,8 @@ export default function AcademicYearManagementPage() {
             await academicYearService.deleteAcademicYear(year.nid, session.accessToken)
             toast.success('Academic year deleted successfully')
             fetchAcademicYears()
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to delete academic year')
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to delete academic year')
         }
     }
 
@@ -107,9 +107,9 @@ export default function AcademicYearManagementPage() {
 
             setIsFormOpen(false)
             fetchAcademicYears()
-        } catch (error: any) {
+        } catch (error) {
             console.error(error)
-            toast.error(error.message || 'Failed to save academic year')
+            toast.error(error instanceof Error ? error.message : 'Failed to save academic year')
             throw error
         } finally {
             setIsSubmitting(false)
@@ -142,20 +142,7 @@ export default function AcademicYearManagementPage() {
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600" />
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">Total Academic Years</p>
-                                <p className="text-3xl font-bold text-gray-900">{totalRecords}</p>
-                            </div>
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
-                                <Calendar className="h-7 w-7 text-blue-600" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
 
                 <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
                     <div className="border-b border-gray-200 p-6">

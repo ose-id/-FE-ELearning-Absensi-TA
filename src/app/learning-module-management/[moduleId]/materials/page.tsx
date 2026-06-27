@@ -217,7 +217,7 @@ export default function ModuleMaterialsPage() {
                         </div>
                     </div>
                     <Button onClick={handleCreate}>
-                        <Plus className="mr-2 h-4 w-4" /> Tambah Materi
+                        <Plus className="mr-2 h-4 w-4" /> Add Material
                     </Button>
                 </div>
 
@@ -249,9 +249,6 @@ export default function ModuleMaterialsPage() {
                         <div className="text-center py-12">
                             <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                             <p className="text-gray-500">Belum ada materi</p>
-                            <Button onClick={handleCreate} variant="outline" className="mt-4">
-                                <Plus className="mr-2 h-4 w-4" /> Tambah Materi
-                            </Button>
                         </div>
                     ) : (
                         <div className="divide-y divide-gray-100">

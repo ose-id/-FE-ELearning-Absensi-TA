@@ -3,10 +3,11 @@
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import BaseUserManagementPage, { UserCategory } from '@/view/user-management/BaseUserManagementPage'
 import { Shield } from 'lucide-react'
+import { ROLES } from '@/config/roles'
 
 export default function AdminManagementPage() {
     return (
-        <DashboardLayout>
+        <DashboardLayout allowedRoles={[ROLES.ADMIN]}>
             <BaseUserManagementPage
                 category="admin"
                 endpoint={`${process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://localhost:5001'}/api/User/staff`}

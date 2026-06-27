@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { NAV_ITEMS } from '@/config/navigation'
-import { ROLES, type RoleCode } from '@/config/roles'
+import { ROLES, type RoleCode, getNormalizedRole } from '@/config/roles'
 import {
   Home,
   Users,
@@ -38,26 +38,7 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
   // State for expanded submenus
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
 
-  // Normalize role code to handle potential backend variations
-  const getNormalizedRole = (role?: string): RoleCode => {
-    switch (role?.toUpperCase()) {
-      case 'ADMIN':
-      case 'ADM':
-        return ROLES.ADMIN
-      case 'TEACHER':
-      case 'GURU':
-      case 'TCR':
-      case 'GR':          // ← backend code for Guru
-        return ROLES.TEACHER
-      case 'STUDENT':
-      case 'MURID':
-      case 'STD':
-      case 'MR':          // ← backend code for Murid
-        return ROLES.STUDENT
-      default:
-        return ROLES.STUDENT
-    }
-  }
+
 
   const userRole = getNormalizedRole(session?.user?.vrole_code)
 
@@ -130,12 +111,16 @@ export default function DashboardSidebar({ expanded, onToggle, onClickOutside }:
 
         {/* Logo */}
         <div className={cn("flex flex-col items-center", expanded ? "px-6 pt-8 pb-6" : "px-2 pt-6 pb-4")}>
-          <div className={cn("flex items-center justify-center rounded-2xl bg-white transition-all duration-300", expanded ? "h-16 w-16 mb-3" : "h-10 w-10 mb-0")}>
-            <span className={cn("font-bold text-[#1e5aa8] transition-all duration-300", expanded ? "text-2xl" : "text-xl")}>S</span>
+          <div className={cn("flex items-center justify-center rounded-2xl bg-white transition-all duration-300 overflow-hidden p-1.5", expanded ? "h-16 w-16 mb-3" : "h-10 w-10 mb-0")}>
+            <img
+              src="/LOGO SMKN 1.png"
+              alt="Logo SMKN 1 Jakarta"
+              className="h-full w-full object-contain"
+            />
           </div>
           <div className={cn("text-center overflow-hidden transition-all duration-300", expanded ? "opacity-100 max-h-20" : "opacity-0 max-h-0 lg:hidden")}>
-            <h2 className="text-base font-bold text-white">STOVIA</h2>
-            <p className="text-xs text-white/90">Lorem Ipsum Dolor Sit Amet</p>
+            <h2 className="text-base font-bold text-white">SMKN 1 JAKARTA</h2>
+            <p className="text-[10px] text-white/90 uppercase tracking-wider font-semibold">The First To The Best</p>
           </div>
         </div>
 

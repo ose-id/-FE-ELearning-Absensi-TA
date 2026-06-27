@@ -224,7 +224,7 @@ export default function ModuleExamsPage() {
                         </div>
                     </div>
                     <Button onClick={handleCreate}>
-                        <Plus className="mr-2 h-4 w-4" /> Tambah Ujian
+                        <Plus className="mr-2 h-4 w-4" /> Add Exam
                     </Button>
                 </div>
 
@@ -256,9 +256,6 @@ export default function ModuleExamsPage() {
                         <div className="text-center py-12">
                             <ClipboardCheck className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                             <p className="text-gray-500">Belum ada ujian</p>
-                            <Button onClick={handleCreate} variant="outline" className="mt-4">
-                                <Plus className="mr-2 h-4 w-4" /> Tambah Ujian
-                            </Button>
                         </div>
                     ) : (
                         <div className="divide-y divide-gray-100">

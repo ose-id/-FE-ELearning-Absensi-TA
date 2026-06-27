@@ -18,12 +18,13 @@ import {
     UserCheck,
     ChevronDown,
     BookText,
-    FolderOpen
+    FolderOpen,
+    type LucideIcon
 } from 'lucide-react'
 import { ROLES, type RoleCode } from './roles'
 
 type NavItem = {
-    icon: any
+    icon: LucideIcon
     label: string
     href: string
     children?: NavItem[]
@@ -57,7 +58,6 @@ export const NAV_ITEMS: Record<RoleCode, NavItem[]> = {
     // Teacher Navigation
     [ROLES.TEACHER]: [
         { icon: Home, label: 'Dashboard', href: '/dashboard' },
-        { icon: Building2, label: 'Department', href: '/department-management' },
         { icon: BookOpen, label: 'Learning Module', href: '/learning-module-management' },
         { icon: FolderOpen, label: 'Question Bank', href: '/question-bank' },
     ],

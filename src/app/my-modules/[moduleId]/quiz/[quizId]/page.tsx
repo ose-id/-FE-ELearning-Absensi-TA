@@ -744,24 +744,24 @@ export default function StudentQuizPage() {
                             Sebelumnya
                         </button>
 
-                        {/* Mobile Submit */}
-                        <button
-                            onClick={() => setShowConfirmSubmit(true)}
-                            disabled={isSubmitting}
-                            className="md:hidden inline-flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-xl shadow-md disabled:opacity-50"
-                        >
-                            <Send className="h-3.5 w-3.5" />
-                            Submit
-                        </button>
-
-                        <button
-                            onClick={() => setCurrentIndex(Math.min(questions.length - 1, currentIndex + 1))}
-                            disabled={currentIndex === questions.length - 1}
-                            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            Selanjutnya
-                            <ChevronRight className="h-3.5 w-3.5" />
-                        </button>
+                        {currentIndex === questions.length - 1 ? (
+                            <button
+                                onClick={() => setShowConfirmSubmit(true)}
+                                disabled={isSubmitting}
+                                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-xl shadow-md hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50"
+                            >
+                                <Send className="h-3.5 w-3.5" />
+                                Submit Kuis
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setCurrentIndex(Math.min(questions.length - 1, currentIndex + 1))}
+                                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                            >
+                                Selanjutnya
+                                <ChevronRight className="h-3.5 w-3.5" />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -805,15 +805,7 @@ export default function StudentQuizPage() {
                             </div>
                         </div>
 
-                        {/* Submit Button */}
-                        <button
-                            onClick={() => setShowConfirmSubmit(true)}
-                            disabled={isSubmitting}
-                            className="w-full mt-2 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
-                        >
-                            <Send className="h-3.5 w-3.5 inline mr-1" />
-                            Submit Kuis
-                        </button>
+
                     </div>
                 </div>
             </div>

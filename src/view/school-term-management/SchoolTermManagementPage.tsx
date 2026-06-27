@@ -44,9 +44,9 @@ export default function SchoolTermManagementPage() {
             )
             setSchoolTerms(response.data)
             setTotalRecords(response.totalRecords)
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to fetch school terms:', error)
-            toast.error(error.message || 'Failed to load school terms')
+            toast.error(error instanceof Error ? error.message : 'Failed to load school terms')
         } finally {
             setLoading(false)
         }
@@ -57,7 +57,7 @@ export default function SchoolTermManagementPage() {
         try {
             const response = await academicYearService.getAllAcademicYears(session.accessToken, 1, 100)
             setAcademicYears(response.data)
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to fetch academic years:', error)
         }
     }
@@ -88,8 +88,8 @@ export default function SchoolTermManagementPage() {
             await schoolTermService.deleteSchoolTerm(term.nid, session.accessToken)
             toast.success('School term deleted successfully')
             fetchSchoolTerms()
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to delete school term')
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to delete school term')
         }
     }
 
@@ -122,9 +122,9 @@ export default function SchoolTermManagementPage() {
 
             setIsFormOpen(false)
             fetchSchoolTerms()
-        } catch (error: any) {
+        } catch (error) {
             console.error(error)
-            toast.error(error.message || 'Failed to save school term')
+            toast.error(error instanceof Error ? error.message : 'Failed to save school term')
             throw error
         } finally {
             setIsSubmitting(false)
@@ -157,20 +157,7 @@ export default function SchoolTermManagementPage() {
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600" />
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">Total School Terms</p>
-                                <p className="text-3xl font-bold text-gray-900">{totalRecords}</p>
-                            </div>
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
-                                <Target className="h-7 w-7 text-blue-600" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
 
                 <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
                     <div className="border-b border-gray-200 p-6">

@@ -44,9 +44,9 @@ export default function SubjectManagementPage() {
             )
             setSubjects(response.data)
             setTotalRecords(response.totalRecords)
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to fetch subjects:', error)
-            toast.error(error.message || 'Failed to load subjects')
+            toast.error(error instanceof Error ? error.message : 'Failed to load subjects')
         } finally {
             setLoading(false)
         }
@@ -56,8 +56,8 @@ export default function SubjectManagementPage() {
         if (!session?.accessToken) return
         try {
             const response = await lovService.getDepartments(session.accessToken)
-            setDepartments(response as any)
-        } catch (error: any) {
+            setDepartments(response as Department[])
+        } catch (error) {
             console.error('Failed to fetch departments:', error)
         }
     }
@@ -88,8 +88,8 @@ export default function SubjectManagementPage() {
             await subjectService.deleteSubject(subject.nid, session.accessToken)
             toast.success('Subject deleted successfully')
             fetchSubjects()
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to delete subject')
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to delete subject')
         }
     }
 
@@ -116,9 +116,9 @@ export default function SubjectManagementPage() {
 
             setIsFormOpen(false)
             fetchSubjects()
-        } catch (error: any) {
+        } catch (error) {
             console.error(error)
-            toast.error(error.message || 'Failed to save subject')
+            toast.error(error instanceof Error ? error.message : 'Failed to save subject')
             throw error
         } finally {
             setIsSubmitting(false)
@@ -151,20 +151,7 @@ export default function SubjectManagementPage() {
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-purple-600" />
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">Total Subjects</p>
-                                <p className="text-3xl font-bold text-gray-900">{totalRecords}</p>
-                            </div>
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-purple-50">
-                                <BookMarked className="h-7 w-7 text-purple-600" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
 
                 <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
                     <div className="border-b border-gray-200 p-6">

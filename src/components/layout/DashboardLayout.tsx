@@ -7,22 +7,30 @@ import DashboardHeader from './DashboardHeader'
 import DashboardSidebar from './DashboardSidebar'
 import { useSession } from 'next-auth/react'
 import { usePathname, useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
+import { ROLES, type RoleCode, getNormalizedRole } from '@/config/roles'
+import AccessDenied from '@/components/ui/AccessDenied'
 
 interface DashboardLayoutProps {
   children: ReactNode
   hideHeader?: boolean
   hideSidebar?: boolean
+  allowedRoles?: RoleCode[]
 }
 
 export default function DashboardLayout({
   children,
   hideHeader = false,
-  hideSidebar = false
+  hideSidebar = false,
+  allowedRoles
 }: DashboardLayoutProps) {
   const { data: session, status } = useSession()
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarExpanded, setSidebarExpanded] = useState(false)
+
+  const userRole = session?.user?.vrole_code ? getNormalizedRole(session.user.vrole_code) : null
+  const isRoleAllowed = !allowedRoles || (userRole && allowedRoles.includes(userRole))
 
   // Initialize sidebar state based on screen width
   useEffect(() => {
@@ -84,7 +92,15 @@ export default function DashboardLayout({
                 if (sidebarExpanded) setSidebarExpanded(false)
               }}
             >
-              {children}
+              {status === 'loading' ? (
+                <div className="flex h-[calc(100vh-12rem)] items-center justify-center">
+                  <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+                </div>
+              ) : status === 'authenticated' && !isRoleAllowed ? (
+                <AccessDenied />
+              ) : (
+                children
+              )}
             </main>
           </div>
         </div>

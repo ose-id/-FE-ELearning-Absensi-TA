@@ -179,7 +179,7 @@ export default function ModuleAssignmentsPage() {
                         </button>
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
-                                Tugas - {module?.vname || 'Loading...'}
+                                Assignment - {module?.vname || 'Loading...'}
                             </h1>
                             <p className="text-sm text-gray-500">
                                 Kelola tugas pembelajaran
@@ -187,7 +187,7 @@ export default function ModuleAssignmentsPage() {
                         </div>
                     </div>
                     <Button onClick={handleCreate}>
-                        <Plus className="mr-2 h-4 w-4" /> Tambah Tugas
+                        <Plus className="mr-2 h-4 w-4" /> Add Assignment
                     </Button>
                 </div>
 
@@ -219,9 +219,6 @@ export default function ModuleAssignmentsPage() {
                         <div className="text-center py-12">
                             <PenLine className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                             <p className="text-gray-500">Belum ada tugas</p>
-                            <Button onClick={handleCreate} variant="outline" className="mt-4">
-                                <Plus className="mr-2 h-4 w-4" /> Tambah Tugas
-                            </Button>
                         </div>
                     ) : (
                         <div className="divide-y divide-gray-100">
