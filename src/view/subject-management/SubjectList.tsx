@@ -35,7 +35,7 @@ export default function SubjectList({ subjects, departments = [], onEdit, onDele
         <Table>
             <TableHeader>
                 <TableRow className="border-b border-gray-200">
-                    <TableHead className="text-gray-600 font-semibold">ID</TableHead>
+                    {/* <TableHead className="text-gray-600 font-semibold">ID</TableHead> */}
                     <TableHead className="text-gray-600 font-semibold">Subject Name</TableHead>
                     <TableHead className="text-gray-600 font-semibold">Department</TableHead>
                     <TableHead className="text-gray-600 font-semibold">Status</TableHead>
@@ -45,7 +45,7 @@ export default function SubjectList({ subjects, departments = [], onEdit, onDele
             <TableBody>
                 {subjects.map((subject) => (
                     <TableRow key={subject.nid} className="border-b border-gray-100 hover:bg-gray-50">
-                        <TableCell className="font-medium text-gray-900">{subject.nid}</TableCell>
+                        {/* <TableCell className="font-medium text-gray-900">{subject.nid}</TableCell> */}
                         <TableCell className="text-gray-900">{subject.vsubject_name}</TableCell>
                         <TableCell className="text-gray-600">
                             {getDepartmentName(subject)}
