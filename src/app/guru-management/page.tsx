@@ -1,0 +1,27 @@
+'use client'
+
+import DashboardLayout from '@/components/layout/DashboardLayout'
+import BaseUserManagementPage from '@/view/user-management/BaseUserManagementPage'
+import { UserCheck } from 'lucide-react'
+import { ROLES } from '@/config/roles'
+
+export default function GuruManagementPage() {
+    return (
+        <DashboardLayout allowedRoles={[ROLES.ADMIN]}>
+            <BaseUserManagementPage
+                category="teacher"
+                endpoint={`${process.env.NEXT_PUBLIC_AUTH_API_URL || 'https://localhost:5001'}/api/Teacher`}
+                title="Teacher Management"
+                description="Manage teacher accounts and profiles"
+                roleNid={2}
+                icon={UserCheck}
+                statsIcon={UserCheck}
+                statsColor={{
+                    iconColor: 'text-indigo-600',
+                    bgColor: 'bg-indigo-50',
+                    color: 'from-indigo-500 to-indigo-600'
+                }}
+            />
+        </DashboardLayout>
+    )
+}

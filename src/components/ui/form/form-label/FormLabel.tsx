@@ -8,13 +8,29 @@ import { cn } from '@/utils/commons'
 import Label from '../../label'
 import { useFormField } from '@/hooks/useFormField'
 
+export interface FormLabelProps extends React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> {
+  required?: boolean
+}
+
 const FormLabel = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
->(({ className, ...props }, ref) => {
+  FormLabelProps
+>(({ className, required, ...props }, ref) => {
   const { error, formItemId } = useFormField()
 
-  return <Label ref={ref} className={cn(error && 'text-destructive', className)} htmlFor={formItemId} {...props} />
+  return (
+    <Label
+      ref={ref}
+      className={cn(error && 'text-destructive', className)}
+      htmlFor={formItemId}
+      {...props}
+    >
+      {props.children}
+      {required && (
+        <span className="text-red-500 ml-1">*</span>
+      )}
+    </Label>
+  )
 })
 
 FormLabel.displayName = 'FormLabel'
