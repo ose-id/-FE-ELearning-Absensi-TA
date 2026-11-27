@@ -21,20 +21,20 @@ Sistem Learning Management System (LMS) berbasis Next.js, TypeScript, dan NextAu
 
 ## Tech Stack
 
-| Kategori | Teknologi |
-|----------|-----------|
-| Framework | Next.js 16 (App Router) |
-| Bahasa | TypeScript |
-| Styling | Tailwind CSS v4 |
-| UI Components | Radix UI |
+| Kategori         | Teknologi                    |
+| ---------------- | ---------------------------- |
+| Framework        | Next.js 16 (App Router)      |
+| Bahasa           | TypeScript                   |
+| Styling          | Tailwind CSS v4              |
+| UI Components    | Radix UI                     |
 | State Management | TanStack Query (React Query) |
-| Form Handling | React Hook Form + Zod |
-| Autentikasi | NextAuth.js v4 |
-| Charts | Recharts |
-| HTTP Client | Fetch API |
-| Validasi | Zod |
-| Analytics | Vercel Analytics |
-| Icons | Lucide React |
+| Form Handling    | React Hook Form + Zod        |
+| Autentikasi      | NextAuth.js v4               |
+| Charts           | Recharts                     |
+| HTTP Client      | Fetch API                    |
+| Validasi         | Zod                          |
+| Analytics        | Vercel Analytics             |
+| Icons            | Lucide React                 |
 
 ---
 
@@ -154,12 +154,12 @@ openssl rand -base64 32
 
 ### Backend Services
 
-| Service | Port | Database | Fungsi |
-|---------|------|----------|--------|
-| Auth Service | 32769 | LMS_AuthDB | Autentikasi & Otorisasi pengguna |
-| Class Service | 32771 | LMS_ClassDB | Manajemen kelas & enrollmen |
-| Assignment Service | 32773 | LMS_AssignmentDB | Manajemen tugas |
-| Exam Service | 32775 | LMS_ExamDB | Manajemen ujian |
+| Service            | Port  | Database         | Fungsi                           |
+| ------------------ | ----- | ---------------- | -------------------------------- |
+| Auth Service       | 32769 | LMS_AuthDB       | Autentikasi & Otorisasi pengguna |
+| Class Service      | 32771 | LMS_ClassDB      | Manajemen kelas & enrollmen      |
+| Assignment Service | 32773 | LMS_AssignmentDB | Manajemen tugas                  |
+| Exam Service       | 32775 | LMS_ExamDB       | Manajemen ujian                  |
 
 ---
 
@@ -231,13 +231,13 @@ Setelah login, session mengandung:
 ```typescript
 interface Session {
   user: {
-    id: number
-    email: string
-    name: string
-    role: 'ADM' | 'TCR' | 'STD'
-  }
-  accessToken: string
-  expires: string
+    id: number;
+    email: string;
+    name: string;
+    role: "ADM" | "TCR" | "STD";
+  };
+  accessToken: string;
+  expires: string;
 }
 ```
 
@@ -269,11 +269,11 @@ export default function ProtectedPage() {
 
 ## Peran Pengguna
 
-| Peran | Kode | Akses |
-|-------|------|-------|
-| Admin | ADM | Full access: manajemen user, kelas, tugas, ujian |
-| Guru | TCR | Manajemen kelas, lihat mahasiswa |
-| Murid | STD | Lihat & enroll kelas, submit tugas |
+| Peran | Kode | Akses                                            |
+| ----- | ---- | ------------------------------------------------ |
+| Admin | ADM  | Full access: manajemen user, kelas, tugas, ujian |
+| Guru  | TCR  | Manajemen kelas, lihat mahasiswa                 |
+| Murid | STD  | Lihat & enroll kelas, submit tugas               |
 
 ### Contoh Cek Role
 
@@ -298,29 +298,32 @@ function AdminOnlyComponent() {
 ### Contoh Penggunaan Service
 
 ```typescript
-import { classService } from '@/services/class.service'
-import { useSession } from 'next-auth/react'
+import { classService } from "@/services/class.service";
+import { useSession } from "next-auth/react";
 
 // Di dalam React Component
 export default function ClassList() {
-  const { data: session } = useSession()
+  const { data: session } = useSession();
 
   // Fetch semua kelas
   const { data: classes, isLoading } = useQuery({
-    queryKey: ['classes'],
+    queryKey: ["classes"],
     queryFn: () => classService.getClasses(session?.accessToken!),
-    enabled: !!session?.accessToken
-  })
+    enabled: !!session?.accessToken,
+  });
 
   // Create kelas baru
   const createClass = async () => {
-    await classService.createClass({
-      name: 'Matematika Dasar',
-      code: 'MTK101',
-      description: 'Pengantar Matematika',
-      teacherId: 1
-    }, session?.accessToken!)
-  }
+    await classService.createClass(
+      {
+        name: "Matematika Dasar",
+        code: "MTK101",
+        description: "Pengantar Matematika",
+        teacherId: 1,
+      },
+      session?.accessToken!,
+    );
+  };
 
   // ...
 }
@@ -328,20 +331,20 @@ export default function ClassList() {
 
 ### Endpoint API Umum
 
-| Method | Endpoint | Deskripsi |
-|--------|----------|-----------|
-| POST | /api/Auth/login | Login user |
-| POST | /api/Auth/register | Registrasi user baru |
-| GET | /api/Class | Get semua kelas |
-| POST | /api/Class | Create kelas baru |
-| GET | /api/Class/{id} | Get kelas by ID |
-| PUT | /api/Class/{id} | Update kelas |
-| DELETE | /api/Class/{id} | Delete kelas |
-| GET | /api/Assignment | Get semua tugas |
-| POST | /api/Assignment | Create tugas baru |
-| GET | /api/Assignment/{id} | Get tugas by ID |
-| PUT | /api/Assignment/{id} | Update tugas |
-| POST | /api/Assignment/{id}/submit | Submit tugas |
+| Method | Endpoint                    | Deskripsi            |
+| ------ | --------------------------- | -------------------- |
+| POST   | /api/Auth/login             | Login user           |
+| POST   | /api/Auth/register          | Registrasi user baru |
+| GET    | /api/Class                  | Get semua kelas      |
+| POST   | /api/Class                  | Create kelas baru    |
+| GET    | /api/Class/{id}             | Get kelas by ID      |
+| PUT    | /api/Class/{id}             | Update kelas         |
+| DELETE | /api/Class/{id}             | Delete kelas         |
+| GET    | /api/Assignment             | Get semua tugas      |
+| POST   | /api/Assignment             | Create tugas baru    |
+| GET    | /api/Assignment/{id}        | Get tugas by ID      |
+| PUT    | /api/Assignment/{id}        | Update tugas         |
+| POST   | /api/Assignment/{id}/submit | Submit tugas         |
 
 ---
 
@@ -408,6 +411,7 @@ CMD ["node", "server.js"]
 **Penyebab:** Backend tidak mengizinkan request dari `localhost:3000`
 
 **Solusi:**
+
 - Cek konfigurasi CORS di backend (.NET: `services.AddCors()`)
 - Pastikan backend allow origin `http://localhost:3000`
 
@@ -418,6 +422,7 @@ CMD ["node", "server.js"]
 **Penyebab:** JWT token validation failed
 
 **Solusi:**
+
 - Pastikan semua backend services menggunakan **JWT secret yang sama**
 - Cek `appsettings.json` di setiap backend service
 - Pastikan `Jwt:Key`, `Jwt:Issuer`, `Jwt:Audience` match semua services
@@ -427,6 +432,7 @@ CMD ["node", "server.js"]
 **Error:** `Unknown database 'LMS_ClassDB'`
 
 **Solusi:**
+
 ```sql
 CREATE DATABASE LMS_AuthDB;
 CREATE DATABASE LMS_ClassDB;
@@ -445,6 +451,7 @@ CREATE DATABASE LMS_ExamDB;
 **Error:** `Cannot find module '@/components/ui/...'`
 
 **Solusi:** Restart development server
+
 ```bash
 npm run dev
 ```
@@ -460,11 +467,13 @@ npm run dev
 ## Kontribusi
 
 1. Buat feature branch dari `main`
+
    ```bash
    git checkout -b feature/fitur-baru
    ```
 
 2. Implementasi dengan commit terstruktur
+
    ```bash
    git commit -m "feat: menambahkan fitur baru"
    ```
@@ -495,3 +504,19 @@ Private Project - All Rights Reserved
 ---
 
 **Last Updated:** April 2026
+
+<!-- Security scan triggered at 2026-08-31 18:07:31 -->
+
+<!-- Security scan triggered at 2026-09-02 14:35:12 -->
+
+<!-- Security scan triggered at 2026-09-02 15:43:10 -->
+
+<!-- Security scan triggered at 2026-09-03 22:13:22 -->
+
+<!-- Security scan triggered at 2026-09-03 23:10:11 -->
+
+<!-- Security scan triggered at 2026-09-10 04:13:55 -->
+
+<!-- Security scan triggered at 2026-09-11 07:32:13 -->
+
+<!-- Security scan triggered at 2026-10-07 11:43:04 -->
